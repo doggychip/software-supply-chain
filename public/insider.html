@@ -616,20 +616,20 @@ td {
 
 <!-- ========== TAB BAR ========== -->
 <nav class="tab-bar">
-  <a href="index.html" class="tab-link" data-i18n="tab.dashboard">Main Dashboard</a>
-  <a href="correlation.html" class="tab-link" data-i18n="tab.correlation">Correlation</a>
-  <a href="technicals.html" class="tab-link" data-i18n="tab.technicals">Technicals</a>
-  <a href="insider.html" class="tab-link active" data-i18n="tab.insider">Insider Activity</a>
-  <a href="options.html" class="tab-link" data-i18n="tab.options">Options Flow</a>
-  <a href="sentiment.html" class="tab-link" data-i18n="tab.sentiment">Sentiment</a>
-  <a href="leaderboard.html" class="tab-link" data-i18n="tab.leaderboard">Leaderboard</a>
-  <a href="stress-test.html" class="tab-link" data-i18n="tab.stress">Stress Test</a>
+  <a href="index.html" class="tab-link" data-i18n="Main Dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="Technicals">Technicals</a>
+  <a href="insider.html" class="tab-link active" data-i18n="Insider Activity">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="Options Flow">Options Flow</a>
+  <a href="sentiment.html" class="tab-link" data-i18n="Sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="Leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link" data-i18n="Stress Test">Stress Test</a>
 </nav>
 
 <!-- ========== HEADER ========== -->
 <header class="page-header">
-  <h1 data-i18n="insider.title">Insider &amp; Institutional Activity</h1>
-  <button class="theme-toggle" onclick="toggleTheme()" data-i18n="theme.toggle">Toggle Theme</button>
+  <h1 data-i18n="Title">Insider &amp; Institutional Activity</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" data-i18n="Toggle">Toggle Theme</button>
 </header>
 
 <!-- ========== LAYOUT ========== -->
@@ -648,13 +648,13 @@ td {
     <!-- Charts Row: Buy/Sell Ratio by Layer + Net Activity by Ticker -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="insider.buyRatioByLayer">Buy / Sell Ratio by Layer</h2>
+        <h2 data-i18n="Buyratiobylayer">Buy / Sell Ratio by Layer</h2>
         <div style="position:relative;height:420px">
           <canvas id="chartLayerRatio"></canvas>
         </div>
       </div>
       <div class="card">
-        <h2 data-i18n="insider.netByTicker">Net Insider Activity by Ticker (Top 20)</h2>
+        <h2 data-i18n="Netbyticker">Net Insider Activity by Ticker (Top 20)</h2>
         <div style="position:relative;height:420px">
           <canvas id="chartNetBuying"></canvas>
         </div>
@@ -664,13 +664,13 @@ td {
     <!-- Charts Row: Buy vs Sell Pie + Activity Timeline -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="insider.buySellDist">Buy vs Sell Distribution (by Value)</h2>
+        <h2 data-i18n="Buyselldist">Buy vs Sell Distribution (by Value)</h2>
         <div style="position:relative;height:350px;display:flex;align-items:center;justify-content:center">
           <canvas id="chartPie"></canvas>
         </div>
       </div>
       <div class="card">
-        <h2 data-i18n="insider.timeline">Activity Timeline by Month</h2>
+        <h2 data-i18n="Timeline">Activity Timeline by Month</h2>
         <div style="position:relative;height:350px">
           <canvas id="chartTimeline"></canvas>
         </div>
@@ -679,8 +679,8 @@ td {
 
     <!-- Notable Insider Moves Cards -->
     <div class="card">
-      <h2 data-i18n="insider.notable">Notable Insider Moves — Bullish Signals</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="insider.notableDesc">
+      <h2 data-i18n="Notable">Notable Insider Moves — Bullish Signals</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Notabledesc">
         Significant insider purchases above $1M — often interpreted as bullish conviction signals from company leadership.
       </p>
       <div class="grid-3" id="notableGrid"></div>
@@ -688,8 +688,8 @@ td {
 
     <!-- Cluster Detection -->
     <div class="card">
-      <h2 data-i18n="insider.clusters">Cluster Detection — Multiple Insiders Buying Same Stock</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="insider.clusterDesc">
+      <h2 data-i18n="Clusters">Cluster Detection — Multiple Insiders Buying Same Stock</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Clusterdesc">
         Stocks where two or more different insiders made purchases — a stronger signal than single-insider activity.
       </p>
       <div class="grid-3" id="clusterGrid"></div>
@@ -697,31 +697,31 @@ td {
 
     <!-- Insider Activity by Layer (horizontal stacked bars) -->
     <div class="card">
-      <h2 data-i18n="insider.layerBreakdown">Insider Activity Breakdown by Layer</h2>
+      <h2 data-i18n="Layerbreakdown">Insider Activity Breakdown by Layer</h2>
       <div id="layerBreakdown"></div>
     </div>
 
     <!-- Transaction Feed with Filters -->
     <div class="card">
-      <h2 data-i18n="insider.feed">Recent Insider Transactions</h2>
+      <h2 data-i18n="Feed">Recent Insider Transactions</h2>
       <div class="filters">
-        <label data-i18n="insider.filterTicker">Ticker</label>
+        <label data-i18n="Filterticker">Ticker</label>
         <select id="filterTicker">
           <option value="ALL" selected>All Tickers</option>
         </select>
-        <label data-i18n="insider.filterType">Type</label>
+        <label data-i18n="Filtertype">Type</label>
         <select id="filterType">
           <option value="ALL">All</option>
           <option value="Buy">Buy</option>
           <option value="Sell">Sell</option>
         </select>
-        <label data-i18n="insider.filterLayer">Layer</label>
+        <label data-i18n="Filterlayer">Layer</label>
         <select id="filterLayer">
           <option value="ALL">All Layers</option>
         </select>
-        <label data-i18n="insider.filterFrom">From</label>
+        <label data-i18n="Filterfrom">From</label>
         <input type="date" id="filterFrom">
-        <label data-i18n="insider.filterTo">To</label>
+        <label data-i18n="Filterto">To</label>
         <input type="date" id="filterTo">
       </div>
       <div class="feed" id="feedContainer"></div>
@@ -729,21 +729,21 @@ td {
 
     <!-- Market Context Table -->
     <div class="card">
-      <h2 data-i18n="insider.context">Market Context — Insider-Active Tickers</h2>
+      <h2 data-i18n="Context">Market Context — Insider-Active Tickers</h2>
       <div class="table-wrap">
         <table id="contextTable">
           <thead>
             <tr>
-              <th data-i18n="table.ticker">Ticker</th>
-              <th data-i18n="table.name">Name</th>
-              <th data-i18n="table.layer">Layer</th>
-              <th data-i18n="table.price">Price</th>
-              <th data-i18n="table.change">Chg %</th>
-              <th data-i18n="table.volume">Volume</th>
-              <th data-i18n="table.mktCap">Mkt Cap</th>
-              <th data-i18n="table.pe">P/E</th>
-              <th data-i18n="table.txns"># Txns</th>
-              <th data-i18n="table.netVal">Net Value</th>
+              <th data-i18n="Ticker">Ticker</th>
+              <th data-i18n="Name">Name</th>
+              <th data-i18n="Layer">Layer</th>
+              <th data-i18n="Price">Price</th>
+              <th data-i18n="Change">Chg %</th>
+              <th data-i18n="Volume">Volume</th>
+              <th data-i18n="Mktcap">Mkt Cap</th>
+              <th data-i18n="Pe">P/E</th>
+              <th data-i18n="Txns"># Txns</th>
+              <th data-i18n="Netval">Net Value</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -996,12 +996,12 @@ setTheme(getTheme());
 // =================================================================
 (function buildSidebar() {
   const sb = document.getElementById('sidebar');
-  let html = '<h3 data-i18n="sidebar.layers">Layers</h3>';
+  let html = '<h3 data-i18n="Software Layers">Layers</h3>';
   for (const [name, info] of Object.entries(LAYERS)) {
     html += '<div class="sidebar-item" onclick="filterByLayer('' + name + '')">' +
       '<span class="dot" style="background:' + info.color + '"></span>' + name + '</div>';
   }
-  html += '<h3 style="margin-top:var(--space-6)" data-i18n="sidebar.quickLinks">Quick Links</h3>';
+  html += '<h3 style="margin-top:var(--space-6)" data-i18n="Quicklinks">Quick Links</h3>';
   html += '<div class="sidebar-item" onclick="scrollToEl('notableGrid')">&#9733; Notable Moves</div>';
   html += '<div class="sidebar-item" onclick="scrollToEl('clusterGrid')">&#9679; Cluster Detection</div>';
   html += '<div class="sidebar-item" onclick="scrollToEl('layerBreakdown')">&#9632; Layer Breakdown</div>';
@@ -1087,7 +1087,7 @@ const mostActive = Object.entries(insiderCounts).sort((a, b) => b[1] - a[1])[0];
 const sigEl = document.getElementById('smartSignal');
 sigEl.innerHTML = '<div class="signal-box ' + (netActivity >= 0 ? 'signal-green' : 'signal-red') + '">' +
   '<div class="signal-dot"></div>' +
-  '<span data-i18n="insider.signal">Smart Money Signal: ' +
+  '<span data-i18n="Signal">Smart Money Signal: ' +
   (netActivity >= 0 ? 'NET BUYING' : 'NET SELLING') +
   ' &mdash; ' + fmt(Math.abs(netActivity)) +
   ' net ' + (netActivity >= 0 ? 'inflow' : 'outflow') +
@@ -1100,22 +1100,22 @@ sigEl.innerHTML = '<div class="signal-box ' + (netActivity >= 0 ? 'signal-green'
 // =================================================================
 document.getElementById('statsGrid').innerHTML =
   '<div class="card">' +
-    '<div class="stat-label" data-i18n="insider.totalBuys">Total Buys</div>' +
+    '<div class="stat-label" data-i18n="Totalbuys">Total Buys</div>' +
     '<div class="stat-value" style="color:var(--green)">' + buys.length + '</div>' +
     '<div class="stat-sub">' + fmt(totalBuyVal) + ' total value</div>' +
   '</div>' +
   '<div class="card">' +
-    '<div class="stat-label" data-i18n="insider.totalSells">Total Sells</div>' +
+    '<div class="stat-label" data-i18n="Totalsells">Total Sells</div>' +
     '<div class="stat-value" style="color:var(--red)">' + sells.length + '</div>' +
     '<div class="stat-sub">' + fmt(totalSellVal) + ' total value</div>' +
   '</div>' +
   '<div class="card">' +
-    '<div class="stat-label" data-i18n="insider.netActivity">Net Activity</div>' +
+    '<div class="stat-label" data-i18n="Netactivity">Net Activity</div>' +
     '<div class="stat-value" style="color:var(' + (netActivity >= 0 ? '--green' : '--red') + ')">' + fmt(Math.abs(netActivity)) + '</div>' +
     '<div class="stat-sub">' + (netActivity >= 0 ? 'Net Buying' : 'Net Selling') + '</div>' +
   '</div>' +
   '<div class="card">' +
-    '<div class="stat-label" data-i18n="insider.largestTxn">Largest Transaction</div>' +
+    '<div class="stat-label" data-i18n="Largesttxn">Largest Transaction</div>' +
     '<div class="stat-value" style="font-size:var(--text-xl)">' + fmt(largest.value) + '</div>' +
     '<div class="stat-sub">' + largest.name + ' — ' + largest.ticker + ' (' + largest.type + ')</div>' +
   '</div>';

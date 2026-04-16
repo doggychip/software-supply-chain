@@ -125,21 +125,21 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 </head>
 <body>
 <nav class="tab-bar">
-  <a href="index.html" class="tab-link" data-i18n="nav.dashboard">Main Dashboard</a>
-  <a href="correlation.html" class="tab-link" data-i18n="nav.correlation">Correlation</a>
-  <a href="technicals.html" class="tab-link" data-i18n="nav.technicals">Technicals</a>
-  <a href="insider.html" class="tab-link" data-i18n="nav.insider">Insider Activity</a>
-  <a href="options.html" class="tab-link" data-i18n="nav.options">Options Flow</a>
-  <a href="sentiment.html" class="tab-link" data-i18n="nav.sentiment">Sentiment</a>
-  <a href="leaderboard.html" class="tab-link active" data-i18n="nav.leaderboard">Leaderboard</a>
-  <a href="stress-test.html" class="tab-link" data-i18n="nav.stresstest">Stress Test</a>
+  <a href="index.html" class="tab-link" data-i18n="Main Dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="Technicals">Technicals</a>
+  <a href="insider.html" class="tab-link" data-i18n="Insider Activity">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="Options Flow">Options Flow</a>
+  <a href="sentiment.html" class="tab-link" data-i18n="Sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link active" data-i18n="Leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link" data-i18n="Stress Test">Stress Test</a>
 </nav>
 
 <div class="page-layout">
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-section">
-      <h3 data-i18n="leaderboard.period">Time Period</h3>
+      <h3 data-i18n="Period">Time Period</h3>
       <div class="period-btns" id="lbPeriodBtns">
         <button class="period-btn active" data-period="1D">1D</button>
         <button class="period-btn" data-period="1W">1W</button>
@@ -150,11 +150,11 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
       </div>
     </div>
     <div class="sidebar-section">
-      <h3 data-i18n="leaderboard.filterLayer">Filter by Layer</h3>
+      <h3 data-i18n="Filter Layer">Filter by Layer</h3>
       <div class="layer-filter" id="lbLayerFilter"></div>
     </div>
     <div class="sidebar-section">
-      <h3 data-i18n="leaderboard.stats">Quick Stats</h3>
+      <h3 data-i18n="Stats">Quick Stats</h3>
       <div id="lbQuickStats" style="font-size:var(--text-xs)"></div>
     </div>
   </aside>
@@ -162,25 +162,25 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
   <!-- Main content -->
   <div class="content">
     <header class="page-header">
-      <h1 data-i18n="leaderboard.title">Performance Leaderboard</h1>
-      <button class="theme-toggle" onclick="toggleTheme()" data-i18n="common.theme">◑ Theme</button>
+      <h1 data-i18n="Title">Performance Leaderboard</h1>
+      <button class="theme-toggle" onclick="toggleTheme()" data-i18n="Theme">◑ Theme</button>
     </header>
 
     <!-- Top/Bottom performers -->
     <div class="grid-2" style="margin-bottom:var(--space-5)">
       <div class="card">
-        <h3 data-i18n="leaderboard.topPerformers">Top 5 Performers</h3>
+        <h3 data-i18n="Top Performers">Top 5 Performers</h3>
         <div class="highlight-cards" id="lbTopCards"></div>
       </div>
       <div class="card">
-        <h3 data-i18n="leaderboard.bottomPerformers">Bottom 5 Performers</h3>
+        <h3 data-i18n="Bottom Performers">Bottom 5 Performers</h3>
         <div class="highlight-cards" id="lbBottomCards"></div>
       </div>
     </div>
 
     <!-- Full leaderboard table -->
     <div class="card">
-      <h2 data-i18n="leaderboard.allTickers">All Tickers — Ranked by Return</h2>
+      <h2 data-i18n="All Tickers">All Tickers — Ranked by Return</h2>
       <div class="scroll-x">
         <table class="perf-table" id="lbPerfTable">
           <thead><tr id="lbTableHead"></tr></thead>
@@ -192,29 +192,29 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
     <!-- Returns bar chart + Layer performance -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="leaderboard.returnsByTicker">Returns by Ticker</h2>
+        <h2 data-i18n="Returnsbyticker">Returns by Ticker</h2>
         <div style="position:relative;height:700px"><canvas id="lbBarChart"></canvas></div>
       </div>
       <div class="card">
-        <h2 data-i18n="leaderboard.layerPerf">Layer Performance (Avg Return)</h2>
+        <h2 data-i18n="Layerperf">Layer Performance (Avg Return)</h2>
         <div id="lbLayerPerf"></div>
       </div>
     </div>
 
     <!-- Volume leaders -->
     <div class="card">
-      <h2 data-i18n="leaderboard.volumeLeaders">Volume Leaders</h2>
+      <h2 data-i18n="Volumeleaders">Volume Leaders</h2>
       <div class="scroll-x">
         <table class="vol-table" id="lbVolTable">
           <thead><tr>
-            <th data-i18n="common.rank">#</th>
-            <th data-i18n="common.ticker">Ticker</th>
-            <th data-i18n="common.name">Name</th>
-            <th data-i18n="leaderboard.volume">Volume</th>
-            <th data-i18n="leaderboard.avgVolume">Avg Volume</th>
-            <th data-i18n="leaderboard.volRatio">Vol Ratio</th>
-            <th data-i18n="common.chgPct">Chg %</th>
-            <th data-i18n="common.layer">Layer</th>
+            <th data-i18n="Rank">#</th>
+            <th data-i18n="Ticker">Ticker</th>
+            <th data-i18n="Name">Name</th>
+            <th data-i18n="Volume">Volume</th>
+            <th data-i18n="Avgvolume">Avg Volume</th>
+            <th data-i18n="Volratio">Vol Ratio</th>
+            <th data-i18n="Chgpct">Chg %</th>
+            <th data-i18n="Layer">Layer</th>
           </tr></thead>
           <tbody id="lbVolBody"></tbody>
         </table>
@@ -223,19 +223,19 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 
     <!-- Momentum Rankings (RSI-based) -->
     <div class="card">
-      <h2 data-i18n="leaderboard.momentumTitle">Momentum Rankings (RSI-Based)</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="leaderboard.momentumDesc">Simulated RSI from price history — Overbought (&gt;70) / Oversold (&lt;30)</p>
+      <h2 data-i18n="Momentumtitle">Momentum Rankings (RSI-Based)</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Momentumdesc">Simulated RSI from price history — Overbought (&gt;70) / Oversold (&lt;30)</p>
       <div class="scroll-x">
         <table class="vol-table" id="lbRsiTable">
           <thead><tr>
-            <th data-i18n="common.rank">#</th>
-            <th data-i18n="common.ticker">Ticker</th>
-            <th data-i18n="common.name">Name</th>
-            <th data-i18n="leaderboard.rsi">RSI (14)</th>
-            <th data-i18n="leaderboard.rsiBar">RSI Bar</th>
-            <th data-i18n="leaderboard.signal">Signal</th>
-            <th data-i18n="common.chgPct">1D Chg</th>
-            <th data-i18n="common.layer">Layer</th>
+            <th data-i18n="Rank">#</th>
+            <th data-i18n="Ticker">Ticker</th>
+            <th data-i18n="Name">Name</th>
+            <th data-i18n="Rsi">RSI (14)</th>
+            <th data-i18n="Rsibar">RSI Bar</th>
+            <th data-i18n="Signal">Signal</th>
+            <th data-i18n="Chgpct">1D Chg</th>
+            <th data-i18n="Layer">Layer</th>
           </tr></thead>
           <tbody id="lbRsiBody"></tbody>
         </table>
@@ -244,15 +244,15 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 
     <!-- Market Cap Treemap -->
     <div class="card">
-      <h2 data-i18n="leaderboard.treemapTitle">Market Cap Treemap</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="leaderboard.treemapDesc">Sized by market cap, colored by return for selected period</p>
+      <h2 data-i18n="Treemaptitle">Market Cap Treemap</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="Treemapdesc">Sized by market cap, colored by return for selected period</p>
       <div class="treemap" id="lbTreemap"></div>
     </div>
 
     <!-- Relative Strength -->
     <div class="card">
-      <h2 data-i18n="leaderboard.rsTitle">Relative Strength Rankings</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="leaderboard.rsDesc">Performance vs equal-weight software index for the selected period</p>
+      <h2 data-i18n="Rstitle">Relative Strength Rankings</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Rsdesc">Performance vs equal-weight software index for the selected period</p>
       <div style="position:relative;height:500px"><canvas id="lbRelStrengthChart"></canvas></div>
     </div>
   </div>

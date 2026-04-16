@@ -157,55 +157,55 @@ td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(
 </head>
 <body>
 <nav class="tab-bar">
-  <a href="index.html" class="tab-link" data-i18n="nav.dashboard">Main Dashboard</a>
-  <a href="correlation.html" class="tab-link" data-i18n="nav.correlation">Correlation</a>
-  <a href="technicals.html" class="tab-link" data-i18n="nav.technicals">Technicals</a>
-  <a href="insider.html" class="tab-link" data-i18n="nav.insider">Insider Activity</a>
-  <a href="options.html" class="tab-link" data-i18n="nav.options">Options Flow</a>
-  <a href="sentiment.html" class="tab-link active" data-i18n="nav.sentiment">Sentiment</a>
-  <a href="leaderboard.html" class="tab-link" data-i18n="nav.leaderboard">Leaderboard</a>
-  <a href="stress-test.html" class="tab-link" data-i18n="nav.stresstest">Stress Test</a>
+  <a href="index.html" class="tab-link" data-i18n="Main Dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="Technicals">Technicals</a>
+  <a href="insider.html" class="tab-link" data-i18n="Insider Activity">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="Options Flow">Options Flow</a>
+  <a href="sentiment.html" class="tab-link active" data-i18n="Sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="Leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link" data-i18n="Stress Test">Stress Test</a>
 </nav>
 
 <header class="page-header">
-  <h1 data-i18n="sentiment.title">Market Sentiment Dashboard</h1>
+  <h1 data-i18n="Title">Market Sentiment Dashboard</h1>
   <div class="header-actions">
-    <button class="theme-toggle" onclick="toggleTheme()" data-i18n="common.theme">◑ Theme</button>
+    <button class="theme-toggle" onclick="toggleTheme()" data-i18n="Theme">◑ Theme</button>
   </div>
 </header>
 
 <div class="main">
   <div class="disclaimer">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 14h14L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-    <span data-i18n="sentiment.disclaimer">Sentiment scores derived from market data signals (price, volume, 52-week range, analyst models) — not NLP analysis. Simulated social data for illustrative purposes.</span>
+    <span data-i18n="Disclaimer">Sentiment scores derived from market data signals (price, volume, 52-week range, analyst models) — not NLP analysis. Simulated social data for illustrative purposes.</span>
   </div>
 
   <!-- Row 1: Fear & Greed + Overall Gauge + Bull/Bear Counts -->
   <div class="grid-3">
     <div class="card" style="display:flex;flex-direction:column;align-items:center">
-      <h2 data-i18n="sentiment.fgTitle">Software Sector Fear &amp; Greed</h2>
+      <h2 data-i18n="Fgtitle">Software Sector Fear &amp; Greed</h2>
       <div class="fear-greed">
         <canvas id="sentFgGauge" width="220" height="220"></canvas>
         <div id="sentFgLabel"></div>
       </div>
     </div>
     <div class="card">
-      <h2 data-i18n="sentiment.overallTitle">Overall Market Sentiment</h2>
+      <h2 data-i18n="Overalltitle">Overall Market Sentiment</h2>
       <canvas id="sentOverallGauge" width="280" height="160" style="display:block;margin:0 auto"></canvas>
       <div id="sentOverallLabel" style="text-align:center;margin-top:var(--space-3)"></div>
       <div id="sentOverallBreakdown" style="margin-top:var(--space-4)"></div>
     </div>
     <div class="card">
-      <div class="stat-label" data-i18n="sentiment.bullishTickers">Bullish Tickers</div>
+      <div class="stat-label" data-i18n="Bullishtickers">Bullish Tickers</div>
       <div class="stat-value" style="color:var(--green)" id="sentBullCount">0</div>
       <div class="stat-sub" id="sentBullSub"></div>
       <div style="margin-top:var(--space-5)">
-        <div class="stat-label" data-i18n="sentiment.bearishTickers">Bearish Tickers</div>
+        <div class="stat-label" data-i18n="Bearishtickers">Bearish Tickers</div>
         <div class="stat-value" style="color:var(--red)" id="sentBearCount">0</div>
         <div class="stat-sub" id="sentBearSub"></div>
       </div>
       <div style="margin-top:var(--space-5)">
-        <div class="stat-label" data-i18n="sentiment.neutralTickers">Neutral Tickers</div>
+        <div class="stat-label" data-i18n="Neutraltickers">Neutral Tickers</div>
         <div class="stat-value" style="color:var(--muted)" id="sentNeutCount">0</div>
       </div>
     </div>
@@ -214,29 +214,29 @@ td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(
   <!-- Row 2: Top Bullish / Bearish -->
   <div class="grid-2">
     <div class="card">
-      <h2 data-i18n="sentiment.topBullish">Top 5 Most Bullish</h2>
+      <h2 data-i18n="Topbullish">Top 5 Most Bullish</h2>
       <div class="trending-list" id="sentTopBullish"></div>
     </div>
     <div class="card">
-      <h2 data-i18n="sentiment.topBearish">Top 5 Most Bearish</h2>
+      <h2 data-i18n="Topbearish">Top 5 Most Bearish</h2>
       <div class="trending-list" id="sentTopBearish"></div>
     </div>
   </div>
 
   <!-- Row 3: Sentiment Heatmap -->
   <div class="card">
-    <h2 data-i18n="sentiment.heatmapTitle">Sentiment Heatmap — All 42 Tickers</h2>
+    <h2 data-i18n="Heatmaptitle">Sentiment Heatmap — All 42 Tickers</h2>
     <div class="heat-grid" id="sentHeatGrid"></div>
   </div>
 
   <!-- Row 4: Layer Sentiment + Radar Chart -->
   <div class="grid-2">
     <div class="card">
-      <h2 data-i18n="sentiment.layerBars">Layer Sentiment Breakdown</h2>
+      <h2 data-i18n="Layerbars">Layer Sentiment Breakdown</h2>
       <div id="sentLayerBars"></div>
     </div>
     <div class="card">
-      <h2 data-i18n="sentiment.radarTitle">Layer Sentiment Radar</h2>
+      <h2 data-i18n="Radartitle">Layer Sentiment Radar</h2>
       <div style="position:relative;height:400px"><canvas id="sentRadarChart"></canvas></div>
     </div>
   </div>
@@ -244,31 +244,31 @@ td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(
   <!-- Row 5: Social Media Sentiment Tracking -->
   <div class="grid-2">
     <div class="card">
-      <h2 data-i18n="sentiment.socialTitle">Social Media Sentiment Feed</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="sentiment.socialDesc">Simulated mentions from Reddit, X/Twitter, StockTwits</p>
+      <h2 data-i18n="Socialtitle">Social Media Sentiment Feed</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="Socialdesc">Simulated mentions from Reddit, X/Twitter, StockTwits</p>
       <div class="social-feed" id="sentSocialFeed"></div>
     </div>
     <div class="card">
-      <h2 data-i18n="sentiment.socialChart">Social Mention Volume by Layer</h2>
+      <h2 data-i18n="Socialchart">Social Mention Volume by Layer</h2>
       <div style="position:relative;height:400px"><canvas id="sentSocialChart"></canvas></div>
     </div>
   </div>
 
   <!-- Row 6: Analyst Ratings -->
   <div class="card">
-    <h2 data-i18n="sentiment.analystTitle">Analyst Ratings Summary</h2>
-    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.analystDesc">Simulated buy/hold/sell distribution based on market signals</p>
+    <h2 data-i18n="Analysttitle">Analyst Ratings Summary</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Analystdesc">Simulated buy/hold/sell distribution based on market signals</p>
     <div class="table-wrap">
       <table id="sentAnalystTable">
         <thead><tr>
-          <th data-i18n="common.ticker">Ticker</th>
-          <th data-i18n="common.name">Name</th>
-          <th data-i18n="common.layer">Layer</th>
-          <th data-i18n="sentiment.buy">Buy</th>
-          <th data-i18n="sentiment.hold">Hold</th>
-          <th data-i18n="sentiment.sell">Sell</th>
-          <th data-i18n="sentiment.distribution">Distribution</th>
-          <th data-i18n="sentiment.consensus">Consensus</th>
+          <th data-i18n="Ticker">Ticker</th>
+          <th data-i18n="Name">Name</th>
+          <th data-i18n="Layer">Layer</th>
+          <th data-i18n="Buy">Buy</th>
+          <th data-i18n="Hold">Hold</th>
+          <th data-i18n="Sell">Sell</th>
+          <th data-i18n="Distribution">Distribution</th>
+          <th data-i18n="Consensus">Consensus</th>
         </tr></thead>
         <tbody id="sentAnalystBody"></tbody>
       </table>
@@ -277,15 +277,15 @@ td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(
 
   <!-- Row 7: Sentiment Momentum -->
   <div class="card">
-    <h2 data-i18n="sentiment.momentumTitle">Sentiment Momentum — Improving vs Deteriorating</h2>
-    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.momentumDesc">Based on 5-day price trend, volume shifts, and 52-week positioning changes</p>
+    <h2 data-i18n="Momentumtitle">Sentiment Momentum — Improving vs Deteriorating</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Momentumdesc">Based on 5-day price trend, volume shifts, and 52-week positioning changes</p>
     <div class="grid-2" style="margin-bottom:0">
       <div>
-        <h3 style="color:var(--green)" data-i18n="sentiment.improving">▲ Improving Sentiment</h3>
+        <h3 style="color:var(--green)" data-i18n="Improving">▲ Improving Sentiment</h3>
         <div id="sentMomentumUp"></div>
       </div>
       <div>
-        <h3 style="color:var(--red)" data-i18n="sentiment.deteriorating">▼ Deteriorating Sentiment</h3>
+        <h3 style="color:var(--red)" data-i18n="Deteriorating">▼ Deteriorating Sentiment</h3>
         <div id="sentMomentumDown"></div>
       </div>
     </div>
@@ -293,33 +293,33 @@ td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(
 
   <!-- Row 8: Narrative / Theme Tracker -->
   <div class="card">
-    <h2 data-i18n="sentiment.narrativeTitle">Software Narrative Tracker</h2>
-    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.narrativeDesc">Key investment themes derived from market signals of related tickers</p>
+    <h2 data-i18n="Narrativetitle">Software Narrative Tracker</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Narrativedesc">Key investment themes derived from market signals of related tickers</p>
     <div id="sentNarratives"></div>
   </div>
 
   <!-- Row 9: News Sentiment Feed -->
   <div class="card">
-    <h2 data-i18n="sentiment.newsTitle">News Sentiment Feed</h2>
-    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.newsDesc">Simulated news headlines with sentiment tags</p>
+    <h2 data-i18n="Newstitle">News Sentiment Feed</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Newsdesc">Simulated news headlines with sentiment tags</p>
     <div id="sentNewsFeed"></div>
   </div>
 
   <!-- Row 10: Full Score Card -->
   <div class="card">
-    <h2 data-i18n="sentiment.scorecardTitle">Sentiment Score Card — All Tickers</h2>
+    <h2 data-i18n="Scorecardtitle">Sentiment Score Card — All Tickers</h2>
     <div class="table-wrap">
       <table id="sentScoreTable">
         <thead><tr>
-          <th data-i18n="common.ticker">Ticker</th>
-          <th data-i18n="common.name">Name</th>
-          <th data-i18n="common.layer">Layer</th>
-          <th data-i18n="common.price">Price</th>
-          <th data-i18n="common.chgPct">Chg %</th>
-          <th data-i18n="sentiment.volRatio">Vol Ratio</th>
-          <th data-i18n="sentiment.pos52w">52W Position</th>
-          <th data-i18n="sentiment.composite">Composite</th>
-          <th data-i18n="sentiment.sentiment">Sentiment</th>
+          <th data-i18n="Ticker">Ticker</th>
+          <th data-i18n="Name">Name</th>
+          <th data-i18n="Layer">Layer</th>
+          <th data-i18n="Price">Price</th>
+          <th data-i18n="Chgpct">Chg %</th>
+          <th data-i18n="Volratio">Vol Ratio</th>
+          <th data-i18n="Pos52W">52W Position</th>
+          <th data-i18n="Composite">Composite</th>
+          <th data-i18n="Sentiment">Sentiment</th>
         </tr></thead>
         <tbody id="sentScoreBody"></tbody>
       </table>

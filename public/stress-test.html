@@ -144,29 +144,29 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 </head>
 <body>
 <nav class="tab-bar">
-  <a href="index.html" class="tab-link" data-i18n="nav.dashboard">Main Dashboard</a>
-  <a href="correlation.html" class="tab-link" data-i18n="nav.correlation">Correlation</a>
-  <a href="technicals.html" class="tab-link" data-i18n="nav.technicals">Technicals</a>
-  <a href="insider.html" class="tab-link" data-i18n="nav.insider">Insider Activity</a>
-  <a href="options.html" class="tab-link" data-i18n="nav.options">Options Flow</a>
-  <a href="sentiment.html" class="tab-link" data-i18n="nav.sentiment">Sentiment</a>
-  <a href="leaderboard.html" class="tab-link" data-i18n="nav.leaderboard">Leaderboard</a>
-  <a href="stress-test.html" class="tab-link active" data-i18n="nav.stresstest">Stress Test</a>
+  <a href="index.html" class="tab-link" data-i18n="Main Dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="Technicals">Technicals</a>
+  <a href="insider.html" class="tab-link" data-i18n="Insider Activity">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="Options Flow">Options Flow</a>
+  <a href="sentiment.html" class="tab-link" data-i18n="Sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="Leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link active" data-i18n="Stress Test">Stress Test</a>
 </nav>
 
 <div class="page-layout">
   <!-- Sidebar with scenario controls -->
   <aside class="sidebar">
     <div class="sidebar-section">
-      <h3 data-i18n="stress.selectScenario">Select Scenario</h3>
+      <h3 data-i18n="Selectscenario">Select Scenario</h3>
       <div id="stScenarioList"></div>
     </div>
     <div class="sidebar-section" id="stCustomPanel" style="display:none">
-      <h3 data-i18n="stress.customShock">Custom Shock by Layer (%)</h3>
+      <h3 data-i18n="Customshock">Custom Shock by Layer (%)</h3>
       <div class="custom-inputs" id="stCustomInputs"></div>
     </div>
     <div class="sidebar-section">
-      <h3 data-i18n="stress.scenarioDetails">Scenario Details</h3>
+      <h3 data-i18n="Scenariodetails">Scenario Details</h3>
       <div id="stScenarioDesc" style="font-size:var(--text-xs);color:var(--muted);line-height:1.5"></div>
     </div>
   </aside>
@@ -174,64 +174,64 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
   <!-- Main content -->
   <div class="content">
     <header class="page-header">
-      <h1 data-i18n="stress.title">Scenario / Stress Test</h1>
-      <button class="theme-toggle" onclick="toggleTheme()" data-i18n="common.theme">◑ Theme</button>
+      <h1 data-i18n="Title">Scenario / Stress Test</h1>
+      <button class="theme-toggle" onclick="toggleTheme()" data-i18n="Theme">◑ Theme</button>
     </header>
 
     <!-- Impact Waterfall + Bar Chart -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="stress.waterfallTitle">Impact Waterfall by Layer</h2>
+        <h2 data-i18n="Waterfalltitle">Impact Waterfall by Layer</h2>
         <div class="waterfall" id="stWaterfall"></div>
       </div>
       <div class="card">
-        <h2 data-i18n="stress.barTitle">Impact Distribution — All Tickers</h2>
+        <h2 data-i18n="Bartitle">Impact Distribution — All Tickers</h2>
         <div style="position:relative;height:600px"><canvas id="stImpactBarChart"></canvas></div>
       </div>
     </div>
 
     <!-- Heat Map -->
     <div class="card">
-      <h2 data-i18n="stress.heatmapTitle">Scenario Impact Heat Map</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="stress.heatmapDesc">Color intensity reflects projected price impact under this scenario</p>
+      <h2 data-i18n="Heatmaptitle">Scenario Impact Heat Map</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="Heatmapdesc">Color intensity reflects projected price impact under this scenario</p>
       <div class="heat-grid-st" id="stHeatGrid"></div>
     </div>
 
     <!-- Before/After Comparison -->
     <div class="card">
-      <h2 data-i18n="stress.beforeAfterTitle">Before / After Price Comparison</h2>
+      <h2 data-i18n="Beforeaftertitle">Before / After Price Comparison</h2>
       <div style="position:relative;height:500px"><canvas id="stBeforeAfterChart"></canvas></div>
     </div>
 
     <!-- Supply Chain Cascade -->
     <div class="card">
-      <h2 data-i18n="stress.cascadeTitle">Software Value Chain Cascade</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="stress.cascadeDesc">Simplified flow showing how a shock propagates through software layers</p>
+      <h2 data-i18n="Cascadetitle">Software Value Chain Cascade</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="Cascadedesc">Simplified flow showing how a shock propagates through software layers</p>
       <div class="cascade-container" id="stCascadeContainer"></div>
     </div>
 
     <!-- Portfolio Impact Calculator -->
     <div class="card">
-      <h2 data-i18n="stress.portfolioTitle">Portfolio Impact Calculator</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="stress.portfolioDesc">Enter share quantities to calculate total portfolio impact</p>
+      <h2 data-i18n="Portfoliotitle">Portfolio Impact Calculator</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Portfoliodesc">Enter share quantities to calculate total portfolio impact</p>
       <div class="port-input-grid" id="stPortInputs"></div>
       <div class="port-summary" id="stPortSummary"></div>
     </div>
 
     <!-- Full Impact Table -->
     <div class="card">
-      <h2 data-i18n="stress.tableTitle">Impact Table — All Tickers</h2>
+      <h2 data-i18n="Tabletitle">Impact Table — All Tickers</h2>
       <div class="scroll-x">
         <table class="impact-table" id="stImpactTable">
           <thead><tr>
-            <th data-i18n="common.ticker">Ticker</th>
-            <th data-i18n="common.name">Name</th>
-            <th data-i18n="common.layer">Layer</th>
-            <th data-i18n="stress.current">Current</th>
-            <th data-i18n="stress.scenario">Scenario</th>
-            <th data-i18n="stress.dollarChange">$ Change</th>
-            <th data-i18n="stress.pctChange">% Change</th>
-            <th data-i18n="stress.severity">Severity</th>
+            <th data-i18n="Ticker">Ticker</th>
+            <th data-i18n="Name">Name</th>
+            <th data-i18n="Layer">Layer</th>
+            <th data-i18n="Current">Current</th>
+            <th data-i18n="Scenario">Scenario</th>
+            <th data-i18n="Dollarchange">$ Change</th>
+            <th data-i18n="Pctchange">% Change</th>
+            <th data-i18n="Severity">Severity</th>
           </tr></thead>
           <tbody id="stImpactBody"></tbody>
         </table>
@@ -240,14 +240,14 @@ body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-hei
 
     <!-- Cross-Scenario Risk Ranking -->
     <div class="card">
-      <h2 data-i18n="stress.riskTitle">Cross-Scenario Risk Ranking</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="stress.riskDesc">Aggregate vulnerability across all 5 predefined scenarios (lower = more vulnerable)</p>
+      <h2 data-i18n="Risktitle">Cross-Scenario Risk Ranking</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="Riskdesc">Aggregate vulnerability across all 5 predefined scenarios (lower = more vulnerable)</p>
       <div class="scroll-x">
         <table class="risk-table" id="stRiskTable">
           <thead><tr>
-            <th>#</th><th data-i18n="common.ticker">Ticker</th><th data-i18n="common.name">Name</th>
+            <th>#</th><th data-i18n="Ticker">Ticker</th><th data-i18n="Name">Name</th>
             <th>AI Disruption</th><th>Rate Shock</th><th>Churn Spike</th><th>Cloud Commodit.</th><th>Reg. Crackdown</th>
-            <th data-i18n="stress.avgImpact">Avg Impact</th><th data-i18n="stress.riskLevel">Risk Level</th>
+            <th data-i18n="Avgimpact">Avg Impact</th><th data-i18n="Risklevel">Risk Level</th>
           </tr></thead>
           <tbody id="stRiskBody"></tbody>
         </table>
