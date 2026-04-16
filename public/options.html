@@ -781,15 +781,15 @@ setTheme(getTheme());
   const sb = document.getElementById('sidebar');
   let html = '<h3 data-i18n="Software Layers">Layers</h3>';
   for (const [name, info] of Object.entries(LAYERS)) {
-    html += '<div class="sidebar-item" onclick="scrollToEl('heatGrid')">' +
+    html += '<div class="sidebar-item" onclick="scrollToEl(\'heatGrid\')">' +
       '<span class="dot" style="background:' + info.color + '"></span>' + name + '</div>';
   }
   html += '<h3 style="margin-top:var(--space-6)" data-i18n="Sections">Sections</h3>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('unusualFeed')">&#9888; Unusual Activity</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('heatGrid')">&#9632; Volume Heatmap</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('scannerTable')">&#9654; Options Scanner</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('blockFeed')">&#9670; Block Trades</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('gammaGrid')">&#9733; Gamma / Max Pain</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'unusualFeed\')">&#9888; Unusual Activity</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'heatGrid\')">&#9632; Volume Heatmap</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'scannerTable\')">&#9654; Options Scanner</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'blockFeed\')">&#9670; Block Trades</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'gammaGrid\')">&#9733; Gamma / Max Pain</div>';
   sb.innerHTML = html;
 })();
 
@@ -1060,7 +1060,7 @@ if (unusualFlows.length === 0) {
   ufEl.innerHTML = unusualFlows.map(t => {
     const sentColor = t.isCall ? 'var(--green)' : 'var(--red)';
     const sentBadge = t.isCall ? 'badge-bullish' : 'badge-bearish';
-    return '<div class="block-card" onclick="openPanel('' + t.ticker + '')">' +
+    return '<div class="block-card" onclick="openPanel(\'' + t.ticker + '\')">' +
       '<div class="block-time">' + t.time + '</div>' +
       '<div class="block-info">' +
         '<span style="color:' + t.layerColor + ';font-weight:700">' + t.ticker + '</span> ' +
@@ -1254,7 +1254,7 @@ allSorted.forEach(d => {
     ? d.volRatio.toFixed(1) + 'x'
     : fmtN(Math.round(d.volume / 1000)) + 'K';
 
-  heatGrid.innerHTML += '<div class="heat-cell" style="background:' + bg + ';border:' + borderW + ' solid ' + borderColor + '" onclick="openPanel('' + d.ticker + '')">' +
+  heatGrid.innerHTML += '<div class="heat-cell" style="background:' + bg + ';border:' + borderW + ' solid ' + borderColor + '" onclick="openPanel(\'' + d.ticker + '\')">' +
     '<div class="ticker" style="color:' + d.layerColor + '">' + d.ticker + '</div>' +
     '<div class="vol">' + d.pcRatio.toFixed(2) + ' P/C</div>' +
     '<div class="vol">' + volLabel + '</div>' +
@@ -1271,7 +1271,7 @@ optionsData.forEach(d => {
   const volColor = d.volRatio > 1.3 ? 'var(--yellow)' : d.volRatio > 1 ? 'var(--text)' : 'var(--muted)';
   const sentClass = d.sentimentScore > 0 ? 'badge-bullish' : d.sentimentScore < 0 ? 'badge-bearish' : 'badge-neutral';
 
-  stBody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel('' + d.ticker + '')">' +
+  stBody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel(\'' + d.ticker + '\')">' +
     '<td style="color:' + d.layerColor + ';font-weight:600">' + d.ticker + '</td>' +
     '<td style="font-family:Inter,sans-serif"><span class="badge badge-layer" style="background:' + d.layerColor + '22;color:' + d.layerColor + '">' + d.layer + '</span></td>' +
     '<td>$' + d.price.toFixed(2) + '</td>' +
@@ -1293,7 +1293,7 @@ blockTrades.forEach(t => {
   const sentColor = t.isCall ? 'var(--green)' : 'var(--red)';
   const sentBadge = t.isCall ? 'badge-bullish' : 'badge-bearish';
 
-  bfEl.innerHTML += '<div class="block-card" onclick="openPanel('' + t.ticker + '')">' +
+  bfEl.innerHTML += '<div class="block-card" onclick="openPanel(\'' + t.ticker + '\')">' +
     '<div class="block-time">' + t.time + '</div>' +
     '<div class="block-info">' +
       '<span style="color:' + t.layerColor + '">' + t.ticker + '</span> ' +
@@ -1337,7 +1337,7 @@ mpSorted.forEach(d => {
   else if (dist < -2) { direction = 'Below (pull up)'; dirColor = 'var(--green)'; }
   else { direction = 'Near max pain'; dirColor = 'var(--muted)'; }
 
-  mpBody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel('' + d.ticker + '')">' +
+  mpBody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel(\'' + d.ticker + '\')">' +
     '<td style="color:' + d.layerColor + ';font-weight:600">' + d.ticker + '</td>' +
     '<td>$' + d.price.toFixed(2) + '</td>' +
     '<td>$' + d.maxPain.toFixed(2) + '</td>' +
