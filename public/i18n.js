@@ -9,6 +9,8 @@ var i18nStorage = (typeof safeStorage !== 'undefined') ? safeStorage : {
   // ── Cross-Dashboard Nav ──
   "AI Hardware":            { zh: "AI硬件" },
   "Software Stack":         { zh: "软件生态" },
+  "Semi Equipment":         { zh: "半导体设备" },
+  "News Feed":              { zh: "新闻动态" },
 };
 
 var I18N_LANG = i18nStorage.getItem('lang') || 'en';

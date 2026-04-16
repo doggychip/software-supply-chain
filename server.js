@@ -60,6 +60,12 @@ app.get('/api/quotes', async (req, res) => {
   }
 });
 
+// News API endpoint
+const NEWS_DATA = require('./news_data.json');
+app.get('/api/news', (req, res) => {
+  res.json(NEWS_DATA);
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
