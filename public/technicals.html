@@ -143,22 +143,22 @@ button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
 .dash-nav-link{padding:4px 14px;font-size:10px;font-weight:700;color:var(--muted);border-radius:var(--radius-sm);letter-spacing:.04em;text-transform:uppercase;text-decoration:none;margin-left:auto}
 .dash-nav-link:hover{color:var(--text);background:var(--s3)}
 
-/* ── DANNY'S 5-PANEL CHART SYSTEM ── */
-.danny-section{margin-bottom:var(--space-6)}
-.danny-section .card-title{font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2)}
-.danny-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-bottom:var(--space-4)}
-.danny-signal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-1)}
-.danny-signal-card .sig-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
-.danny-signal-card .sig-value{font-size:var(--text-lg);font-weight:700}
-.danny-signal-card .sig-sub{font-size:var(--text-xs);color:var(--muted)}
-.danny-bull{color:var(--green)}
-.danny-bear{color:var(--red)}
-.danny-warn{color:var(--warn)}
-.danny-green{color:var(--green)}
-.danny-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
-.danny-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4)}
-.danny-chart-card .card-chart{height:220px}
-@media(max-width:900px){.danny-grid{grid-template-columns:1fr}.danny-chart-row{grid-template-columns:1fr}}
+/* ── RYAN'S TRADE — 5-PANEL ANALYSIS ── */
+.ryan-section{margin-bottom:var(--space-6)}
+.ryan-section .card-title{font-size:var(--text-xs);font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--space-4);display:flex;align-items:center;gap:var(--space-2)}
+.ryan-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4);margin-bottom:var(--space-4)}
+.ryan-signal-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-1)}
+.ryan-signal-card .sig-label{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+.ryan-signal-card .sig-value{font-size:var(--text-lg);font-weight:700}
+.ryan-signal-card .sig-sub{font-size:var(--text-xs);color:var(--muted)}
+.ryan-bull{color:var(--green)}
+.ryan-bear{color:var(--red)}
+.ryan-warn{color:var(--warn)}
+.ryan-green{color:var(--green)}
+.ryan-chart-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)}
+.ryan-chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-4)}
+.ryan-chart-card .card-chart{height:220px}
+@media(max-width:900px){.ryan-grid{grid-template-columns:1fr}.ryan-chart-row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -269,37 +269,37 @@ button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
   <div class="summary-grid" id="summaryGrid"></div>
 
 
-  <!-- ── Danny's 5-Panel Chart System ── -->
-  <div class="danny-section">
+  <!-- ── Ryan's Trade — 5-Panel Analysis ── -->
+  <div class="ryan-section">
     <div class="card-title">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 6-6"/></svg>
-      <span data-i18n="Danny's Chart System — 5-Panel Analysis">Danny's Chart System — 5-Panel Analysis</span>
+      <span data-i18n="Ryan's Trade — 5-Panel Analysis">Ryan's Trade — 5-Panel Analysis</span>
     </div>
-    <div class="danny-grid">
-      <div class="danny-signal-card" id="dannyPanel1">
+    <div class="ryan-grid">
+      <div class="ryan-signal-card" id="ryanPanel1">
         <div class="sig-label" data-i18n="Panel 1 — Ribbon">Panel 1 — Ribbon</div>
-        <div class="sig-value" id="dannyRibbonSig">—</div>
-        <div class="sig-sub" id="dannyRibbonSub"></div>
+        <div class="sig-value" id="ryanRibbonSig">—</div>
+        <div class="sig-sub" id="ryanRibbonSub"></div>
       </div>
-      <div class="danny-signal-card" id="dannyPanel3">
+      <div class="ryan-signal-card" id="ryanPanel3">
         <div class="sig-label" data-i18n="Panel 3 — Accumulation">Panel 3 — Accumulation</div>
-        <div class="sig-value" id="dannyAccumSig">—</div>
-        <div class="sig-sub" id="dannyAccumSub"></div>
+        <div class="sig-value" id="ryanAccumSig">—</div>
+        <div class="sig-sub" id="ryanAccumSub"></div>
       </div>
-      <div class="danny-signal-card" id="dannyPanel2">
+      <div class="ryan-signal-card" id="ryanPanel2">
         <div class="sig-label" data-i18n="Panel 2 — Candle">Panel 2 — Candle</div>
-        <div class="sig-value" id="dannyCandleSig">—</div>
-        <div class="sig-sub" id="dannyCandleSub"></div>
+        <div class="sig-value" id="ryanCandleSig">—</div>
+        <div class="sig-sub" id="ryanCandleSub"></div>
       </div>
     </div>
-    <div class="danny-chart-row">
-      <div class="danny-chart-card">
+    <div class="ryan-chart-row">
+      <div class="ryan-chart-card">
         <div class="card-title" data-i18n="Ribbon EMA Fan">Ribbon EMA Fan</div>
-        <div class="card-chart"><canvas id="chartDannyRibbon"></canvas></div>
+        <div class="card-chart"><canvas id="chartRyanRibbon"></canvas></div>
       </div>
-      <div class="danny-chart-card">
+      <div class="ryan-chart-card">
         <div class="card-title" data-i18n="Momentum (MACD Histogram)">Momentum (MACD Histogram)</div>
-        <div class="card-chart"><canvas id="chartDannyMomentum"></canvas></div>
+        <div class="card-chart"><canvas id="chartRyanMomentum"></canvas></div>
       </div>
     </div>
   </div>
@@ -845,17 +845,17 @@ function selectTicker(t) {
   renderTickerGrid();
   try { buildCharts(t); } catch(e) { console.warn('Chart build failed:', e); }
   updateSummary(t);
-  try { buildDannyCharts(t); } catch(e) { console.warn('Danny charts failed:', e); }
+  try { buildRyanCharts(t); } catch(e) { console.warn('Ryan charts failed:', e); }
 }
 
-/* ── Danny's 5-Panel Chart System ── */
-var dannyCharts = {};
-function destroyDannyCharts() {
-  for (var k in dannyCharts) { if (dannyCharts[k] && typeof dannyCharts[k].destroy === 'function') dannyCharts[k].destroy(); }
-  dannyCharts = {};
+/* ── Ryan's Trade — 5-Panel Analysis ── */
+var ryanCharts = {};
+function destroyRyanCharts() {
+  for (var k in ryanCharts) { if (ryanCharts[k] && typeof ryanCharts[k].destroy === 'function') ryanCharts[k].destroy(); }
+  ryanCharts = {};
 }
-function buildDannyCharts(ticker) {
-  destroyDannyCharts();
+function buildRyanCharts(ticker) {
+  destroyRyanCharts();
   var data = getTickerData(ticker);
   if (!data) return;
   var colors = getColors();
@@ -882,36 +882,36 @@ function buildDannyCharts(ticker) {
   var ema8 = ema(closes, 8), ema13 = ema(closes, 13), ema21 = ema(closes, 21), ema34 = ema(closes, 34), ema55 = ema(closes, 55);
   var last = n - 1;
   var ribbonBull = (ema8[last] !== null && ema55[last] !== null) ? ema8[last] > ema55[last] : null;
-  var ribbonEl = document.getElementById('dannyRibbonSig');
-  var ribbonSub = document.getElementById('dannyRibbonSub');
+  var ribbonEl = document.getElementById('ryanRibbonSig');
+  var ribbonSub = document.getElementById('ryanRibbonSub');
   if (ribbonBull === null) { ribbonEl.textContent = '—'; ribbonEl.className = 'sig-value'; ribbonSub.textContent = 'Insufficient data'; }
-  else if (ribbonBull) { ribbonEl.textContent = 'BULLISH'; ribbonEl.className = 'sig-value danny-bull'; ribbonSub.textContent = 'EMA8 > EMA55 — uptrend ribbon'; }
-  else { ribbonEl.textContent = 'BEARISH'; ribbonEl.className = 'sig-value danny-bear'; ribbonSub.textContent = 'EMA8 < EMA55 — downtrend ribbon'; }
+  else if (ribbonBull) { ribbonEl.textContent = 'BULLISH'; ribbonEl.className = 'sig-value ryan-bull'; ribbonSub.textContent = 'EMA8 > EMA55 — uptrend ribbon'; }
+  else { ribbonEl.textContent = 'BEARISH'; ribbonEl.className = 'sig-value ryan-bear'; ribbonSub.textContent = 'EMA8 < EMA55 — downtrend ribbon'; }
 
   // ── Panel 2: Candle (last 3 bars pattern) ──
-  var candleEl = document.getElementById('dannyCandleSig');
-  var candleSub = document.getElementById('dannyCandleSub');
+  var candleEl = document.getElementById('ryanCandleSig');
+  var candleSub = document.getElementById('ryanCandleSub');
   if (n >= 3) {
     var c1 = closes[last - 2], c2 = closes[last - 1], c3 = closes[last];
-    if (c2 < c1 && c3 > c2 && c3 > c1) { candleEl.textContent = 'BULL ENGULF'; candleEl.className = 'sig-value danny-bull'; candleSub.textContent = 'Reversal pattern detected'; }
-    else if (c2 > c1 && c3 < c2 && c3 < c1) { candleEl.textContent = 'BEAR ENGULF'; candleEl.className = 'sig-value danny-bear'; candleSub.textContent = 'Reversal pattern detected'; }
-    else if (c3 > c2 && c2 > c1) { candleEl.textContent = '3 WHITE'; candleEl.className = 'sig-value danny-bull'; candleSub.textContent = 'Consecutive up candles'; }
-    else if (c3 < c2 && c2 < c1) { candleEl.textContent = '3 BLACK'; candleEl.className = 'sig-value danny-bear'; candleSub.textContent = 'Consecutive down candles'; }
-    else { candleEl.textContent = 'NEUTRAL'; candleEl.className = 'sig-value danny-warn'; candleSub.textContent = 'No clear pattern'; }
+    if (c2 < c1 && c3 > c2 && c3 > c1) { candleEl.textContent = 'BULL ENGULF'; candleEl.className = 'sig-value ryan-bull'; candleSub.textContent = 'Reversal pattern detected'; }
+    else if (c2 > c1 && c3 < c2 && c3 < c1) { candleEl.textContent = 'BEAR ENGULF'; candleEl.className = 'sig-value ryan-bear'; candleSub.textContent = 'Reversal pattern detected'; }
+    else if (c3 > c2 && c2 > c1) { candleEl.textContent = '3 WHITE'; candleEl.className = 'sig-value ryan-bull'; candleSub.textContent = 'Consecutive up candles'; }
+    else if (c3 < c2 && c2 < c1) { candleEl.textContent = '3 BLACK'; candleEl.className = 'sig-value ryan-bear'; candleSub.textContent = 'Consecutive down candles'; }
+    else { candleEl.textContent = 'NEUTRAL'; candleEl.className = 'sig-value ryan-warn'; candleSub.textContent = 'No clear pattern'; }
   } else { candleEl.textContent = '—'; candleEl.className = 'sig-value'; candleSub.textContent = 'Insufficient data'; }
 
   // ── Panel 3: Accumulation (volume-price trend) ──
-  var accumEl = document.getElementById('dannyAccumSig');
-  var accumSub = document.getElementById('dannyAccumSub');
+  var accumEl = document.getElementById('ryanAccumSig');
+  var accumSub = document.getElementById('ryanAccumSub');
   if (n >= 5) {
     var recentUp = 0, recentDn = 0;
     for (var i = n - 5; i < n; i++) {
       if (closes[i] > closes[i - 1]) recentUp += volumes[i];
       else recentDn += volumes[i];
     }
-    if (recentUp > recentDn * 1.5) { accumEl.textContent = 'ACCUMULATION'; accumEl.className = 'sig-value danny-green'; accumSub.textContent = 'Volume weighted to up days'; }
-    else if (recentDn > recentUp * 1.5) { accumEl.textContent = 'DISTRIBUTION'; accumEl.className = 'sig-value danny-bear'; accumSub.textContent = 'Volume weighted to down days'; }
-    else { accumEl.textContent = 'NEUTRAL'; accumEl.className = 'sig-value danny-warn'; accumSub.textContent = 'Balanced volume'; }
+    if (recentUp > recentDn * 1.5) { accumEl.textContent = 'ACCUMULATION'; accumEl.className = 'sig-value ryan-green'; accumSub.textContent = 'Volume weighted to up days'; }
+    else if (recentDn > recentUp * 1.5) { accumEl.textContent = 'DISTRIBUTION'; accumEl.className = 'sig-value ryan-bear'; accumSub.textContent = 'Volume weighted to down days'; }
+    else { accumEl.textContent = 'NEUTRAL'; accumEl.className = 'sig-value ryan-warn'; accumSub.textContent = 'Balanced volume'; }
   } else { accumEl.textContent = '—'; accumEl.className = 'sig-value'; accumSub.textContent = 'Insufficient data'; }
 
   // ── Ribbon Chart ──
@@ -920,7 +920,7 @@ function buildDannyCharts(ticker) {
   var ribbonColors = isDark
     ? ['#5b9cf6','#56d4e8','#a87ef0','#f5a454','#56cc84']
     : ['#2563eb','#0891b2','#7c3aed','#c2570a','#2d7a4a'];
-  try { dannyCharts.ribbon = new Chart(document.getElementById('chartDannyRibbon'), {
+  try { ryanCharts.ribbon = new Chart(document.getElementById('chartRyanRibbon'), {
     type: 'line',
     data: {
       labels: ribbonLabels,
@@ -937,7 +937,7 @@ function buildDannyCharts(ticker) {
       plugins: { legend: { display: true, labels: { color: colors.text, font: { size: 9 }, boxWidth: 10, padding: 6 } } },
       scales: commonScales(colors)
     }
-  }); } catch(e) { console.warn('Danny ribbon chart failed:', e); }
+  }); } catch(e) { console.warn('Ryan ribbon chart failed:', e); }
 
   // ── Momentum Chart (MACD Histogram) ──
   var ema12 = ema(closes, 12), ema26 = ema(closes, 26);
@@ -945,7 +945,7 @@ function buildDannyCharts(ticker) {
   var sigLine = ema(macdLine, 9);
   var hist = macdLine.map(function(m, i) { return (m !== null && sigLine[i] !== null) ? m - sigLine[i] : null; });
   var histBg = hist.map(function(v) { return v !== null && v >= 0 ? (isDark ? 'rgba(86,204,132,0.7)' : 'rgba(45,122,74,0.7)') : (isDark ? 'rgba(240,112,112,0.7)' : 'rgba(192,57,43,0.7)'); });
-  try { dannyCharts.momentum = new Chart(document.getElementById('chartDannyMomentum'), {
+  try { ryanCharts.momentum = new Chart(document.getElementById('chartRyanMomentum'), {
     type: 'bar',
     data: {
       labels: ribbonLabels,
@@ -958,7 +958,7 @@ function buildDannyCharts(ticker) {
       plugins: { legend: { display: false } },
       scales: commonScales(colors)
     }
-  }); } catch(e) { console.warn('Danny momentum chart failed:', e); }
+  }); } catch(e) { console.warn('Ryan momentum chart failed:', e); }
 }
 
 window.selectTicker = selectTicker;
@@ -967,7 +967,7 @@ function rebuildCharts() {
   try { buildCharts(selectedTicker); } catch(e) { console.warn('Chart build failed:', e); }
   updateSummary(selectedTicker);
   buildSignalsTable();
-  try { buildDannyCharts(selectedTicker); } catch(e) { console.warn('Danny charts failed:', e); }
+  try { buildRyanCharts(selectedTicker); } catch(e) { console.warn('Ryan charts failed:', e); }
 }
 
 // Side panel
@@ -1011,9 +1011,9 @@ document.getElementById('panelOverlay').addEventListener('click', () => {
 document.querySelector('.sidebar-item[data-layer="all"]').classList.add('active');
 renderTickerGrid();
 try { buildCharts(selectedTicker); } catch(e) { console.warn('Chart build failed:', e); }
-updateSummary(selectedTicker);
-buildSignalsTable();
-try { buildDannyCharts(selectedTicker); } catch(e) { console.warn('Danny charts init failed:', e); }
+try { updateSummary(selectedTicker); } catch(e) { console.warn('Summary failed:', e); }
+try { buildSignalsTable(); } catch(e) { console.warn('Signals table failed:', e); }
+try { buildRyanCharts(selectedTicker); } catch(e) { console.warn('Ryan charts init failed:', e); }
 </script>
 <script src="i18n.js"></script>
 
