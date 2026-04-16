@@ -20,7 +20,8 @@ html.theme-transitioning *::after {
   flex-shrink: 0;
 }
 
-/* Shared icon button style */
+/* Shared icon button style — use .dash-nav prefix for specificity over inline .dash-nav button{} rules */
+.dash-nav .de-icon-btn,
 .de-icon-btn {
   width: 30px;
   height: 30px;
@@ -34,9 +35,11 @@ html.theme-transitioning *::after {
   background: transparent;
   color: var(--muted, #7a7e96);
   transition: all 0.2s ease;
-  padding: 0;
+  padding: 0 !important;
   line-height: 1;
   position: relative;
+  text-transform: none;
+  letter-spacing: normal;
 }
 .de-icon-btn:hover {
   background: var(--s3, #1c1f2a);
@@ -48,13 +51,16 @@ html.theme-transitioning *::after {
   background: color-mix(in srgb, var(--primary, #5b9cf6) 10%, transparent);
 }
 .de-icon-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 16px !important;
+  height: 16px !important;
+  max-width: none !important;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+  display: inline-block;
+  overflow: visible;
 }
 
 /* Text button variant */
