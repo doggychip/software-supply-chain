@@ -5,6 +5,10 @@ var i18nStorage = (typeof safeStorage !== 'undefined') ? safeStorage : {
   _s: {},
   getItem: function(k) { return this._s[k] || null; },
   setItem: function(k, v) { this._s[k] = v; },
+
+  // ── Cross-Dashboard Nav ──
+  "AI Hardware":            { zh: "AI硬件" },
+  "Software Stack":         { zh: "软件生态" },
 };
 
 var I18N_LANG = i18nStorage.getItem('lang') || 'en';

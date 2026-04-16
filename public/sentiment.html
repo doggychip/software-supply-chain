@@ -153,9 +153,22 @@ td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(
 
 @media(max-width:1024px){.grid-3{grid-template-columns:repeat(2,1fr)}.grid-4{grid-template-columns:repeat(2,1fr)}.heat-grid{grid-template-columns:repeat(5,1fr)}}
 @media(max-width:640px){.grid-3,.grid-2,.grid-4{grid-template-columns:1fr}.heat-grid{grid-template-columns:repeat(3,1fr)}.main{padding:var(--space-4)}.drawer{width:90vw}}
+
+/* ── CROSS-DASHBOARD NAV ── */
+.xnav{display:flex;align-items:center;justify-content:center;gap:var(--space-2);padding:4px var(--space-4);background:var(--s2);border-bottom:1px solid var(--div);font-size:11px;font-weight:600;letter-spacing:.03em}
+.xnav-item{padding:3px 12px;border-radius:var(--radius-sm);color:var(--muted);text-decoration:none;transition:all .15s}
+.xnav-item:hover{color:var(--text);background:var(--s3)}
+.xnav-item.xnav-active{color:var(--primary);background:color-mix(in srgb,var(--primary) 12%,transparent)}
+.xnav-sep{color:var(--faint);font-size:10px}
 </style>
 </head>
 <body>
+<nav class="xnav" data-i18n-container>
+  <a href="javascript:void(0)" class="xnav-item" id="xnav-ai" onclick="goDash('ai')" data-i18n="AI Hardware">AI Hardware</a>
+  <span class="xnav-sep">|</span>
+  <a href="javascript:void(0)" class="xnav-item xnav-active" id="xnav-sw" onclick="goDash('sw')" data-i18n="Software Stack">Software Stack</a>
+</nav>
+
 <nav class="tab-bar">
   <a href="index.html" class="tab-link" data-i18n="Main Dashboard">Main Dashboard</a>
   <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
@@ -796,5 +809,17 @@ const scoreBody = document.getElementById('sentScoreBody');
 });
 </script>
 <script src="i18n.js"></script>
+
+<script>
+// Cross-dashboard navigation — edit these URLs to match your Zeabur deployments
+var DASH_URLS = {
+  ai: 'https://ai-supply-chain.zeabur.app',
+  sw: 'https://software-supply-chain.zeabur.app'
+};
+function goDash(target) {
+  var url = DASH_URLS[target];
+  if (url) window.location.href = url + '/index.html';
+}
+</script>
 </body>
 </html>
