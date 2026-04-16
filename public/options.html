@@ -550,8 +550,8 @@ td {
 
 <!-- ========== HEADER ========== -->
 <header class="page-header">
-  <h1 data-i18n="Title">Options Flow &amp; Unusual Activity</h1>
-  <button class="theme-toggle" onclick="toggleTheme()" data-i18n="Toggle">Toggle Theme</button>
+  <h1 data-i18n="Options Flow & Unusual Activity">Options Flow &amp; Unusual Activity</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" data-i18n="Toggle Theme">Toggle Theme</button>
 </header>
 
 <!-- ========== LAYOUT ========== -->
@@ -567,28 +567,28 @@ td {
         <path d="M8 1L1 14h14L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         <path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
-      <span data-i18n="Disclaimer">Simulated options data derived from volume &amp; momentum signals — not real options flow</span>
+      <span data-i18n="Simulated options data derived from volume & momentum signals — not real options flow">Simulated options data derived from volume &amp; momentum signals — not real options flow</span>
     </div>
 
     <!-- Market Tilt Gauge + KPI Summary -->
     <div class="grid-4" id="topRow">
       <div class="card" style="display:flex;flex-direction:column;align-items:center">
-        <h2 data-i18n="Tilt">Market Tilt</h2>
+        <h2 data-i18n="Market Tilt">Market Tilt</h2>
         <canvas id="gaugeChart" width="280" height="160"></canvas>
         <div id="gaugeLabel" style="text-align:center;margin-top:var(--space-2)"></div>
       </div>
       <div class="card">
-        <div class="stat-label" data-i18n="Totalpremium">Total Premium</div>
+        <div class="stat-label" data-i18n="Total Premium">Total Premium</div>
         <div class="stat-value" style="color:var(--primary)" id="totalPremium">&mdash;</div>
         <div class="stat-sub" id="premiumSub"></div>
       </div>
       <div class="card">
-        <div class="stat-label" data-i18n="Putcallratio">Avg Put/Call Ratio</div>
+        <div class="stat-label" data-i18n="Avg Put/Call Ratio">Avg Put/Call Ratio</div>
         <div class="stat-value" id="pcRatioVal">&mdash;</div>
         <div class="stat-sub" id="pcRatioSub"></div>
       </div>
       <div class="card">
-        <div class="stat-label" data-i18n="Unusualactivity">Unusual Activity</div>
+        <div class="stat-label" data-i18n="Unusual Activity">Unusual Activity</div>
         <div class="stat-value" style="color:var(--yellow)" id="unusualCount">0</div>
         <div class="stat-sub" id="unusualNames"></div>
       </div>
@@ -597,22 +597,22 @@ td {
     <!-- Additional KPIs Row -->
     <div class="grid-4">
       <div class="card">
-        <div class="stat-label" data-i18n="Mostactive">Most Active</div>
+        <div class="stat-label" data-i18n="Most Active">Most Active</div>
         <div class="stat-value" style="font-size:var(--text-xl);color:var(--primary)" id="mostActiveTicker">&mdash;</div>
         <div class="stat-sub" id="mostActiveSub"></div>
       </div>
       <div class="card">
-        <div class="stat-label" data-i18n="Bullishcount">Bullish Tickers</div>
+        <div class="stat-label" data-i18n="Bullish Tickers">Bullish Tickers</div>
         <div class="stat-value" style="color:var(--green)" id="bullCount">0</div>
         <div class="stat-sub" id="bullPct"></div>
       </div>
       <div class="card">
-        <div class="stat-label" data-i18n="Bearishcount">Bearish Tickers</div>
+        <div class="stat-label" data-i18n="Bearish Tickers">Bearish Tickers</div>
         <div class="stat-value" style="color:var(--red)" id="bearCount">0</div>
         <div class="stat-sub" id="bearPct"></div>
       </div>
       <div class="card">
-        <div class="stat-label" data-i18n="Callpremium">Net Call Premium</div>
+        <div class="stat-label" data-i18n="Net Call Premium">Net Call Premium</div>
         <div class="stat-value" style="font-size:var(--text-xl);color:var(--green)" id="netCallPrem">&mdash;</div>
         <div class="stat-sub" id="callPremSub"></div>
       </div>
@@ -620,8 +620,8 @@ td {
 
     <!-- Unusual Options Activity Feed -->
     <div class="card">
-      <h2 data-i18n="Unusualfeed">Unusual Options Activity Feed</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Unusualdesc">
+      <h2 data-i18n="Unusual Options Activity Feed">Unusual Options Activity Feed</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Largest and most unusual simulated options flow — high volume, extreme P/C ratios, or significant premium.">
         Largest and most unusual simulated options flow — high volume, extreme P/C ratios, or significant premium.
       </p>
       <div class="feed" id="unusualFeed"></div>
@@ -630,13 +630,13 @@ td {
     <!-- Charts Row: Put/Call by Layer + Volume Ratio -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="Pcbylayer">Put/Call Ratio by Layer</h2>
+        <h2 data-i18n="Put/Call Ratio by Layer">Put/Call Ratio by Layer</h2>
         <div style="position:relative;height:420px">
           <canvas id="chartPCLayer"></canvas>
         </div>
       </div>
       <div class="card">
-        <h2 data-i18n="Volratio">Volume vs Average Ratio (Top 18)</h2>
+        <h2 data-i18n="Volume vs Average Ratio (Top 18)">Volume vs Average Ratio (Top 18)</h2>
         <div style="position:relative;height:420px">
           <canvas id="chartVolRatio"></canvas>
         </div>
@@ -646,13 +646,13 @@ td {
     <!-- Premium Distribution Chart -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="Premdist">Call vs Put Premium Distribution</h2>
+        <h2 data-i18n="Call vs Put Premium Distribution">Call vs Put Premium Distribution</h2>
         <div style="position:relative;height:350px;display:flex;align-items:center;justify-content:center">
           <canvas id="chartPremPie"></canvas>
         </div>
       </div>
       <div class="card">
-        <h2 data-i18n="Sentdist">Sentiment Distribution</h2>
+        <h2 data-i18n="Sentiment Distribution">Sentiment Distribution</h2>
         <div style="position:relative;height:350px;display:flex;align-items:center;justify-content:center">
           <canvas id="chartSentPie"></canvas>
         </div>
@@ -661,8 +661,8 @@ td {
 
     <!-- Options Volume Heatmap -->
     <div class="card">
-      <h2 data-i18n="Heatmap">Options Volume Heatmap</h2>
-      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Heatmapdesc">
+      <h2 data-i18n="Options Volume Heatmap">Options Volume Heatmap</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Green = bullish sentiment (low P/C ratio), Red = bearish (high P/C). Yellow border = unusual volume.">
         Green = bullish sentiment (low P/C ratio), Red = bearish (high P/C). Yellow border = unusual volume.
       </p>
       <div class="heat-grid" id="heatGrid"></div>
@@ -670,7 +670,7 @@ td {
 
     <!-- Options Activity Scanner Table -->
     <div class="card">
-      <h2 data-i18n="Scanner">Options Activity Scanner</h2>
+      <h2 data-i18n="Options Activity Scanner">Options Activity Scanner</h2>
       <div class="table-wrap">
         <table id="scannerTable">
           <thead>
@@ -678,9 +678,9 @@ td {
               <th data-i18n="Ticker">Ticker</th>
               <th data-i18n="Layer">Layer</th>
               <th data-i18n="Price">Price</th>
-              <th data-i18n="Change">Chg %</th>
-              <th data-i18n="Volavg">Vol/Avg</th>
-              <th data-i18n="Pc">Sim P/C</th>
+              <th data-i18n="Chg %">Chg %</th>
+              <th data-i18n="Vol/Avg">Vol/Avg</th>
+              <th data-i18n="Sim P/C">Sim P/C</th>
               <th data-i18n="Sentiment">Sentiment</th>
               <th data-i18n="Activity">Activity</th>
             </tr>
@@ -692,22 +692,22 @@ td {
 
     <!-- Large Block Trades Feed -->
     <div class="card">
-      <h2 data-i18n="Blocktrades">Simulated Large Block Trades</h2>
+      <h2 data-i18n="Simulated Large Block Trades">Simulated Large Block Trades</h2>
       <div class="feed" id="blockFeed"></div>
     </div>
 
     <!-- Gamma Exposure + Max Pain -->
     <div class="grid-2">
       <div class="card">
-        <h2 data-i18n="Gamma">Gamma Exposure — Top Tickers</h2>
-        <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Gammadesc">
+        <h2 data-i18n="Gamma Exposure — Top Tickers">Gamma Exposure — Top Tickers</h2>
+        <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Simulated gamma exposure based on market cap and volume. Higher gamma = more market-maker hedging activity.">
           Simulated gamma exposure based on market cap and volume. Higher gamma = more market-maker hedging activity.
         </p>
         <div id="gammaGrid"></div>
       </div>
       <div class="card">
-        <h2 data-i18n="Maxpain">Max Pain Levels</h2>
-        <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Maxpaindesc">
+        <h2 data-i18n="Max Pain Levels">Max Pain Levels</h2>
+        <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="Simulated max-pain strike where total option holder losses are maximized. Price tends to gravitate toward this level at expiry.">
           Simulated max-pain strike where total option holder losses are maximized. Price tends to gravitate toward this level at expiry.
         </p>
         <div class="table-wrap">
@@ -716,7 +716,7 @@ td {
               <tr>
                 <th data-i18n="Ticker">Ticker</th>
                 <th data-i18n="Price">Price</th>
-                <th data-i18n="Maxpain">Max Pain</th>
+                <th data-i18n="Max Pain">Max Pain</th>
                 <th data-i18n="Distance">Distance</th>
                 <th data-i18n="Direction">Direction</th>
               </tr>
