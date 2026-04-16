@@ -635,7 +635,28 @@ function injectLangToggle() {
   btn.onclick = toggleLang;
   btn.style.cssText = 'margin-left:auto;padding:4px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:inherit;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;white-space:nowrap;';
   btn.onmouseenter = function() { btn.style.background = 'rgba(99,102,241,0.25)'; };
-  btn.onmouseleave = function() { btn.style.background = 'rgba(255,255,255,0.06)'; };
+  btn.onmouseleave = function() { btn.style.background = 'rgba(255,255,255,0.06)'; 
+  // ── Dashboard Enhancements: Search, Watchlist, Dark Mode, Compare ──
+  "Search tickers...": { zh: "搜索股票代码…" },
+  "No results found": { zh: "未找到结果" },
+  "Navigate": { zh: "导航" },
+  "Select": { zh: "选择" },
+  "Close": { zh: "关闭" },
+  "Watchlist": { zh: "关注列表" },
+  "Compare": { zh: "对比" },
+  "Dark Mode": { zh: "深色模式" },
+  "Light Mode": { zh: "浅色模式" },
+  "Quick Compare": { zh: "快速对比" },
+  "Select 2-3 tickers to compare normalized performance": { zh: "选择2-3只股票以对比标准化表现" },
+  "Click tickers below to select (max 3)": { zh: "点击下方股票代码以选择（最多3只）" },
+  "No price data available for comparison": { zh: "没有可用于对比的价格数据" },
+  "Normalized Performance (% Change)": { zh: "标准化表现（%变化）" },
+  "Select at least 2 tickers": { zh: "至少选择2只股票" },
+  "Search": { zh: "搜索" },
+  "Toggle theme": { zh: "切换主题" },
+  "Show watchlist only": { zh: "仅显示关注列表" },
+  "Remove from compare": { zh: "从对比中移除" },
+};
   nav.appendChild(btn);
 }
 

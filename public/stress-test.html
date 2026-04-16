@@ -285,16 +285,16 @@ const QUOTES = {"AMZN":{"name":"Amazon.com, Inc.","layer":"Cloud Infrastructure"
 const LAYERS = {
   "Cloud Infrastructure":{color:"#5b9cf6",tickers:["AMZN","MSFT","GOOGL","ORCL"]},
   "Cybersecurity":{color:"#f07070",tickers:["CRWD","PANW","ZS","FTNT","S"]},
-  "Data & Analytics":{color:"#56d4e8",tickers:["SNOW","MDB","CFLT","ESTC"]},
+  "Data & Analytics":{color:"#56d4e8",tickers:["SNOW","MDB","CFLT","ESTC","FICO"]},
   "Observability & DevOps":{color:"#a87ef0",tickers:["DDOG","DT","GTLB","NET"]},
-  "Enterprise SaaS":{color:"#56cc84",tickers:["CRM","NOW","WDAY","TEAM"]},
+  "Enterprise SaaS":{color:"#56cc84",tickers:["CRM","NOW","WDAY","TEAM","ADBE","SAP","MNDY","PAYC","PCTY"]},
   "AI / ML Software":{color:"#f5a454",tickers:["PLTR","AI","PATH","DUOL"]},
-  "Vertical SaaS":{color:"#e8c44a",tickers:["VEEV","PCOR","BILL","TOST"]},
-  "Fintech / Payments":{color:"#4fc4cf",tickers:["SQ","PYPL","AFRM"]},
-  "AdTech / MarTech":{color:"#f0ad4e",tickers:["TTD","ZETA","HUBS"]},
+  "Vertical SaaS":{color:"#e8c44a",tickers:["VEEV","PCOR","BILL","TOST","INTU","ADSK","MANH","PTC"]},
+  "Fintech / Payments":{color:"#4fc4cf",tickers:["SQ","PYPL","AFRM","SHOP"]},
+  "AdTech / MarTech":{color:"#f0ad4e",tickers:["TTD","ZETA","HUBS","APP"]},
   "Communication Platforms":{color:"#7a7e96",tickers:["TWLO","ZM","RNG"]},
   "Identity & Access":{color:"#c06ef0",tickers:["OKTA","CYBR"]},
-  "Internet / Social":{color:"#f07070",tickers:["RDDT","PINS"]}
+  "Internet / Social":{color:"#f07070",tickers:["RDDT","PINS","UBER","DASH","SNAP","SPOT"]}
 };
 const TICKERS = Object.keys(QUOTES);
 
@@ -751,5 +751,8 @@ function goDash(target) {
   if (url) window.location.href = url + '/index.html';
 }
 </script>
+<!-- Dashboard Enhancements: Search, Watchlist, Dark Mode, Compare -->
+<link rel="stylesheet" href="dashboard_enhancements.css">
+<script src="dashboard_enhancements.js"></script>
 </body>
 </html>
