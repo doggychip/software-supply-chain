@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sentiment — Software Supply Chain Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+var _memStore={};
+var safeStorage={getItem:function(k){return _memStore[k]||null},setItem:function(k,v){_memStore[k]=v},removeItem:function(k){delete _memStore[k]}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart==="undefined"){var s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js";document.head.appendChild(s);}</script>
+<style>
+:root{
+  --bg:#0d0f14;--surface:#13151d;--s2:#181a24;--s3:#1c1f2a;--s4:#22253a;
+  --text:#dde0f0;--muted:#7a7e96;--primary:#5b9cf6;--border:#1e2230;
+  --success:#56cc84;--warn:#f0ad4e;--error:#f07070;
+  --cyan:#56d4e8;--purple:#a87ef0;--orange:#f5a454;--gold:#e8c44a;
+  --green:#56cc84;--red:#f07070;--blue:#5b9cf6;--teal:#4fc4cf;
+  --font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;
+  --text-xs:0.75rem;--text-sm:0.875rem;--text-base:1rem;--text-lg:1.125rem;--text-xl:1.25rem;--text-2xl:1.5rem;--text-3xl:1.875rem;
+  --radius:8px;--radius-lg:12px;
+}
+[data-theme="light"]{
+  --bg:#f2f3f7;--surface:#fff;--s2:#ecedf2;--s3:#e4e5ec;--s4:#d5d7e0;
+  --text:#1a1d2e;--muted:#6b7084;--primary:#2563eb;--border:#d1d5db;
+  --success:#059669;--warn:#d97706;--error:#dc2626;
+  --green:#059669;--red:#dc2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+.mono{font-family:var(--font-mono)}
+
+/* Tab bar */
+.tab-bar{display:flex;gap:2px;background:var(--surface);border-bottom:2px solid var(--border);padding:0 var(--space-4);position:sticky;top:0;z-index:100;overflow-x:auto}
+.tab-link{padding:var(--space-3) var(--space-4);font-size:var(--text-xs);font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab-link:hover{color:var(--text)}
+.tab-link.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* Page header */
+.page-header{display:flex;align-items:center;justify-content:space-between;padding:var(--space-5) var(--space-8);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:var(--space-3)}
+.page-header h1{font-size:var(--text-2xl);font-weight:700;letter-spacing:-0.02em}
+.header-actions{display:flex;gap:var(--space-3);align-items:center}
+.theme-toggle{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:var(--space-2) var(--space-3);border-radius:var(--radius);cursor:pointer;font-size:var(--text-sm);font-weight:600;transition:all .2s}
+.theme-toggle:hover{border-color:var(--primary)}
+
+/* Main content */
+.main{padding:var(--space-6) var(--space-8);max-width:1600px;margin:0 auto}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-5)}
+.card h2{font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-4);letter-spacing:-0.01em}
+.card h3{font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-3);color:var(--muted)}
+
+/* Grids */
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-5);margin-bottom:var(--space-5)}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-5);margin-bottom:var(--space-5)}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-5);margin-bottom:var(--space-5)}
+
+/* Stats */
+.stat-value{font-size:var(--text-3xl);font-weight:700;font-family:var(--font-mono)}
+.stat-label{font-size:var(--text-xs);color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:var(--space-1)}
+.stat-sub{font-size:var(--text-xs);color:var(--muted);margin-top:var(--space-1)}
+
+/* Disclaimer */
+.disclaimer{background:rgba(240,173,78,0.08);border:1px solid rgba(240,173,78,0.25);border-radius:var(--radius);padding:var(--space-3) var(--space-4);font-size:var(--text-xs);color:var(--warn);margin-bottom:var(--space-6);display:flex;align-items:center;gap:var(--space-3)}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:var(--text-xs);font-weight:600;text-transform:uppercase}
+.badge-bullish{background:rgba(86,204,132,0.15);color:var(--green)}
+.badge-bearish{background:rgba(240,112,112,0.15);color:var(--red)}
+.badge-neutral{background:rgba(122,126,150,0.15);color:var(--muted)}
+
+/* Heat grid */
+.heat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--space-2)}
+.heat-cell{padding:var(--space-3);border-radius:var(--radius);text-align:center;font-family:var(--font-mono);font-size:var(--text-xs);font-weight:600;border:1px solid var(--border);cursor:default;transition:transform .15s,box-shadow .15s}
+.heat-cell:hover{transform:scale(1.08);box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:1}
+.heat-cell .ht{margin-bottom:2px}
+.heat-cell .hs{font-size:10px;opacity:0.8}
+
+/* Trending list */
+.trending-list{display:flex;flex-direction:column;gap:var(--space-2)}
+.trending-item{display:flex;align-items:center;justify-content:space-between;padding:var(--space-3);background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)}
+.trending-item .rank{font-family:var(--font-mono);font-size:var(--text-xs);color:var(--muted);width:24px}
+.trending-item .ticker{font-family:var(--font-mono);font-weight:600;color:var(--primary);width:60px}
+.trending-item .bar-wrap{flex:1;margin:0 var(--space-3);height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.trending-item .bar-fill{height:100%;border-radius:3px;transition:width .5s}
+.trending-item .score{font-family:var(--font-mono);font-size:var(--text-xs);font-weight:600;width:40px;text-align:right}
+
+/* Narrative cards */
+.narrative-card{display:grid;grid-template-columns:1fr auto auto;gap:var(--space-4);padding:var(--space-4);background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);align-items:center;margin-bottom:var(--space-2)}
+.narrative-card .theme{font-weight:600;font-size:var(--text-sm)}
+.narrative-card .desc{font-size:var(--text-xs);color:var(--muted)}
+
+/* Sector bars */
+.sector-bar-wrap{margin-bottom:var(--space-3)}
+.sector-bar-label{display:flex;justify-content:space-between;font-size:var(--text-xs);margin-bottom:4px}
+.sector-bar-label span:first-child{font-weight:600}
+.sector-bar-label span:last-child{font-family:var(--font-mono)}
+.sector-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.sector-bar-inner{height:100%;border-radius:4px;transition:width .6s}
+
+/* Social feed */
+.social-feed{display:flex;flex-direction:column;gap:var(--space-2);max-height:500px;overflow-y:auto}
+.social-item{display:flex;align-items:flex-start;gap:var(--space-3);padding:var(--space-3);background:var(--bg);border-radius:var(--radius);border:1px solid var(--border)}
+.social-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.social-content{flex:1;min-width:0}
+.social-platform{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600}
+.social-text{font-size:var(--text-xs);margin-top:2px;line-height:1.4}
+.social-meta{font-size:10px;color:var(--muted);margin-top:4px;display:flex;gap:var(--space-3)}
+
+/* Analyst ratings */
+.analyst-bar{display:flex;height:16px;border-radius:3px;overflow:hidden;margin-top:4px}
+.analyst-buy{background:var(--green)}
+.analyst-hold{background:var(--warn)}
+.analyst-sell{background:var(--red)}
+
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:var(--text-sm)}
+th{text-align:left;padding:var(--space-3);border-bottom:2px solid var(--border);font-size:var(--text-xs);color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;font-weight:600;position:sticky;top:0;background:var(--surface)}
+td{padding:var(--space-3);border-bottom:1px solid var(--border);font-family:var(--font-mono);font-size:var(--text-xs)}
+.table-wrap{max-height:600px;overflow-y:auto}
+.table-wrap::-webkit-scrollbar{width:6px}
+.table-wrap::-webkit-scrollbar-track{background:var(--bg)}
+.table-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Side panel drawer */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:201;transition:right .3s;overflow-y:auto;padding:var(--space-5)}
+.drawer.open{right:0}
+.drawer h2{font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-4)}
+.drawer-close{position:absolute;top:var(--space-4);right:var(--space-4);background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.drawer-close:hover{color:var(--text)}
+
+/* News sentiment */
+.news-item{padding:var(--space-3);background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);margin-bottom:var(--space-2)}
+.news-title{font-size:var(--text-sm);font-weight:600;margin-bottom:4px}
+.news-meta{font-size:10px;color:var(--muted);display:flex;gap:var(--space-3);align-items:center}
+
+/* Momentum arrows */
+.momentum-up{color:var(--green)}
+.momentum-down{color:var(--red)}
+.momentum-flat{color:var(--muted)}
+
+/* Fear gauge */
+.fear-greed{display:flex;flex-direction:column;align-items:center;gap:var(--space-3)}
+.fg-label{font-size:var(--text-2xl);font-weight:700;font-family:var(--font-mono)}
+.fg-desc{font-size:var(--text-xs);color:var(--muted)}
+
+@media(max-width:1024px){.grid-3{grid-template-columns:repeat(2,1fr)}.grid-4{grid-template-columns:repeat(2,1fr)}.heat-grid{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:640px){.grid-3,.grid-2,.grid-4{grid-template-columns:1fr}.heat-grid{grid-template-columns:repeat(3,1fr)}.main{padding:var(--space-4)}.drawer{width:90vw}}
+</style>
+</head>
+<body>
+<nav class="tab-bar">
+  <a href="index.html" class="tab-link" data-i18n="nav.dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="nav.correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="nav.technicals">Technicals</a>
+  <a href="insider.html" class="tab-link" data-i18n="nav.insider">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="nav.options">Options Flow</a>
+  <a href="sentiment.html" class="tab-link active" data-i18n="nav.sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="nav.leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link" data-i18n="nav.stresstest">Stress Test</a>
+</nav>
+
+<header class="page-header">
+  <h1 data-i18n="sentiment.title">Market Sentiment Dashboard</h1>
+  <div class="header-actions">
+    <button class="theme-toggle" onclick="toggleTheme()" data-i18n="common.theme">◑ Theme</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="disclaimer">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1L1 14h14L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+    <span data-i18n="sentiment.disclaimer">Sentiment scores derived from market data signals (price, volume, 52-week range, analyst models) — not NLP analysis. Simulated social data for illustrative purposes.</span>
+  </div>
+
+  <!-- Row 1: Fear & Greed + Overall Gauge + Bull/Bear Counts -->
+  <div class="grid-3">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center">
+      <h2 data-i18n="sentiment.fgTitle">Software Sector Fear &amp; Greed</h2>
+      <div class="fear-greed">
+        <canvas id="sentFgGauge" width="220" height="220"></canvas>
+        <div id="sentFgLabel"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="sentiment.overallTitle">Overall Market Sentiment</h2>
+      <canvas id="sentOverallGauge" width="280" height="160" style="display:block;margin:0 auto"></canvas>
+      <div id="sentOverallLabel" style="text-align:center;margin-top:var(--space-3)"></div>
+      <div id="sentOverallBreakdown" style="margin-top:var(--space-4)"></div>
+    </div>
+    <div class="card">
+      <div class="stat-label" data-i18n="sentiment.bullishTickers">Bullish Tickers</div>
+      <div class="stat-value" style="color:var(--green)" id="sentBullCount">0</div>
+      <div class="stat-sub" id="sentBullSub"></div>
+      <div style="margin-top:var(--space-5)">
+        <div class="stat-label" data-i18n="sentiment.bearishTickers">Bearish Tickers</div>
+        <div class="stat-value" style="color:var(--red)" id="sentBearCount">0</div>
+        <div class="stat-sub" id="sentBearSub"></div>
+      </div>
+      <div style="margin-top:var(--space-5)">
+        <div class="stat-label" data-i18n="sentiment.neutralTickers">Neutral Tickers</div>
+        <div class="stat-value" style="color:var(--muted)" id="sentNeutCount">0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Top Bullish / Bearish -->
+  <div class="grid-2">
+    <div class="card">
+      <h2 data-i18n="sentiment.topBullish">Top 5 Most Bullish</h2>
+      <div class="trending-list" id="sentTopBullish"></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="sentiment.topBearish">Top 5 Most Bearish</h2>
+      <div class="trending-list" id="sentTopBearish"></div>
+    </div>
+  </div>
+
+  <!-- Row 3: Sentiment Heatmap -->
+  <div class="card">
+    <h2 data-i18n="sentiment.heatmapTitle">Sentiment Heatmap — All 42 Tickers</h2>
+    <div class="heat-grid" id="sentHeatGrid"></div>
+  </div>
+
+  <!-- Row 4: Layer Sentiment + Radar Chart -->
+  <div class="grid-2">
+    <div class="card">
+      <h2 data-i18n="sentiment.layerBars">Layer Sentiment Breakdown</h2>
+      <div id="sentLayerBars"></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="sentiment.radarTitle">Layer Sentiment Radar</h2>
+      <div style="position:relative;height:400px"><canvas id="sentRadarChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 5: Social Media Sentiment Tracking -->
+  <div class="grid-2">
+    <div class="card">
+      <h2 data-i18n="sentiment.socialTitle">Social Media Sentiment Feed</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="sentiment.socialDesc">Simulated mentions from Reddit, X/Twitter, StockTwits</p>
+      <div class="social-feed" id="sentSocialFeed"></div>
+    </div>
+    <div class="card">
+      <h2 data-i18n="sentiment.socialChart">Social Mention Volume by Layer</h2>
+      <div style="position:relative;height:400px"><canvas id="sentSocialChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Row 6: Analyst Ratings -->
+  <div class="card">
+    <h2 data-i18n="sentiment.analystTitle">Analyst Ratings Summary</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.analystDesc">Simulated buy/hold/sell distribution based on market signals</p>
+    <div class="table-wrap">
+      <table id="sentAnalystTable">
+        <thead><tr>
+          <th data-i18n="common.ticker">Ticker</th>
+          <th data-i18n="common.name">Name</th>
+          <th data-i18n="common.layer">Layer</th>
+          <th data-i18n="sentiment.buy">Buy</th>
+          <th data-i18n="sentiment.hold">Hold</th>
+          <th data-i18n="sentiment.sell">Sell</th>
+          <th data-i18n="sentiment.distribution">Distribution</th>
+          <th data-i18n="sentiment.consensus">Consensus</th>
+        </tr></thead>
+        <tbody id="sentAnalystBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Row 7: Sentiment Momentum -->
+  <div class="card">
+    <h2 data-i18n="sentiment.momentumTitle">Sentiment Momentum — Improving vs Deteriorating</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.momentumDesc">Based on 5-day price trend, volume shifts, and 52-week positioning changes</p>
+    <div class="grid-2" style="margin-bottom:0">
+      <div>
+        <h3 style="color:var(--green)" data-i18n="sentiment.improving">▲ Improving Sentiment</h3>
+        <div id="sentMomentumUp"></div>
+      </div>
+      <div>
+        <h3 style="color:var(--red)" data-i18n="sentiment.deteriorating">▼ Deteriorating Sentiment</h3>
+        <div id="sentMomentumDown"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 8: Narrative / Theme Tracker -->
+  <div class="card">
+    <h2 data-i18n="sentiment.narrativeTitle">Software Narrative Tracker</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.narrativeDesc">Key investment themes derived from market signals of related tickers</p>
+    <div id="sentNarratives"></div>
+  </div>
+
+  <!-- Row 9: News Sentiment Feed -->
+  <div class="card">
+    <h2 data-i18n="sentiment.newsTitle">News Sentiment Feed</h2>
+    <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="sentiment.newsDesc">Simulated news headlines with sentiment tags</p>
+    <div id="sentNewsFeed"></div>
+  </div>
+
+  <!-- Row 10: Full Score Card -->
+  <div class="card">
+    <h2 data-i18n="sentiment.scorecardTitle">Sentiment Score Card — All Tickers</h2>
+    <div class="table-wrap">
+      <table id="sentScoreTable">
+        <thead><tr>
+          <th data-i18n="common.ticker">Ticker</th>
+          <th data-i18n="common.name">Name</th>
+          <th data-i18n="common.layer">Layer</th>
+          <th data-i18n="common.price">Price</th>
+          <th data-i18n="common.chgPct">Chg %</th>
+          <th data-i18n="sentiment.volRatio">Vol Ratio</th>
+          <th data-i18n="sentiment.pos52w">52W Position</th>
+          <th data-i18n="sentiment.composite">Composite</th>
+          <th data-i18n="sentiment.sentiment">Sentiment</th>
+        </tr></thead>
+        <tbody id="sentScoreBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Side panel drawer -->
+<div class="drawer-overlay" id="sentDrawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="sentDrawer">
+  <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  <h2 id="sentDrawerTitle"></h2>
+  <div id="sentDrawerContent"></div>
+</div>
+
+<script>
+const QUOTES = {"AMZN":{"name":"Amazon.com, Inc.","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":248.5,"change":-0.52,"changePct":-0.20882,"marketCap":2667622650000.0,"pe":34.66,"eps":7.17,"volume":42574235.0,"avgVolume":51693068.0,"dayLow":247.2,"dayHigh":250.44,"yearLow":165.29,"yearHigh":258.6,"previousClose":249.02,"divYield":0.0,"volRatio":0.82},"MSFT":{"name":"Microsoft Corporation","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":411.22,"change":18.11,"changePct":4.60685,"marketCap":3053567568600.0,"pe":25.75,"eps":15.97,"volume":43012959.0,"avgVolume":37609490.0,"dayLow":396.73,"dayHigh":414.3699,"yearLow":355.67,"yearHigh":555.45,"previousClose":393.11,"divYield":0.00846262,"volRatio":1.14},"GOOGL":{"name":"Alphabet Inc.","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":337.12,"change":4.21,"changePct":1.26461,"marketCap":4078140734731.0,"pe":31.16,"eps":10.82,"volume":24854068.0,"avgVolume":33294495.0,"dayLow":330.9,"dayHigh":337.48,"yearLow":146.1,"yearHigh":349.0,"previousClose":332.91,"divYield":0.00249169,"volRatio":0.75},"ORCL":{"name":"Oracle Corporation","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":169.8,"change":6.8,"changePct":4.17178,"marketCap":488352610800.0,"pe":30.48,"eps":5.57,"volume":39108504.0,"avgVolume":28893110.0,"dayLow":166.21,"dayHigh":172.56,"yearLow":121.24,"yearHigh":345.72,"previousClose":163.0,"divYield":0.01177856,"volRatio":1.35},"CRWD":{"name":"CrowdStrike Holdings, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":411.16,"change":12.67,"changePct":3.1795,"marketCap":104275932240.0,"pe":-674.03,"eps":-0.61,"volume":3099776.0,"avgVolume":4168110.0,"dayLow":402.05,"dayHigh":411.98,"yearLow":342.72,"yearHigh":566.9,"previousClose":398.49,"divYield":0.0,"volRatio":0.74},"PANW":{"name":"Palo Alto Networks, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":164.11,"change":2.52,"changePct":1.5595,"marketCap":111842823382.0,"pe":90.67,"eps":1.81,"volume":7384306.0,"avgVolume":11051938.0,"dayLow":161.69,"dayHigh":165.2299,"yearLow":139.57,"yearHigh":223.61,"previousClose":161.59,"divYield":0.0,"volRatio":0.67},"ZS":{"name":"Zscaler, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":131.01,"change":8.33,"changePct":6.79002,"marketCap":21065190000.0,"pe":-304.67,"eps":-0.43,"volume":3769526.0,"avgVolume":2997601.0,"dayLow":122.77,"dayHigh":131.3199,"yearLow":114.625,"yearHigh":336.99,"previousClose":122.68,"divYield":0.0,"volRatio":1.26},"FTNT":{"name":"Fortinet, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":79.64,"change":0.94,"changePct":1.19441,"marketCap":59224134604.0,"pe":32.91,"eps":2.42,"volume":5664082.0,"avgVolume":6787323.0,"dayLow":77.41,"dayHigh":80.065,"yearLow":70.12,"yearHigh":109.33,"previousClose":78.7,"divYield":0.0,"volRatio":0.83},"S":{"name":"SentinelOne, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":13.26,"change":0.51,"changePct":4.0,"marketCap":4428521760.0,"pe":-9.68,"eps":-1.37,"volume":6582621.0,"avgVolume":8664738.0,"dayLow":12.885,"dayHigh":13.3,"yearLow":11.81,"yearHigh":21.4,"previousClose":12.75,"divYield":0.0,"volRatio":0.76},"SNOW":{"name":"Snowflake Inc.","layer":"Data & Analytics","layerColor":"#56d4e8","price":144.48,"change":9.01,"changePct":6.65092,"marketCap":49946736000.0,"pe":-39.91,"eps":-3.62,"volume":7574086.0,"avgVolume":6872466.0,"dayLow":137.01,"dayHigh":144.69,"yearLow":118.3,"yearHigh":280.67,"previousClose":135.47,"divYield":0.0,"volRatio":1.1},"MDB":{"name":"MongoDB, Inc.","layer":"Data & Analytics","layerColor":"#56d4e8","price":244.06,"change":10.46,"changePct":4.47774,"marketCap":19614986760.0,"pe":-277.34,"eps":-0.88,"volume":1812257.0,"avgVolume":1925028.0,"dayLow":231.0,"dayHigh":244.69,"yearLow":148.88,"yearHigh":444.72,"previousClose":233.6,"divYield":0.0,"volRatio":0.94},"CFLT":{"name":"Confluent, Inc.","layer":"Data & Analytics","layerColor":"#56d4e8","price":30.99,"change":0.0,"changePct":0.0,"marketCap":11083508824.0,"pe":-36.03,"eps":-0.86,"volume":14322497.0,"avgVolume":12051344.0,"dayLow":30.99,"dayHigh":30.99,"yearLow":15.64,"yearHigh":31.0,"previousClose":30.99,"divYield":0.0,"volRatio":1.19},"ESTC":{"name":"Elastic N.V.","layer":"Data & Analytics","layerColor":"#56d4e8","price":47.51,"change":2.12,"changePct":4.67063,"marketCap":4917332890.0,"pe":-60.14,"eps":-0.79,"volume":1215008.0,"avgVolume":2238978.0,"dayLow":46.28,"dayHigh":48.2,"yearLow":42.05,"yearHigh":96.07,"previousClose":45.39,"divYield":0.0,"volRatio":0.54},"DDOG":{"name":"Datadog, Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":121.06,"change":10.49,"changePct":9.4872,"marketCap":42837241889.0,"pe":390.52,"eps":0.31,"volume":5235651.0,"avgVolume":5817230.0,"dayLow":112.45,"dayHigh":121.13,"yearLow":87.695,"yearHigh":201.69,"previousClose":110.57,"divYield":0.0,"volRatio":0.9},"DT":{"name":"Dynatrace, Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":35.45,"change":2.18,"changePct":6.55245,"marketCap":10687758356.0,"pe":59.08,"eps":0.6,"volume":5003525.0,"avgVolume":7300110.0,"dayLow":33.88,"dayHigh":35.565,"yearLow":31.635,"yearHigh":57.55,"previousClose":33.27,"divYield":0.0,"volRatio":0.69},"GTLB":{"name":"GitLab Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":21.76,"change":1.68,"changePct":8.36653,"marketCap":3702072255.0,"pe":-64.0,"eps":-0.34,"volume":6870948.0,"avgVolume":6522646.0,"dayLow":20.42,"dayHigh":21.83,"yearLow":18.73,"yearHigh":54.08,"previousClose":20.08,"divYield":0.0,"volRatio":1.05},"NET":{"name":"Cloudflare, Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":190.02,"change":11.37,"changePct":6.3644,"marketCap":66883296606.0,"pe":-655.24,"eps":-0.29,"volume":5208879.0,"avgVolume":5454241.0,"dayLow":182.34,"dayHigh":190.88,"yearLow":100.25,"yearHigh":260.0,"previousClose":178.65,"divYield":0.0,"volRatio":0.96},"CRM":{"name":"Salesforce, Inc.","layer":"Enterprise SaaS","layerColor":"#56cc84","price":177.6,"change":6.29,"changePct":3.6717,"marketCap":166411204618.0,"pe":22.77,"eps":7.8,"volume":13275722.0,"avgVolume":13857671.0,"dayLow":172.88,"dayHigh":179.62,"yearLow":163.52,"yearHigh":296.05,"previousClose":171.31,"divYield":0.0095045,"volRatio":0.96},"NOW":{"name":"ServiceNow, Inc.","layer":"Enterprise SaaS","layerColor":"#56cc84","price":94.19,"change":6.4,"changePct":7.29012,"marketCap":98522740000.0,"pe":56.4,"eps":1.67,"volume":25676225.0,"avgVolume":21355618.0,"dayLow":89.2,"dayHigh":94.83,"yearLow":81.24,"yearHigh":211.478,"previousClose":87.79,"divYield":0.0,"volRatio":1.2},"WDAY":{"name":"Workday, Inc.","layer":"Enterprise SaaS","layerColor":"#56cc84","price":124.12,"change":6.26,"changePct":5.31139,"marketCap":32903925283.0,"pe":47.92,"eps":2.59,"volume":3808624.0,"avgVolume":5516245.0,"dayLow":118.26,"dayHigh":124.66,"yearLow":110.36,"yearHigh":276.0,"previousClose":117.86,"divYield":0.0,"volRatio":0.69},"TEAM":{"name":"Atlassian Corporation","layer":"Enterprise SaaS","layerColor":"#56cc84","price":66.0,"change":6.29,"changePct":10.53425,"marketCap":17363443614.0,"pe":-91.67,"eps":-0.72,"volume":10703105.0,"avgVolume":6914898.0,"dayLow":60.25,"dayHigh":66.105,"yearLow":56.01,"yearHigh":242.0,"previousClose":59.71,"divYield":0.0,"volRatio":1.55},"PLTR":{"name":"Palantir Technologies Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":142.15,"change":6.45,"changePct":4.75313,"marketCap":325732460500.0,"pe":225.63,"eps":0.63,"volume":47901983.0,"avgVolume":52759571.0,"dayLow":134.93,"dayHigh":142.58,"yearLow":89.31,"yearHigh":207.52,"previousClose":135.7,"divYield":0.0,"volRatio":0.91},"AI":{"name":"C3.ai, Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":9.52,"change":1.12,"changePct":13.33333,"marketCap":1349850320.0,"pe":-3.01,"eps":-3.16,"volume":7818648.0,"avgVolume":6679713.0,"dayLow":8.54,"dayHigh":9.575,"yearLow":7.675,"yearHigh":30.24,"previousClose":8.4,"divYield":0.0,"volRatio":1.17},"PATH":{"name":"UiPath Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":10.61,"change":0.59,"changePct":5.88822,"marketCap":5673694540.0,"pe":20.4,"eps":0.52,"volume":23842900.0,"avgVolume":32274536.0,"dayLow":10.03,"dayHigh":10.64,"yearLow":9.28,"yearHigh":19.84,"previousClose":10.02,"divYield":0.0,"volRatio":0.74},"DUOL":{"name":"Duolingo, Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":98.78,"change":7.32,"changePct":8.0035,"marketCap":4637739274.0,"pe":11.53,"eps":8.57,"volume":1947700.0,"avgVolume":2672080.0,"dayLow":92.6,"dayHigh":99.14,"yearLow":87.89,"yearHigh":544.93,"previousClose":91.46,"divYield":0.0,"volRatio":0.73},"VEEV":{"name":"Veeva Systems Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":167.295,"change":8.205,"changePct":5.15746,"marketCap":27500261964.0,"pe":30.81,"eps":5.43,"volume":2445686.0,"avgVolume":2253983.0,"dayLow":160.0,"dayHigh":168.1,"yearLow":148.05,"yearHigh":310.5,"previousClose":159.09,"divYield":0.0,"volRatio":1.09},"PCOR":{"name":"Procore Technologies, Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":52.39,"change":2.79,"changePct":5.625,"marketCap":8145065284.0,"pe":-78.19,"eps":-0.67,"volume":3079762.0,"avgVolume":2709185.0,"dayLow":49.5,"dayHigh":53.03,"yearLow":46.08,"yearHigh":82.315,"previousClose":49.6,"divYield":0.0,"volRatio":1.14},"BILL":{"name":"Bill.com Holdings, Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":39.31,"change":2.31,"changePct":6.24324,"marketCap":3937159012.0,"pe":-170.91,"eps":-0.23,"volume":1627468.0,"avgVolume":2776991.0,"dayLow":37.59,"dayHigh":39.4,"yearLow":34.44,"yearHigh":57.21,"previousClose":37.0,"divYield":0.0,"volRatio":0.59},"TOST":{"name":"Toast, Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":28.16,"change":1.06,"changePct":3.91144,"marketCap":16586240056.0,"pe":50.29,"eps":0.56,"volume":7158230.0,"avgVolume":11954835.0,"dayLow":27.06,"dayHigh":28.23,"yearLow":24.35,"yearHigh":49.66,"previousClose":27.1,"divYield":0.0,"volRatio":0.6},"SQ":{"name":"Block, Inc.","layer":"Fintech / Payments","layerColor":"#4fc4cf","price":83.46,"change":0.47,"changePct":0.56633,"marketCap":51729675689.0,"pe":49.98,"eps":1.67,"volume":1142032.0,"avgVolume":4489291.0,"dayLow":83.13,"dayHigh":85.07,"yearLow":55.0,"yearHigh":99.26,"previousClose":82.99,"divYield":0.0,"volRatio":0.25},"PYPL":{"name":"PayPal Holdings, Inc.","layer":"Fintech / Payments","layerColor":"#4fc4cf","price":49.57,"change":1.6,"changePct":3.33542,"marketCap":45637364050.0,"pe":9.16,"eps":5.41,"volume":12938087.0,"avgVolume":23829165.0,"dayLow":47.9,"dayHigh":49.75,"yearLow":38.46,"yearHigh":79.5,"previousClose":47.97,"divYield":0.00564858,"volRatio":0.54},"AFRM":{"name":"Affirm Holdings, Inc.","layer":"Fintech / Payments","layerColor":"#4fc4cf","price":59.62,"change":3.8,"changePct":6.8076,"marketCap":19860056834.0,"pe":73.6,"eps":0.81,"volume":7529607.0,"avgVolume":6465755.0,"dayLow":56.635,"dayHigh":59.91,"yearLow":39.42,"yearHigh":100.0,"previousClose":55.82,"divYield":0.0,"volRatio":1.16},"TTD":{"name":"The Trade Desk, Inc.","layer":"AdTech / MarTech","layerColor":"#f0ad4e","price":22.38,"change":1.36,"changePct":6.47003,"marketCap":10652366737.0,"pe":24.87,"eps":0.9,"volume":15375594.0,"avgVolume":19332040.0,"dayLow":21.3,"dayHigh":22.55,"yearLow":19.74,"yearHigh":91.45,"previousClose":21.02,"divYield":0.0,"volRatio":0.8},"ZETA":{"name":"Zeta Global Holdings Corp.","layer":"AdTech / MarTech","layerColor":"#f0ad4e","price":17.37,"change":1.17,"changePct":7.22222,"marketCap":4243985003.0,"pe":-124.07,"eps":-0.14,"volume":6980920.0,"avgVolume":8326496.0,"dayLow":16.4399,"dayHigh":17.585,"yearLow":10.69,"yearHigh":24.9,"previousClose":16.2,"divYield":0.0,"volRatio":0.84},"HUBS":{"name":"HubSpot, Inc.","layer":"AdTech / MarTech","layerColor":"#f0ad4e","price":218.62,"change":12.18,"changePct":5.90002,"marketCap":11530128110.0,"pe":251.29,"eps":0.87,"volume":2216550.0,"avgVolume":1836271.0,"dayLow":207.85,"dayHigh":223.185,"yearLow":187.45,"yearHigh":682.565,"previousClose":206.44,"divYield":0.0,"volRatio":1.21},"TWLO":{"name":"Twilio Inc.","layer":"Communication Platforms","layerColor":"#7a7e96","price":134.07,"change":10.07,"changePct":8.12097,"marketCap":20326731046.0,"pe":638.43,"eps":0.21,"volume":1857467.0,"avgVolume":2442110.0,"dayLow":125.405,"dayHigh":134.59,"yearLow":80.9,"yearHigh":145.9,"previousClose":124.0,"divYield":0.0,"volRatio":0.76},"ZM":{"name":"Zoom Communications, Inc.","layer":"Communication Platforms","layerColor":"#7a7e96","price":89.03,"change":6.63,"changePct":8.04612,"marketCap":26361867222.0,"pe":14.41,"eps":6.18,"volume":5933854.0,"avgVolume":4430758.0,"dayLow":83.33,"dayHigh":89.46,"yearLow":69.15,"yearHigh":97.58,"previousClose":82.4,"divYield":0.0,"volRatio":1.34},"RNG":{"name":"RingCentral, Inc.","layer":"Communication Platforms","layerColor":"#7a7e96","price":38.71,"change":1.54,"changePct":4.14312,"marketCap":3463823175.0,"pe":80.65,"eps":0.48,"volume":1013653.0,"avgVolume":2589313.0,"dayLow":37.505,"dayHigh":38.91,"yearLow":21.91,"yearHigh":42.42,"previousClose":37.17,"divYield":0.00193748,"volRatio":0.39},"OKTA":{"name":"Okta, Inc.","layer":"Identity & Access","layerColor":"#c06ef0","price":67.35,"change":3.26,"changePct":5.0866,"marketCap":11395651048.0,"pe":51.41,"eps":1.31,"volume":4394581.0,"avgVolume":3573646.0,"dayLow":65.2325,"dayHigh":67.64,"yearLow":62.66,"yearHigh":127.567,"previousClose":64.09,"divYield":0.0,"volRatio":1.23},"CYBR":{"name":"CyberArk Software Ltd.","layer":"Identity & Access","layerColor":"#c06ef0","price":408.85,"change":0.0,"changePct":0.0,"marketCap":20637502330.0,"pe":-139.06,"eps":-2.94,"volume":0.0,"avgVolume":783172.0,"dayLow":408.85,"dayHigh":408.85,"yearLow":288.63,"yearHigh":526.19,"previousClose":408.85,"divYield":0.0,"volRatio":0.0},"RDDT":{"name":"Reddit, Inc.","layer":"Internet / Social","layerColor":"#f07070","price":158.54,"change":4.0,"changePct":2.58833,"marketCap":30286812561.0,"pe":56.42,"eps":2.81,"volume":3599477.0,"avgVolume":5480253.0,"dayLow":155.33,"dayHigh":160.3799,"yearLow":90.78,"yearHigh":282.95,"previousClose":154.54,"divYield":0.0,"volRatio":0.66},"PINS":{"name":"Pinterest, Inc.","layer":"Internet / Social","layerColor":"#f07070","price":20.27,"change":1.57,"changePct":8.39572,"marketCap":13676716513.0,"pe":33.23,"eps":0.61,"volume":24819806.0,"avgVolume":20381276.0,"dayLow":18.75,"dayHigh":20.499,"yearLow":13.84,"yearHigh":39.93,"previousClose":18.7,"divYield":0.0,"volRatio":1.22}};
+
+const LAYERS = {
+  "Cloud Infrastructure": {color:"#5b9cf6", tickers:["AMZN","MSFT","GOOGL","ORCL"]},
+  "Cybersecurity": {color:"#f07070", tickers:["CRWD","PANW","ZS","FTNT","S"]},
+  "Data & Analytics": {color:"#56d4e8", tickers:["SNOW","MDB","CFLT","ESTC"]},
+  "Observability & DevOps": {color:"#a87ef0", tickers:["DDOG","DT","GTLB","NET"]},
+  "Enterprise SaaS": {color:"#56cc84", tickers:["CRM","NOW","WDAY","TEAM"]},
+  "AI / ML Software": {color:"#f5a454", tickers:["PLTR","AI","PATH","DUOL"]},
+  "Vertical SaaS": {color:"#e8c44a", tickers:["VEEV","PCOR","BILL","TOST"]},
+  "Fintech / Payments": {color:"#4fc4cf", tickers:["SQ","PYPL","AFRM"]},
+  "AdTech / MarTech": {color:"#f0ad4e", tickers:["TTD","ZETA","HUBS"]},
+  "Communication Platforms": {color:"#7a7e96", tickers:["TWLO","ZM","RNG"]},
+  "Identity & Access": {color:"#c06ef0", tickers:["OKTA","CYBR"]},
+  "Internet / Social": {color:"#f07070", tickers:["RDDT","PINS"]}
+};
+
+/* Theme */
+function getTheme(){try{return safeStorage.getItem('theme')||'dark'}catch(e){return 'dark'}}
+function setTheme(t){document.documentElement.setAttribute('data-theme',t);safeStorage.setItem('theme',t)}
+function toggleTheme(){setTheme(getTheme()==='dark'?'light':'dark')}
+setTheme(getTheme());
+
+/* Drawer */
+function openDrawer(title,html){
+  document.getElementById('sentDrawerTitle').textContent=title;
+  document.getElementById('sentDrawerContent').innerHTML=html;
+  document.getElementById('sentDrawerOverlay').classList.add('open');
+  document.getElementById('sentDrawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('sentDrawerOverlay').classList.remove('open');
+  document.getElementById('sentDrawer').classList.remove('open');
+}
+
+/* Helpers */
+const fmtPct = n => (n>=0?'+':'')+n.toFixed(2)+'%';
+const fmtCap = n => {
+  if(n>=1e12) return '$'+(n/1e12).toFixed(2)+'T';
+  if(n>=1e9) return '$'+(n/1e9).toFixed(1)+'B';
+  if(n>=1e6) return '$'+(n/1e6).toFixed(0)+'M';
+  return '$'+n.toFixed(0);
+};
+
+// Seed-based pseudo-random for deterministic simulated data
+function seededRand(seed){let s=seed;return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646}}
+
+/* Compute sentiment for each ticker */
+const tickers = Object.keys(QUOTES).sort();
+const sentimentData = [];
+
+tickers.forEach(ticker => {
+  const q = QUOTES[ticker];
+  // Factor 1: Price change % (normalized -1 to 1)
+  const chgScore = Math.max(-1, Math.min(1, q.changePct / 5));
+  // Factor 2: Volume ratio signal
+  const volRatio = q.avgVolume > 0 ? q.volume / q.avgVolume : 1;
+  const volSignal = (volRatio - 1) * (q.changePct >= 0 ? 0.3 : -0.3);
+  // Factor 3: 52-week position
+  const range52 = q.yearHigh - q.yearLow;
+  const pos52 = range52 > 0 ? (q.price - q.yearLow) / range52 : 0.5;
+  const posScore = (pos52 - 0.5) * 2;
+  // Factor 4: PE health signal
+  let peScore = 0;
+  if(q.pe > 0 && q.pe < 40) peScore = 0.15;
+  else if(q.pe > 0 && q.pe < 80) peScore = 0.05;
+  else if(q.pe < 0) peScore = -0.1;
+  else peScore = -0.05;
+  // Composite
+  const composite = chgScore * 0.35 + posScore * 0.3 + volSignal * 0.2 + peScore * 0.15;
+  const score = Math.max(0, Math.min(100, 50 + composite * 50));
+
+  let sentiment = 'Neutral';
+  if(score >= 65) sentiment = 'Bullish';
+  else if(score >= 55) sentiment = 'Leaning Bullish';
+  else if(score <= 35) sentiment = 'Bearish';
+  else if(score <= 45) sentiment = 'Leaning Bearish';
+
+  // Simulate momentum (5-day trend)
+  const rng = seededRand(ticker.charCodeAt(0)*100+ticker.length*17);
+  const momentumDelta = (q.changePct > 2 ? 1 : q.changePct < -2 ? -1 : 0) + (rng() - 0.4) * 2;
+
+  sentimentData.push({
+    ticker, name: q.name, layer: q.layer, layerColor: q.layerColor,
+    price: q.price, change: q.changePct, volume: q.volume, avgVolume: q.avgVolume,
+    volRatio, pos52, score, sentiment, marketCap: q.marketCap, pe: q.pe,
+    composite, momentumDelta
+  });
+});
+
+/* Stats */
+const bullish = sentimentData.filter(d => d.score >= 55);
+const bearish = sentimentData.filter(d => d.score <= 45);
+const neutral = sentimentData.filter(d => d.score > 45 && d.score < 55);
+document.getElementById('sentBullCount').textContent = bullish.length;
+document.getElementById('sentBullSub').textContent = bullish.sort((a,b)=>b.score-a.score).slice(0,4).map(d=>d.ticker).join(', ');
+document.getElementById('sentBearCount').textContent = bearish.length;
+document.getElementById('sentBearSub').textContent = bearish.sort((a,b)=>a.score-b.score).slice(0,4).map(d=>d.ticker).join(', ');
+document.getElementById('sentNeutCount').textContent = neutral.length;
+
+/* Overall market sentiment (cap-weighted) */
+const totalCap = sentimentData.reduce((s,d) => s + d.marketCap, 0);
+const overallScore = sentimentData.reduce((s,d) => s + d.score * (d.marketCap / totalCap), 0);
+
+/* Draw overall gauge */
+const sentOverCtx = document.getElementById('sentOverallGauge').getContext('2d');
+(function drawOverallGauge(ctx, score) {
+  const w = 280, h = 160, cx = w/2, cy = h - 10, r = 100;
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, 0);
+  ctx.lineWidth = 18;
+  const bg = ctx.createLinearGradient(cx-r, cy, cx+r, cy);
+  bg.addColorStop(0, 'rgba(240,112,112,0.25)');
+  bg.addColorStop(0.5, 'rgba(240,173,78,0.25)');
+  bg.addColorStop(1, 'rgba(86,204,132,0.25)');
+  ctx.strokeStyle = bg; ctx.stroke();
+  const angle = Math.PI + (score/100) * Math.PI;
+  ctx.beginPath(); ctx.arc(cx, cy, r, Math.PI, angle);
+  ctx.lineWidth = 18;
+  const fg = ctx.createLinearGradient(cx-r, cy, cx+r, cy);
+  fg.addColorStop(0, '#f07070'); fg.addColorStop(0.5, '#f0ad4e'); fg.addColorStop(1, '#56cc84');
+  ctx.strokeStyle = fg; ctx.stroke();
+  const na = Math.PI + (score/100) * Math.PI;
+  const nx = cx + Math.cos(na) * (r-25), ny = cy + Math.sin(na) * (r-25);
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(nx,ny);
+  ctx.strokeStyle = '#dde0f0'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,4,0,2*Math.PI); ctx.fillStyle='#dde0f0'; ctx.fill();
+  ctx.font = '11px Inter'; ctx.fillStyle = '#7a7e96';
+  ctx.textAlign = 'left'; ctx.fillText('BEARISH', cx-r+5, cy+18);
+  ctx.textAlign = 'right'; ctx.fillText('BULLISH', cx+r-5, cy+18);
+})(sentOverCtx, overallScore);
+
+const overLabel = overallScore >= 60 ? 'Bullish' : overallScore <= 40 ? 'Bearish' : 'Neutral';
+const overColor = overallScore >= 60 ? 'var(--green)' : overallScore <= 40 ? 'var(--red)' : 'var(--warn)';
+document.getElementById('sentOverallLabel').innerHTML = `<span class="mono" style="font-size:var(--text-2xl);font-weight:700;color:${overColor}">${overallScore.toFixed(1)}</span><br><span style="font-size:var(--text-xs);color:var(--muted)">Market-Cap Weighted: ${overLabel}</span>`;
+document.getElementById('sentOverallBreakdown').innerHTML = `
+  <div style="display:flex;gap:var(--space-4);justify-content:center">
+    <div style="text-align:center"><div class="mono" style="color:var(--green);font-weight:600">${bullish.length}</div><div style="font-size:10px;color:var(--muted)">Bullish</div></div>
+    <div style="text-align:center"><div class="mono" style="color:var(--muted);font-weight:600">${neutral.length}</div><div style="font-size:10px;color:var(--muted)">Neutral</div></div>
+    <div style="text-align:center"><div class="mono" style="color:var(--red);font-weight:600">${bearish.length}</div><div style="font-size:10px;color:var(--muted)">Bearish</div></div>
+  </div>`;
+
+/* Fear & Greed Index */
+const momentum = sentimentData.reduce((s,d)=>s+d.change,0) / sentimentData.length;
+const breadth = (bullish.length - bearish.length) / sentimentData.length;
+const avgPos52 = sentimentData.reduce((s,d)=>s+d.pos52,0) / sentimentData.length;
+const volStrength = sentimentData.reduce((s,d)=>s+(d.volRatio>1&&d.change>0?1:d.volRatio>1&&d.change<0?-1:0),0) / sentimentData.length;
+const fgScore = Math.max(0, Math.min(100, 50 + momentum * 5 + breadth * 25 + (avgPos52-0.5) * 30 + volStrength * 15));
+
+const sentFgCtx = document.getElementById('sentFgGauge').getContext('2d');
+(function drawFG(ctx, score) {
+  const cx=110, cy=110, r=90;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI);
+  ctx.lineWidth=16; ctx.strokeStyle='rgba(30,34,48,0.6)'; ctx.stroke();
+  const endAngle = -Math.PI/2 + (score/100) * 2 * Math.PI;
+  ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2, endAngle);
+  ctx.lineWidth=16; ctx.lineCap='round';
+  try {
+    const grad = ctx.createConicGradient(-Math.PI/2, cx, cy);
+    grad.addColorStop(0, '#f07070'); grad.addColorStop(0.25, '#f5a454');
+    grad.addColorStop(0.5, '#f0ad4e'); grad.addColorStop(0.75, '#56cc84');
+    grad.addColorStop(1, '#56cc84');
+    ctx.strokeStyle = grad;
+  } catch(e) {
+    ctx.strokeStyle = score >= 50 ? '#56cc84' : '#f07070';
+  }
+  ctx.stroke();
+  ctx.font = 'bold 42px JetBrains Mono';
+  ctx.fillStyle = score >= 60 ? '#56cc84' : score <= 40 ? '#f07070' : '#f0ad4e';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(Math.round(score), cx, cy);
+})(sentFgCtx, fgScore);
+
+const fgLabel = fgScore >= 75 ? 'Extreme Greed' : fgScore >= 55 ? 'Greed' : fgScore >= 45 ? 'Neutral' : fgScore >= 25 ? 'Fear' : 'Extreme Fear';
+const fgColor = fgScore >= 55 ? 'var(--green)' : fgScore <= 45 ? 'var(--red)' : 'var(--warn)';
+document.getElementById('sentFgLabel').innerHTML = `<div class="fg-label" style="color:${fgColor}">${fgLabel}</div><div class="fg-desc">0 = Extreme Fear, 100 = Extreme Greed</div>`;
+
+/* Trending bullish/bearish */
+const sortedBull = [...sentimentData].sort((a,b)=>b.score-a.score);
+const sortedBear = [...sentimentData].sort((a,b)=>a.score-b.score);
+function renderTrending(container, items, isBull) {
+  const el = document.getElementById(container);
+  items.slice(0,5).forEach((d,i) => {
+    const barWidth = isBull ? d.score : (100 - d.score);
+    const barColor = isBull ? 'var(--green)' : 'var(--red)';
+    const scoreColor = isBull ? 'var(--green)' : 'var(--red)';
+    el.innerHTML += `<div class="trending-item" onclick="openDrawer('${d.ticker} — ${d.name}','<div style=\\'padding:8px\\'><p><b>Layer:</b> ${d.layer}</p><p><b>Price:</b> $${d.price.toFixed(2)}</p><p><b>Change:</b> ${fmtPct(d.change)}</p><p><b>Score:</b> ${d.score.toFixed(1)}</p><p><b>Sentiment:</b> ${d.sentiment}</p><p><b>52W Position:</b> ${(d.pos52*100).toFixed(0)}%</p><p><b>Vol Ratio:</b> ${d.volRatio.toFixed(2)}x</p></div>')" style="cursor:pointer">
+      <div class="rank">#${i+1}</div>
+      <div class="ticker">${d.ticker}</div>
+      <div class="bar-wrap"><div class="bar-fill" style="width:${barWidth}%;background:${barColor}"></div></div>
+      <div class="score" style="color:${scoreColor}">${d.score.toFixed(0)}</div>
+    </div>`;
+  });
+}
+renderTrending('sentTopBullish', sortedBull, true);
+renderTrending('sentTopBearish', sortedBear, false);
+
+/* Heatmap */
+const heatGrid = document.getElementById('sentHeatGrid');
+[...sentimentData].sort((a,b)=>a.ticker.localeCompare(b.ticker)).forEach(d => {
+  const hue = (d.score / 100) * 140;
+  const sat = 50 + Math.abs(d.score - 50) * 0.6;
+  const light = 15 + (1 - Math.abs(d.score - 50) / 50) * 8;
+  heatGrid.innerHTML += `<div class="heat-cell" style="background:hsl(${hue},${sat}%,${light}%)" title="${d.name}: Score ${d.score.toFixed(1)}" onclick="openDrawer('${d.ticker}','<p><b>Score:</b> ${d.score.toFixed(1)}</p><p><b>Sentiment:</b> ${d.sentiment}</p><p><b>Change:</b> ${fmtPct(d.change)}</p>')">
+    <div class="ht">${d.ticker}</div>
+    <div class="hs">${d.score.toFixed(0)}</div>
+  </div>`;
+});
+
+/* Layer sentiment */
+const layerData = {};
+Object.entries(LAYERS).forEach(([layer, cfg]) => {
+  const items = cfg.tickers.map(t => sentimentData.find(d => d.ticker === t)).filter(Boolean);
+  if(items.length === 0) return;
+  const avgScore = items.reduce((s,d) => s + d.score, 0) / items.length;
+  const capTotal = items.reduce((s,d) => s + d.marketCap, 0);
+  layerData[layer] = { avgScore, count: items.length, capTotal, color: cfg.color, tickers: items.map(d=>d.ticker) };
+});
+const sortedLayers = Object.entries(layerData).sort((a,b)=>b[1].avgScore - a[1].avgScore);
+
+/* Layer bars */
+const layerBarsEl = document.getElementById('sentLayerBars');
+sortedLayers.forEach(([name, data]) => {
+  const barColor = data.avgScore >= 55 ? 'var(--green)' : data.avgScore <= 45 ? 'var(--red)' : 'var(--warn)';
+  layerBarsEl.innerHTML += `<div class="sector-bar-wrap">
+    <div class="sector-bar-label"><span style="color:${data.color}">${name}</span><span style="color:${barColor}">${data.avgScore.toFixed(1)}</span></div>
+    <div class="sector-bar"><div class="sector-bar-inner" style="width:${data.avgScore}%;background:${barColor}"></div></div>
+  </div>`;
+});
+
+/* Radar chart */
+try { new Chart(document.getElementById('sentRadarChart'), {
+  type: 'radar',
+  data: {
+    labels: sortedLayers.map(([n]) => n.length > 18 ? n.slice(0,16)+'...' : n),
+    datasets: [{
+      label: 'Sentiment Score',
+      data: sortedLayers.map(([,d]) => d.avgScore),
+      backgroundColor: 'rgba(91,156,246,0.15)',
+      borderColor: '#5b9cf6',
+      pointBackgroundColor: sortedLayers.map(([,d]) => d.color),
+      pointRadius: 5,
+      borderWidth: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      r: {
+        min: 0, max: 100,
+        ticks: { stepSize: 25, color: '#7a7e96', backdropColor: 'transparent', font: { size: 10 } },
+        grid: { color: 'rgba(30,34,48,0.5)' },
+        pointLabels: { color: '#dde0f0', font: { size: 10 } }
+      }
+    }
+  }
+}); } catch(e) { console.warn('Radar chart failed:', e); }
+
+/* Social Media Sentiment Feed (simulated) */
+const socialPlatforms = [
+  {name:'Reddit', icon:'R', bg:'#FF5700'},
+  {name:'X/Twitter', icon:'𝕏', bg:'#1DA1F2'},
+  {name:'StockTwits', icon:'ST', bg:'#36a2e0'}
+];
+const socialTemplates = [
+  {tpl:'$TICKER looking strong after earnings beat', sent:'bullish'},
+  {tpl:'$TICKER AI features could be a game changer for SaaS', sent:'bullish'},
+  {tpl:'$TICKER revenue growth acceleration continues', sent:'bullish'},
+  {tpl:'$TICKER breaking out of consolidation pattern', sent:'bullish'},
+  {tpl:'$TICKER valuation seems stretched here at these levels', sent:'bearish'},
+  {tpl:'$TICKER losing market share to competitors', sent:'bearish'},
+  {tpl:'$TICKER churn concerns are real, downgrading', sent:'bearish'},
+  {tpl:'$TICKER trading sideways, waiting for catalyst', sent:'neutral'},
+  {tpl:'$TICKER cloud migration tailwinds still intact', sent:'bullish'},
+  {tpl:'$TICKER NRR declining, watch next quarter closely', sent:'bearish'},
+  {tpl:'$TICKER management delivered solid guidance', sent:'bullish'},
+  {tpl:'$TICKER customer acquisition cost rising, margins under pressure', sent:'bearish'},
+  {tpl:'$TICKER AI integration driving enterprise adoption', sent:'bullish'},
+  {tpl:'$TICKER free cash flow improving quarter over quarter', sent:'bullish'},
+  {tpl:'$TICKER faces regulatory headwinds in EU market', sent:'bearish'},
+  {tpl:'$TICKER positioned well for cybersecurity spending wave', sent:'bullish'},
+  {tpl:'$TICKER SMB segment weakening amid macro uncertainty', sent:'bearish'},
+  {tpl:'$TICKER partnership deal could unlock $2B TAM', sent:'bullish'}
+];
+const feedEl = document.getElementById('sentSocialFeed');
+const rng2 = seededRand(42);
+for(let i = 0; i < 18; i++) {
+  const platform = socialPlatforms[i % 3];
+  const t = sentimentData[Math.floor(rng2() * sentimentData.length)];
+  const tmpl = socialTemplates[i % socialTemplates.length];
+  const text = tmpl.tpl.replace('$TICKER', t.ticker);
+  const sentBadge = tmpl.sent === 'bullish' ? 'badge-bullish' : tmpl.sent === 'bearish' ? 'badge-bearish' : 'badge-neutral';
+  const likes = Math.floor(rng2() * 500 + 10);
+  const comments = Math.floor(rng2() * 80 + 2);
+  const hours = Math.floor(rng2() * 24 + 1);
+  feedEl.innerHTML += `<div class="social-item">
+    <div class="social-icon" style="background:${platform.bg};color:#fff;font-weight:700;font-size:12px">${platform.icon}</div>
+    <div class="social-content">
+      <div class="social-platform">${platform.name}</div>
+      <div class="social-text">${text} <span class="badge ${sentBadge}">${tmpl.sent}</span></div>
+      <div class="social-meta"><span>♡ ${likes}</span><span>💬 ${comments}</span><span>${hours}h ago</span></div>
+    </div>
+  </div>`;
+}
+
+/* Social mention chart */
+try {
+  const mentionData = sortedLayers.map(([name, data]) => {
+    const rng3 = seededRand(name.length * 7);
+    return { name, mentions: Math.floor(rng3() * 5000 + data.count * 800), color: data.color };
+  }).sort((a,b) => b.mentions - a.mentions);
+  new Chart(document.getElementById('sentSocialChart'), {
+    type: 'bar',
+    data: {
+      labels: mentionData.map(d => d.name.length > 16 ? d.name.slice(0,14)+'...' : d.name),
+      datasets: [{
+        label: 'Social Mentions (24h)',
+        data: mentionData.map(d => d.mentions),
+        backgroundColor: mentionData.map(d => d.color + '99'),
+        borderColor: mentionData.map(d => d.color),
+        borderWidth: 1, borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#7a7e96' }, grid: { color: 'rgba(30,34,48,0.5)' } },
+        y: { ticks: { color: '#dde0f0', font: { size: 10 } }, grid: { display: false } }
+      }
+    }
+  });
+} catch(e) { console.warn('Social chart failed:', e); }
+
+/* Analyst Ratings Table */
+const analystBody = document.getElementById('sentAnalystBody');
+[...sentimentData].sort((a,b)=>b.score-a.score).forEach(d => {
+  const rng4 = seededRand(d.ticker.charCodeAt(0)*31 + d.ticker.charCodeAt(d.ticker.length-1)*13);
+  let buyPct, holdPct, sellPct;
+  if(d.score >= 60) { buyPct = 50 + Math.floor(rng4()*30); holdPct = Math.floor(rng4()*25); sellPct = 100 - buyPct - holdPct; }
+  else if(d.score <= 40) { sellPct = 40 + Math.floor(rng4()*25); holdPct = Math.floor(rng4()*30); buyPct = 100 - sellPct - holdPct; }
+  else { holdPct = 35 + Math.floor(rng4()*25); buyPct = Math.floor(rng4()*35); sellPct = 100 - holdPct - buyPct; }
+  buyPct = Math.max(0, buyPct); holdPct = Math.max(0, holdPct); sellPct = Math.max(0, sellPct);
+  const total = buyPct + holdPct + sellPct;
+  buyPct = Math.round(buyPct/total*100); holdPct = Math.round(holdPct/total*100); sellPct = 100-buyPct-holdPct;
+  const consensus = buyPct > 50 ? 'Buy' : sellPct > 35 ? 'Sell' : 'Hold';
+  const consBadge = consensus === 'Buy' ? 'badge-bullish' : consensus === 'Sell' ? 'badge-bearish' : 'badge-neutral';
+  analystBody.innerHTML += `<tr>
+    <td style="color:var(--primary);font-weight:600">${d.ticker}</td>
+    <td style="font-family:var(--font-body)">${d.name.length>25?d.name.slice(0,25)+'...':d.name}</td>
+    <td style="font-family:var(--font-body);color:${d.layerColor}">${d.layer}</td>
+    <td style="color:var(--green)">${buyPct}%</td>
+    <td style="color:var(--warn)">${holdPct}%</td>
+    <td style="color:var(--red)">${sellPct}%</td>
+    <td><div class="analyst-bar"><div class="analyst-buy" style="width:${buyPct}%"></div><div class="analyst-hold" style="width:${holdPct}%"></div><div class="analyst-sell" style="width:${sellPct}%"></div></div></td>
+    <td><span class="badge ${consBadge}">${consensus}</span></td>
+  </tr>`;
+});
+
+/* Sentiment Momentum */
+const improving = [...sentimentData].filter(d => d.momentumDelta > 0).sort((a,b)=>b.momentumDelta-a.momentumDelta).slice(0,10);
+const deteriorating = [...sentimentData].filter(d => d.momentumDelta < 0).sort((a,b)=>a.momentumDelta-b.momentumDelta).slice(0,10);
+const momUpEl = document.getElementById('sentMomentumUp');
+improving.forEach(d => {
+  momUpEl.innerHTML += `<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;border-bottom:1px solid var(--border)">
+    <span class="mono" style="color:var(--primary);font-weight:700;width:55px">${d.ticker}</span>
+    <span style="font-size:var(--text-xs);flex:1">${d.name.length>20?d.name.slice(0,20)+'...':d.name}</span>
+    <span class="mono momentum-up" style="font-weight:600;font-size:var(--text-xs)">▲ +${d.momentumDelta.toFixed(1)}pts</span>
+  </div>`;
+});
+const momDownEl = document.getElementById('sentMomentumDown');
+deteriorating.forEach(d => {
+  momDownEl.innerHTML += `<div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) 0;border-bottom:1px solid var(--border)">
+    <span class="mono" style="color:var(--primary);font-weight:700;width:55px">${d.ticker}</span>
+    <span style="font-size:var(--text-xs);flex:1">${d.name.length>20?d.name.slice(0,20)+'...':d.name}</span>
+    <span class="mono momentum-down" style="font-weight:600;font-size:var(--text-xs)">▼ ${d.momentumDelta.toFixed(1)}pts</span>
+  </div>`;
+});
+
+/* Narrative Tracker */
+const narratives = [
+  { theme:'AI Copilot Monetization', desc:'SaaS platforms embedding AI features driving upsell and NRR expansion', tickers:['CRM','NOW','WDAY','PLTR','DDOG'] },
+  { theme:'Cybersecurity Consolidation', desc:'Platform vendors absorbing point solutions — CRWD, PANW, ZS leading', tickers:['CRWD','PANW','ZS','FTNT','S','OKTA'] },
+  { theme:'Cloud Infrastructure Reacceleration', desc:'Hyperscaler growth reaccelerating on AI workload demand', tickers:['AMZN','MSFT','GOOGL','ORCL'] },
+  { theme:'Data Lakehouse / Real-Time Analytics', desc:'Convergence of warehousing and streaming analytics', tickers:['SNOW','MDB','CFLT','ESTC','DDOG'] },
+  { theme:'Fintech Recovery', desc:'Payment platforms regaining margin as rates stabilize', tickers:['SQ','PYPL','AFRM'] },
+  { theme:'Vertical SaaS Resilience', desc:'Industry-specific platforms showing stickier revenue vs horizontal SaaS', tickers:['VEEV','PCOR','BILL','TOST'] },
+  { theme:'DevOps & Observability Boom', desc:'Cloud complexity driving monitoring/CI-CD spend', tickers:['DDOG','DT','GTLB','NET'] },
+  { theme:'Digital Advertising Renaissance', desc:'AI-powered ad targeting and MarTech platform consolidation', tickers:['TTD','ZETA','HUBS','RDDT','PINS'] }
+];
+const narrativeEl = document.getElementById('sentNarratives');
+narratives.sort((a,b) => {
+  const sa = a.tickers.map(t => sentimentData.find(d=>d.ticker===t)).filter(Boolean);
+  const sb = b.tickers.map(t => sentimentData.find(d=>d.ticker===t)).filter(Boolean);
+  const avgA = sa.reduce((s,d)=>s+d.score,0) / (sa.length||1);
+  const avgB = sb.reduce((s,d)=>s+d.score,0) / (sb.length||1);
+  return avgB - avgA;
+}).forEach(n => {
+  const items = n.tickers.map(t => sentimentData.find(d=>d.ticker===t)).filter(Boolean);
+  const avgScore = items.reduce((s,d)=>s+d.score,0) / (items.length||1);
+  const label = avgScore >= 55 ? 'Bullish' : avgScore <= 45 ? 'Bearish' : 'Neutral';
+  const badgeClass = avgScore >= 55 ? 'badge-bullish' : avgScore <= 45 ? 'badge-bearish' : 'badge-neutral';
+  const scoreColor = avgScore >= 55 ? 'var(--green)' : avgScore <= 45 ? 'var(--red)' : 'var(--warn)';
+  narrativeEl.innerHTML += `<div class="narrative-card">
+    <div><div class="theme">${n.theme}</div><div class="desc">${n.desc} &mdash; ${n.tickers.join(', ')}</div></div>
+    <span class="badge ${badgeClass}">${label}</span>
+    <span class="mono" style="color:${scoreColor};font-weight:700;font-size:var(--text-lg)">${avgScore.toFixed(0)}</span>
+  </div>`;
+});
+
+/* News Sentiment Feed */
+const newsItems = [
+  {title:'Microsoft Azure revenue beats estimates on AI demand surge', tickers:['MSFT'], sent:'bullish', time:'2h ago', source:'Bloomberg'},
+  {title:'CrowdStrike expands platform with identity protection module', tickers:['CRWD','OKTA'], sent:'bullish', time:'3h ago', source:'Reuters'},
+  {title:'Snowflake warns of slower enterprise adoption amid budget cuts', tickers:['SNOW'], sent:'bearish', time:'4h ago', source:'CNBC'},
+  {title:'Palantir wins $500M government contract for AI analytics', tickers:['PLTR'], sent:'bullish', time:'5h ago', source:'WSJ'},
+  {title:'PayPal faces headwinds as competition from Apple Pay intensifies', tickers:['PYPL'], sent:'bearish', time:'6h ago', source:'Bloomberg'},
+  {title:'Salesforce introduces Agentforce 2.0, targets autonomous CRM workflows', tickers:['CRM'], sent:'bullish', time:'7h ago', source:'TechCrunch'},
+  {title:'Trade Desk shares rally on connected TV advertising growth', tickers:['TTD'], sent:'bullish', time:'8h ago', source:'Barron\'s'},
+  {title:'Analyst downgrades Datadog citing valuation concerns post-rally', tickers:['DDOG'], sent:'bearish', time:'9h ago', source:'Seeking Alpha'},
+  {title:'MongoDB Atlas usage growth accelerates in Q4 preview', tickers:['MDB'], sent:'bullish', time:'10h ago', source:'Reuters'},
+  {title:'Zoom pivots to AI-first platform strategy with revenue assistant', tickers:['ZM'], sent:'bullish', time:'11h ago', source:'The Verge'},
+  {title:'Affirm BNPL volumes surge as consumer spending stays resilient', tickers:['AFRM'], sent:'bullish', time:'12h ago', source:'Forbes'},
+  {title:'SentinelOne faces pricing pressure from CrowdStrike bundle deals', tickers:['S','CRWD'], sent:'bearish', time:'13h ago', source:'Gartner'}
+];
+const newsEl = document.getElementById('sentNewsFeed');
+newsItems.forEach(n => {
+  const sentBadge = n.sent === 'bullish' ? 'badge-bullish' : n.sent === 'bearish' ? 'badge-bearish' : 'badge-neutral';
+  newsEl.innerHTML += `<div class="news-item">
+    <div class="news-title">${n.title}</div>
+    <div class="news-meta">
+      <span class="badge ${sentBadge}">${n.sent}</span>
+      <span>${n.tickers.map(t=>'<span style="color:var(--primary);font-family:var(--font-mono);font-weight:600">'+t+'</span>').join(' ')}</span>
+      <span>${n.source}</span>
+      <span>${n.time}</span>
+    </div>
+  </div>`;
+});
+
+/* Full Score Table */
+const scoreBody = document.getElementById('sentScoreBody');
+[...sentimentData].sort((a,b)=>b.score-a.score).forEach(d => {
+  const chgColor = d.change >= 0 ? 'var(--green)' : 'var(--red)';
+  const volColor = d.volRatio > 1.2 ? 'var(--warn)' : 'var(--text)';
+  const scoreColor = d.score >= 55 ? 'var(--green)' : d.score <= 45 ? 'var(--red)' : 'var(--warn)';
+  const sentClass = d.score >= 55 ? 'badge-bullish' : d.score <= 45 ? 'badge-bearish' : 'badge-neutral';
+  scoreBody.innerHTML += `<tr>
+    <td style="color:var(--primary);font-weight:600">${d.ticker}</td>
+    <td style="font-family:var(--font-body)">${d.name.length>28?d.name.slice(0,28)+'...':d.name}</td>
+    <td style="font-family:var(--font-body);color:${d.layerColor}">${d.layer}</td>
+    <td>$${d.price.toFixed(2)}</td>
+    <td style="color:${chgColor}">${fmtPct(d.change)}</td>
+    <td style="color:${volColor}">${d.volRatio.toFixed(2)}x</td>
+    <td>${(d.pos52*100).toFixed(0)}%</td>
+    <td style="color:${scoreColor};font-weight:700">${d.score.toFixed(1)}</td>
+    <td><span class="badge ${sentClass}">${d.sentiment}</span></td>
+  </tr>`;
+});
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>

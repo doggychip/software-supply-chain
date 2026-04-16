@@ -1,0 +1,19 @@
+{
+  "name": "software-supply-chain",
+  "version": "1.0.0",
+  "description": "Software Value Chain Research Dashboard — Full Ecosystem Analysis",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "author": "Ryan Cheung",
+  "license": "MIT"
+}

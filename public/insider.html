@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Insider Activity — Software Value Chain Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+if(typeof Chart==="undefined"){var s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js";document.head.appendChild(s);}
+</script>
+<style>
+/* ========== CSS VARIABLES — DARK THEME (default) ========== */
+:root {
+  --bg: #0d0f14;
+  --surface: #13151d;
+  --s2: #181a24;
+  --s3: #1c1f2a;
+  --s4: #22253a;
+  --text: #dde0f0;
+  --muted: #7a7e96;
+  --primary: #5b9cf6;
+  --border: #1e2230;
+  --green: #56cc84;
+  --red: #f07070;
+  --yellow: #f0ad4e;
+  --orange: #f5a454;
+  --cyan: #56d4e8;
+  --purple: #a87ef0;
+  --gold: #e8c44a;
+  --teal: #4fc4cf;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ========== LIGHT THEME ========== */
+[data-theme="light"] {
+  --bg: #f2f3f7;
+  --surface: #fff;
+  --s2: #ebedf2;
+  --s3: #e0e2e9;
+  --s4: #d6d8e0;
+  --text: #1a1d2e;
+  --muted: #6b7280;
+  --primary: #2563eb;
+  --border: #d1d5db;
+  --green: #059669;
+  --red: #dc2626;
+  --yellow: #d97706;
+  --orange: #ea580c;
+  --cyan: #0891b2;
+  --purple: #7c3aed;
+  --gold: #b45309;
+  --teal: #0d9488;
+}
+
+/* ========== RESET ========== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ========== TAB BAR ========== */
+.tab-bar {
+  display: flex;
+  gap: 2px;
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
+  padding: 0 var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  overflow-x: auto;
+}
+
+.tab-link {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.tab-link:hover { color: var(--text); }
+.tab-link.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+/* ========== PAGE HEADER ========== */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-6) var(--space-8);
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header h1 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+}
+
+.theme-toggle {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  transition: background 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--s2);
+}
+
+/* ========== LAYOUT ========== */
+.layout {
+  display: flex;
+  min-height: calc(100vh - 90px);
+}
+
+.sidebar {
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: var(--space-4);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.sidebar h3 {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: var(--space-4) 0 var(--space-2);
+  font-weight: 600;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.sidebar-item:hover { background: var(--s2); }
+
+.sidebar-item .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ========== MAIN CONTENT ========== */
+.main {
+  flex: 1;
+  padding: var(--space-6) var(--space-8);
+  max-width: 1400px;
+  overflow-x: hidden;
+}
+
+/* ========== CARD ========== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.card h2 {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-4);
+}
+
+.card h3 {
+  font-size: var(--text-base);
+  font-weight: 600;
+  margin-bottom: var(--space-3);
+  color: var(--muted);
+}
+
+/* ========== GRID LAYOUTS ========== */
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-5); margin-bottom: var(--space-6); }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-bottom: var(--space-6); }
+.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--space-5); margin-bottom: var(--space-6); }
+
+/* ========== STATS ========== */
+.stat-value {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.stat-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-1);
+}
+
+.stat-sub {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin-top: var(--space-1);
+}
+
+/* ========== BADGES ========== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-buy { background: rgba(86, 204, 132, 0.15); color: var(--green); }
+.badge-sell { background: rgba(240, 112, 112, 0.15); color: var(--red); }
+.badge-cluster { background: rgba(168, 126, 240, 0.15); color: var(--purple); }
+.badge-layer { font-size: 10px; }
+
+/* ========== SIGNAL BOX ========== */
+.signal-box {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+.signal-green {
+  background: rgba(86, 204, 132, 0.1);
+  border: 1px solid rgba(86, 204, 132, 0.3);
+  color: var(--green);
+}
+
+.signal-red {
+  background: rgba(240, 112, 112, 0.1);
+  border: 1px solid rgba(240, 112, 112, 0.3);
+  color: var(--red);
+}
+
+.signal-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+.signal-green .signal-dot { background: var(--green); }
+.signal-red .signal-dot { background: var(--red); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ========== FILTERS ========== */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  align-items: center;
+}
+
+.filters label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.filters select,
+.filters input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+}
+
+.filters select { min-width: 140px; }
+
+/* ========== TRANSACTION FEED ========== */
+.feed {
+  max-height: 600px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.feed::-webkit-scrollbar { width: 6px; }
+.feed::-webkit-scrollbar-track { background: var(--bg); }
+.feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.txn-card {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  align-items: center;
+  transition: border-color 0.2s;
+  cursor: pointer;
+}
+
+.txn-card:hover { border-color: var(--primary); }
+.txn-date { font-family: var(--font-mono); font-size: var(--text-xs); color: var(--muted); }
+.txn-info { display: flex; flex-direction: column; gap: 2px; }
+.txn-name { font-weight: 600; font-size: var(--text-sm); }
+.txn-ticker { font-family: var(--font-mono); color: var(--primary); font-weight: 500; font-size: var(--text-xs); }
+.txn-details { font-size: var(--text-xs); color: var(--muted); }
+.txn-value { text-align: right; }
+.txn-value .amount { font-family: var(--font-mono); font-weight: 600; font-size: var(--text-sm); }
+
+/* ========== TABLE ========== */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+th {
+  text-align: left;
+  padding: var(--space-3);
+  border-bottom: 2px solid var(--border);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+}
+
+td {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.table-wrap {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.table-wrap::-webkit-scrollbar { width: 6px; }
+.table-wrap::-webkit-scrollbar-track { background: var(--bg); }
+.table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ========== NOTABLE CARDS ========== */
+.notable-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.notable-card:hover {
+  border-color: var(--green);
+  transform: translateY(-2px);
+}
+
+.notable-card .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.notable-card .ticker {
+  font-family: var(--font-mono);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: var(--text-base);
+}
+
+.notable-card .detail {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.notable-card .amount {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: var(--text-lg);
+}
+
+/* ========== CLUSTER CARDS ========== */
+.cluster-card {
+  background: var(--bg);
+  border: 1px solid rgba(168, 126, 240, 0.3);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+}
+
+.cluster-card:hover {
+  border-color: var(--purple);
+  transform: translateY(-2px);
+}
+
+.cluster-card h4 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--purple);
+  margin-bottom: var(--space-2);
+}
+
+.cluster-card .members {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-top: var(--space-2);
+  line-height: 1.6;
+}
+
+/* ========== TIMELINE BAR ========== */
+.timeline-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.timeline-bar .label {
+  width: 80px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.timeline-bar .bar-wrap {
+  flex: 1;
+  height: 22px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+}
+
+.timeline-bar .bar {
+  height: 100%;
+  transition: width 0.5s;
+}
+
+.timeline-bar .val {
+  width: 80px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  padding-left: var(--space-2);
+}
+
+.mono { font-family: var(--font-mono); }
+
+/* ========== SIDE PANEL ========== */
+.side-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.side-panel-overlay.open {
+  display: block;
+  opacity: 1;
+}
+
+.side-panel {
+  position: fixed;
+  top: 0;
+  right: -480px;
+  width: 480px;
+  height: 100%;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  z-index: 201;
+  transition: right 0.3s;
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+.side-panel.open { right: 0; }
+
+.side-panel .close-btn {
+  position: absolute;
+  top: var(--space-4);
+  right: var(--space-4);
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: var(--text-xl);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+}
+
+.side-panel .close-btn:hover { background: var(--s2); }
+
+.side-panel h2 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+}
+
+.side-panel .meta {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-bottom: var(--space-4);
+}
+
+.side-panel .stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.side-panel .stat-row .label { color: var(--muted); }
+.side-panel .stat-row .val { font-family: var(--font-mono); font-weight: 600; }
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1200px) {
+  .sidebar { display: none; }
+}
+
+@media (max-width: 1024px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .grid-4,
+  .grid-3 { grid-template-columns: 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .txn-card { grid-template-columns: 80px 1fr; }
+  .txn-value { grid-column: 1 / -1; text-align: left; }
+  .main { padding: var(--space-4); }
+  .side-panel { width: 100%; right: -100%; }
+}
+</style>
+</head>
+<body>
+
+<!-- ========== TAB BAR ========== -->
+<nav class="tab-bar">
+  <a href="index.html" class="tab-link" data-i18n="tab.dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="tab.correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="tab.technicals">Technicals</a>
+  <a href="insider.html" class="tab-link active" data-i18n="tab.insider">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="tab.options">Options Flow</a>
+  <a href="sentiment.html" class="tab-link" data-i18n="tab.sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="tab.leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link" data-i18n="tab.stress">Stress Test</a>
+</nav>
+
+<!-- ========== HEADER ========== -->
+<header class="page-header">
+  <h1 data-i18n="insider.title">Insider &amp; Institutional Activity</h1>
+  <button class="theme-toggle" onclick="toggleTheme()" data-i18n="theme.toggle">Toggle Theme</button>
+</header>
+
+<!-- ========== LAYOUT ========== -->
+<div class="layout">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar"></aside>
+
+  <!-- Main Content -->
+  <div class="main">
+    <!-- Smart Money Signal Banner -->
+    <div id="smartSignal" style="margin-bottom:var(--space-6)"></div>
+
+    <!-- KPI Summary Stats -->
+    <div class="grid-4" id="statsGrid"></div>
+
+    <!-- Charts Row: Buy/Sell Ratio by Layer + Net Activity by Ticker -->
+    <div class="grid-2">
+      <div class="card">
+        <h2 data-i18n="insider.buyRatioByLayer">Buy / Sell Ratio by Layer</h2>
+        <div style="position:relative;height:420px">
+          <canvas id="chartLayerRatio"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="insider.netByTicker">Net Insider Activity by Ticker (Top 20)</h2>
+        <div style="position:relative;height:420px">
+          <canvas id="chartNetBuying"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row: Buy vs Sell Pie + Activity Timeline -->
+    <div class="grid-2">
+      <div class="card">
+        <h2 data-i18n="insider.buySellDist">Buy vs Sell Distribution (by Value)</h2>
+        <div style="position:relative;height:350px;display:flex;align-items:center;justify-content:center">
+          <canvas id="chartPie"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="insider.timeline">Activity Timeline by Month</h2>
+        <div style="position:relative;height:350px">
+          <canvas id="chartTimeline"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notable Insider Moves Cards -->
+    <div class="card">
+      <h2 data-i18n="insider.notable">Notable Insider Moves — Bullish Signals</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="insider.notableDesc">
+        Significant insider purchases above $1M — often interpreted as bullish conviction signals from company leadership.
+      </p>
+      <div class="grid-3" id="notableGrid"></div>
+    </div>
+
+    <!-- Cluster Detection -->
+    <div class="card">
+      <h2 data-i18n="insider.clusters">Cluster Detection — Multiple Insiders Buying Same Stock</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="insider.clusterDesc">
+        Stocks where two or more different insiders made purchases — a stronger signal than single-insider activity.
+      </p>
+      <div class="grid-3" id="clusterGrid"></div>
+    </div>
+
+    <!-- Insider Activity by Layer (horizontal stacked bars) -->
+    <div class="card">
+      <h2 data-i18n="insider.layerBreakdown">Insider Activity Breakdown by Layer</h2>
+      <div id="layerBreakdown"></div>
+    </div>
+
+    <!-- Transaction Feed with Filters -->
+    <div class="card">
+      <h2 data-i18n="insider.feed">Recent Insider Transactions</h2>
+      <div class="filters">
+        <label data-i18n="insider.filterTicker">Ticker</label>
+        <select id="filterTicker">
+          <option value="ALL" selected>All Tickers</option>
+        </select>
+        <label data-i18n="insider.filterType">Type</label>
+        <select id="filterType">
+          <option value="ALL">All</option>
+          <option value="Buy">Buy</option>
+          <option value="Sell">Sell</option>
+        </select>
+        <label data-i18n="insider.filterLayer">Layer</label>
+        <select id="filterLayer">
+          <option value="ALL">All Layers</option>
+        </select>
+        <label data-i18n="insider.filterFrom">From</label>
+        <input type="date" id="filterFrom">
+        <label data-i18n="insider.filterTo">To</label>
+        <input type="date" id="filterTo">
+      </div>
+      <div class="feed" id="feedContainer"></div>
+    </div>
+
+    <!-- Market Context Table -->
+    <div class="card">
+      <h2 data-i18n="insider.context">Market Context — Insider-Active Tickers</h2>
+      <div class="table-wrap">
+        <table id="contextTable">
+          <thead>
+            <tr>
+              <th data-i18n="table.ticker">Ticker</th>
+              <th data-i18n="table.name">Name</th>
+              <th data-i18n="table.layer">Layer</th>
+              <th data-i18n="table.price">Price</th>
+              <th data-i18n="table.change">Chg %</th>
+              <th data-i18n="table.volume">Volume</th>
+              <th data-i18n="table.mktCap">Mkt Cap</th>
+              <th data-i18n="table.pe">P/E</th>
+              <th data-i18n="table.txns"># Txns</th>
+              <th data-i18n="table.netVal">Net Value</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SIDE PANEL DRAWER ========== -->
+<div class="side-panel-overlay" id="panelOverlay" onclick="closePanel()"></div>
+<div class="side-panel" id="sidePanel">
+  <button class="close-btn" onclick="closePanel()" aria-label="Close">&times;</button>
+  <div id="panelContent"></div>
+</div>
+
+<!-- ========== SAFE STORAGE SHIM ========== -->
+<script>
+var _memStore = {};
+var safeStorage = {
+  getItem: function(k) { return _memStore[k] || null; },
+  setItem: function(k, v) { _memStore[k] = v; },
+  removeItem: function(k) { delete _memStore[k]; }
+};
+</script>
+
+<!-- ========== MAIN APPLICATION SCRIPT ========== -->
+<script>
+// =================================================================
+// EMBEDDED FINANCIAL DATA — Software Value Chain (42 tickers)
+// =================================================================
+const QUOTES = {"AMZN": {"name": "Amazon.com, Inc.", "layer": "Cloud Infrastructure", "layerColor": "#5b9cf6", "price": 248.5, "change": -0.52, "changePct": -0.20882, "marketCap": 2667622650000.0, "pe": 34.66, "eps": 7.17, "volume": 42574235.0, "avgVolume": 51693068.0, "yearLow": 165.29, "yearHigh": 258.6, "volRatio": 0.82, "thesis": "AWS dominates IaaS/PaaS with 31% market share; AI/ML services driving growth"}, "MSFT": {"name": "Microsoft Corporation", "layer": "Cloud Infrastructure", "layerColor": "#5b9cf6", "price": 411.22, "change": 18.11, "changePct": 4.60685, "marketCap": 3053567568600.0, "pe": 25.75, "eps": 15.97, "volume": 43012959.0, "avgVolume": 37609490.0, "yearLow": 355.67, "yearHigh": 555.45, "volRatio": 1.14, "thesis": "Azure fastest-growing cloud; Copilot monetization across 365/GitHub/Dynamics"}, "GOOGL": {"name": "Alphabet Inc.", "layer": "Cloud Infrastructure", "layerColor": "#5b9cf6", "price": 337.12, "change": 4.21, "changePct": 1.26461, "marketCap": 4078140734731.0005, "pe": 31.16, "eps": 10.82, "volume": 24854068.0, "avgVolume": 33294495.0, "yearLow": 146.1, "yearHigh": 349.0, "volRatio": 0.75, "thesis": "GCP gaining share; Gemini AI integration across Cloud and Workspace"}, "ORCL": {"name": "Oracle Corporation", "layer": "Cloud Infrastructure", "layerColor": "#5b9cf6", "price": 169.8, "change": 6.8, "changePct": 4.17178, "marketCap": 488352610800.0, "pe": 30.48, "eps": 5.57, "volume": 39108504.0, "avgVolume": 28893110.0, "yearLow": 121.24, "yearHigh": 345.72, "volRatio": 1.35, "thesis": "OCI growth accelerating; database-as-a-service moat; Gen2 cloud architecture"}, "CRWD": {"name": "CrowdStrike Holdings, Inc.", "layer": "Cybersecurity", "layerColor": "#f07070", "price": 411.16, "change": 12.67, "changePct": 3.1795, "marketCap": 104275932240.0, "pe": -674.03, "eps": -0.61, "volume": 3099776.0, "avgVolume": 4168110.0, "yearLow": 342.72, "yearHigh": 566.9, "volRatio": 0.74, "thesis": "Falcon platform leader in XDR; 80%+ gross margins; land-and-expand model"}, "PANW": {"name": "Palo Alto Networks, Inc.", "layer": "Cybersecurity", "layerColor": "#f07070", "price": 164.11, "change": 2.52, "changePct": 1.5595, "marketCap": 111842823382.0, "pe": 90.67, "eps": 1.81, "volume": 7384306.0, "avgVolume": 11051938.0, "yearLow": 139.57, "yearHigh": 223.61, "volRatio": 0.67, "thesis": "Platformization strategy consolidating security spend; SASE + cloud security"}, "ZS": {"name": "Zscaler, Inc.", "layer": "Cybersecurity", "layerColor": "#f07070", "price": 131.01, "change": 8.33, "changePct": 6.79002, "marketCap": 21065190000.0, "pe": -304.67, "eps": -0.43, "volume": 3769526.0, "avgVolume": 2997601.0, "yearLow": 114.625, "yearHigh": 336.99, "volRatio": 1.26, "thesis": "Zero-trust leader; proxy architecture scales better than VPN; 125%+ NRR"}, "FTNT": {"name": "Fortinet, Inc.", "layer": "Cybersecurity", "layerColor": "#f07070", "price": 79.64, "change": 0.94, "changePct": 1.19441, "marketCap": 59224134604.0, "pe": 32.91, "eps": 2.42, "volume": 5664082.0, "avgVolume": 6787323.0, "yearLow": 70.12, "yearHigh": 109.33, "volRatio": 0.83, "thesis": "Integrated security fabric; FortiASIC custom silicon advantage; strong FCF"}, "S": {"name": "SentinelOne, Inc.", "layer": "Cybersecurity", "layerColor": "#f07070", "price": 13.26, "change": 0.51, "changePct": 4.0, "marketCap": 4428521760.0, "pe": -9.68, "eps": -1.37, "volume": 6582621.0, "avgVolume": 8664738.0, "yearLow": 11.81, "yearHigh": 21.4, "volRatio": 0.76, "thesis": "AI-native endpoint security; Singularity platform gaining enterprise traction"}, "SNOW": {"name": "Snowflake Inc.", "layer": "Data & Analytics", "layerColor": "#56d4e8", "price": 144.48, "change": 9.01, "changePct": 6.65092, "marketCap": 49946736000.0, "pe": -39.91, "eps": -3.62, "volume": 7574086.0, "avgVolume": 6872466.0, "yearLow": 118.3, "yearHigh": 280.67, "volRatio": 1.1, "thesis": "Data Cloud platform; consumption model; Cortex AI for unstructured data"}, "MDB": {"name": "MongoDB, Inc.", "layer": "Data & Analytics", "layerColor": "#56d4e8", "price": 244.06, "change": 10.46, "changePct": 4.47774, "marketCap": 19614986760.0, "pe": -277.34, "eps": -0.88, "volume": 1812257.0, "avgVolume": 1925028.0, "yearLow": 148.88, "yearHigh": 444.72, "volRatio": 0.94, "thesis": "Document database leader; Atlas cloud 65%+ of revenue; developer-first GTM"}, "CFLT": {"name": "Confluent, Inc.", "layer": "Data & Analytics", "layerColor": "#56d4e8", "price": 30.99, "change": 0.0, "changePct": 0.0, "marketCap": 11083508824.0, "pe": -36.03488372093023, "eps": -0.86, "volume": 14322497.0, "avgVolume": 12051344.0, "yearLow": 15.64, "yearHigh": 31.0, "volRatio": 1.19, "thesis": "Data streaming platform; Kafka-native cloud; real-time data pipelines"}, "ESTC": {"name": "Elastic N.V.", "layer": "Data & Analytics", "layerColor": "#56d4e8", "price": 47.51, "change": 2.12, "changePct": 4.67063, "marketCap": 4917332890.0, "pe": -60.14, "eps": -0.79, "volume": 1215008.0, "avgVolume": 2238978.0, "yearLow": 42.05, "yearHigh": 96.07, "volRatio": 0.54, "thesis": "Search-powered observability; AI assistant integrations; hybrid deployment"}, "DDOG": {"name": "Datadog, Inc.", "layer": "Observability & DevOps", "layerColor": "#a87ef0", "price": 121.06, "change": 10.49, "changePct": 9.4872, "marketCap": 42837241889.0, "pe": 390.52, "eps": 0.31, "volume": 5235651.0, "avgVolume": 5817230.0, "yearLow": 87.695, "yearHigh": 201.69, "volRatio": 0.9, "thesis": "Full-stack observability leader; 20+ products; best-in-class NDR expansion"}, "DT": {"name": "Dynatrace, Inc.", "layer": "Observability & DevOps", "layerColor": "#a87ef0", "price": 35.45, "change": 2.18, "changePct": 6.55245, "marketCap": 10687758356.0, "pe": 59.08, "eps": 0.6, "volume": 5003525.0, "avgVolume": 7300110.0, "yearLow": 31.635, "yearHigh": 57.55, "volRatio": 0.69, "thesis": "AI-powered observability; Grail platform; strong in large enterprises"}, "GTLB": {"name": "GitLab Inc.", "layer": "Observability & DevOps", "layerColor": "#a87ef0", "price": 21.76, "change": 1.68, "changePct": 8.36653, "marketCap": 3702072255.0, "pe": -64.0, "eps": -0.34, "volume": 6870948.0, "avgVolume": 6522646.0, "yearLow": 18.73, "yearHigh": 54.08, "volRatio": 1.05, "thesis": "DevSecOps platform; single app for entire SDLC; AI-powered Duo features"}, "NET": {"name": "Cloudflare, Inc.", "layer": "Observability & DevOps", "layerColor": "#a87ef0", "price": 190.02, "change": 11.37, "changePct": 6.3644, "marketCap": 66883296606.0, "pe": -655.24, "eps": -0.29, "volume": 5208879.0, "avgVolume": 5454241.0, "yearLow": 100.25, "yearHigh": 260.0, "volRatio": 0.96, "thesis": "Edge cloud platform; Workers serverless; R2 storage disrupting S3 pricing"}, "CRM": {"name": "Salesforce, Inc.", "layer": "Enterprise SaaS", "layerColor": "#56cc84", "price": 177.6, "change": 6.28999, "changePct": 3.6717, "marketCap": 166411204618.0, "pe": 22.77, "eps": 7.8, "volume": 13275722.0, "avgVolume": 13857671.0, "yearLow": 163.52, "yearHigh": 296.05, "volRatio": 0.96, "thesis": "CRM leader; Agentforce AI platform; Data Cloud unifying customer 360"}, "NOW": {"name": "ServiceNow, Inc.", "layer": "Enterprise SaaS", "layerColor": "#56cc84", "price": 94.19, "change": 6.4, "changePct": 7.29012, "marketCap": 98522740000.0, "pe": 56.4, "eps": 1.67, "volume": 25676225.0, "avgVolume": 21355618.0, "yearLow": 81.24, "yearHigh": 211.478, "volRatio": 1.2, "thesis": "Enterprise workflow automation; Now Platform AI agents; IT + non-IT expansion"}, "WDAY": {"name": "Workday, Inc.", "layer": "Enterprise SaaS", "layerColor": "#56cc84", "price": 124.12, "change": 6.26, "changePct": 5.31139, "marketCap": 32903925283.0, "pe": 47.92, "eps": 2.59, "volume": 3808624.0, "avgVolume": 5516245.0, "yearLow": 110.36, "yearHigh": 276.0, "volRatio": 0.69, "thesis": "HCM/ERP leader for enterprises; AI-driven insights; high retention rates"}, "TEAM": {"name": "Atlassian Corporation", "layer": "Enterprise SaaS", "layerColor": "#56cc84", "price": 66.0, "change": 6.29, "changePct": 10.53425, "marketCap": 17363443614.0, "pe": -91.67, "eps": -0.72, "volume": 10703105.0, "avgVolume": 6914898.0, "yearLow": 56.01, "yearHigh": 242.0, "volRatio": 1.55, "thesis": "Developer collaboration; Jira dominant in project management; Rovo AI assistant"}, "PLTR": {"name": "Palantir Technologies Inc.", "layer": "AI / ML Software", "layerColor": "#f5a454", "price": 142.15, "change": 6.45, "changePct": 4.75313, "marketCap": 325732460500.0, "pe": 225.63, "eps": 0.63, "volume": 47901983.0, "avgVolume": 52759571.0, "yearLow": 89.31, "yearHigh": 207.52, "volRatio": 0.91, "thesis": "AI/ML analytics platform; AIP bootcamps driving enterprise adoption; gov + commercial"}, "AI": {"name": "C3.ai, Inc.", "layer": "AI / ML Software", "layerColor": "#f5a454", "price": 9.52, "change": 1.12, "changePct": 13.33333, "marketCap": 1349850320.0, "pe": -3.01, "eps": -3.16, "volume": 7818648.0, "avgVolume": 6679713.0, "yearLow": 7.675, "yearHigh": 30.24, "volRatio": 1.17, "thesis": "Enterprise AI platform; federal contracts; industry-specific AI applications"}, "PATH": {"name": "UiPath Inc.", "layer": "AI / ML Software", "layerColor": "#f5a454", "price": 10.61, "change": 0.59, "changePct": 5.88822, "marketCap": 5673694540.0, "pe": 20.4, "eps": 0.52, "volume": 23842900.0, "avgVolume": 32274536.0, "yearLow": 9.28, "yearHigh": 19.84, "volRatio": 0.74, "thesis": "RPA leader transitioning to AI-powered automation; large enterprise base"}, "DUOL": {"name": "Duolingo, Inc.", "layer": "AI / ML Software", "layerColor": "#f5a454", "price": 98.78, "change": 7.32, "changePct": 8.0035, "marketCap": 4637739274.0, "pe": 11.53, "eps": 8.57, "volume": 1947700.0, "avgVolume": 2672080.0, "yearLow": 87.89, "yearHigh": 544.93, "volRatio": 0.73, "thesis": "AI-native language learning; gamification moat; subscription + ads model"}, "VEEV": {"name": "Veeva Systems Inc.", "layer": "Vertical SaaS", "layerColor": "#e8c44a", "price": 167.295, "change": 8.205, "changePct": 5.15746, "marketCap": 27500261964.0, "pe": 30.81, "eps": 5.43, "volume": 2445686.0, "avgVolume": 2253983.0, "yearLow": 148.05, "yearHigh": 310.5, "volRatio": 1.09, "thesis": "Life sciences cloud leader; regulatory compliance moat; high switching costs"}, "PCOR": {"name": "Procore Technologies, Inc.", "layer": "Vertical SaaS", "layerColor": "#e8c44a", "price": 52.39, "change": 2.79, "changePct": 5.625, "marketCap": 8145065284.0, "pe": -78.19, "eps": -0.67, "volume": 3079762.0, "avgVolume": 2709185.0, "yearLow": 46.08, "yearHigh": 82.315, "volRatio": 1.14, "thesis": "Construction management platform; digitizing $13T industry; international expansion"}, "BILL": {"name": "Bill.com Holdings, Inc.", "layer": "Vertical SaaS", "layerColor": "#e8c44a", "price": 39.31, "change": 2.31, "changePct": 6.24324, "marketCap": 3937159012.0, "pe": -170.91, "eps": -0.23, "volume": 1627468.0, "avgVolume": 2776991.0, "yearLow": 34.44, "yearHigh": 57.21, "volRatio": 0.59, "thesis": "SMB financial operations; AP/AR automation; embedded lending opportunity"}, "TOST": {"name": "Toast, Inc.", "layer": "Vertical SaaS", "layerColor": "#e8c44a", "price": 28.16, "change": 1.06, "changePct": 3.91144, "marketCap": 16586240056.0, "pe": 50.29, "eps": 0.56, "volume": 7158230.0, "avgVolume": 11954835.0, "yearLow": 24.35, "yearHigh": 49.66, "volRatio": 0.6, "thesis": "Restaurant platform; hardware + SaaS + fintech stack; 120K+ locations"}, "SQ": {"name": "Block, Inc.", "layer": "Fintech / Payments", "layerColor": "#4fc4cf", "price": 83.46, "change": 0.47, "changePct": 0.56633, "marketCap": 51729675689.0, "pe": 49.97604790419162, "eps": 1.67, "volume": 1142032.0, "avgVolume": 4489291.0, "yearLow": 55.0, "yearHigh": 99.26, "volRatio": 0.25, "thesis": "Seller ecosystem + Cash App; Bitcoin integration; commerce + banking convergence"}, "PYPL": {"name": "PayPal Holdings, Inc.", "layer": "Fintech / Payments", "layerColor": "#4fc4cf", "price": 49.57, "change": 1.6, "changePct": 3.33542, "marketCap": 45637364050.0, "pe": 9.16, "eps": 5.41, "volume": 12938087.0, "avgVolume": 23829165.0, "yearLow": 38.46, "yearHigh": 79.5, "volRatio": 0.54, "thesis": "Digital payments scale; Venmo monetization; branded checkout improving"}, "AFRM": {"name": "Affirm Holdings, Inc.", "layer": "Fintech / Payments", "layerColor": "#4fc4cf", "price": 59.62, "change": 3.8, "changePct": 6.8076, "marketCap": 19860056834.0, "pe": 73.6, "eps": 0.81, "volume": 7529607.0, "avgVolume": 6465755.0, "yearLow": 39.42, "yearHigh": 100.0, "volRatio": 1.16, "thesis": "BNPL leader; transparent pricing; expanding merchant network; path to profitability"}, "TTD": {"name": "The Trade Desk, Inc.", "layer": "AdTech / MarTech", "layerColor": "#f0ad4e", "price": 22.38, "change": 1.36, "changePct": 6.47003, "marketCap": 10652366737.0, "pe": 24.87, "eps": 0.9, "volume": 15375594.0, "avgVolume": 19332040.0, "yearLow": 19.74, "yearHigh": 91.45, "volRatio": 0.8, "thesis": "Independent DSP leader; UID 2.0 identity; Kokai AI-powered bidding platform"}, "ZETA": {"name": "Zeta Global Holdings Corp.", "layer": "AdTech / MarTech", "layerColor": "#f0ad4e", "price": 17.37, "change": 1.17, "changePct": 7.22222, "marketCap": 4243985003.0, "pe": -124.07, "eps": -0.14, "volume": 6980920.0, "avgVolume": 8326496.0, "yearLow": 10.69, "yearHigh": 24.9, "volRatio": 0.84, "thesis": "AI-powered marketing cloud; CDP + omnichannel; enterprise data-driven marketing"}, "HUBS": {"name": "HubSpot, Inc.", "layer": "AdTech / MarTech", "layerColor": "#f0ad4e", "price": 218.62, "change": 12.18, "changePct": 5.90002, "marketCap": 11530128110.0, "pe": 251.29, "eps": 0.87, "volume": 2216550.0, "avgVolume": 1836271.0, "yearLow": 187.45, "yearHigh": 682.565, "volRatio": 1.21, "thesis": "Inbound marketing pioneer; CRM suite for mid-market; AI content creation"}, "TWLO": {"name": "Twilio Inc.", "layer": "Communication Platforms", "layerColor": "#7a7e96", "price": 134.07, "change": 10.07, "changePct": 8.12097, "marketCap": 20326731046.0, "pe": 638.43, "eps": 0.21, "volume": 1857467.0, "avgVolume": 2442110.0, "yearLow": 80.9, "yearHigh": 145.9, "volRatio": 0.76, "thesis": "CPaaS leader; programmable communications; Segment CDP for data unification"}, "ZM": {"name": "Zoom Communications, Inc.", "layer": "Communication Platforms", "layerColor": "#7a7e96", "price": 89.03, "change": 6.63, "changePct": 8.04612, "marketCap": 26361867222.0, "pe": 14.41, "eps": 6.18, "volume": 5933854.0, "avgVolume": 4430758.0, "yearLow": 69.15, "yearHigh": 97.58, "volRatio": 1.34, "thesis": "Unified comms + AI Companion; Zoom Workplace platform; enterprise expansion"}, "RNG": {"name": "RingCentral, Inc.", "layer": "Communication Platforms", "layerColor": "#7a7e96", "price": 38.71, "change": 1.54, "changePct": 4.14312, "marketCap": 3463823175.0, "pe": 80.65, "eps": 0.48, "volume": 1013653.0, "avgVolume": 2589313.0, "yearLow": 21.91, "yearHigh": 42.42, "volRatio": 0.39, "thesis": "UCaaS + CCaaS platform; AI-powered virtual agents; healthcare/education verticals"}, "OKTA": {"name": "Okta, Inc.", "layer": "Identity & Access", "layerColor": "#c06ef0", "price": 67.35, "change": 3.26, "changePct": 5.0866, "marketCap": 11395651048.0, "pe": 51.41, "eps": 1.31, "volume": 4394581.0, "avgVolume": 3573646.0, "yearLow": 62.66, "yearHigh": 127.567, "volRatio": 1.23, "thesis": "Identity-as-a-service leader; Workforce + Customer Identity; zero-trust gateway"}, "CYBR": {"name": "CyberArk Software Ltd.", "layer": "Identity & Access", "layerColor": "#c06ef0", "price": 408.85001, "change": 1e-05, "changePct": 2.445885e-06, "marketCap": 20637502330.0, "pe": -139.0646292517007, "eps": -2.94, "volume": 0.0, "avgVolume": 783172.0, "yearLow": 288.63, "yearHigh": 526.19, "volRatio": 0.0, "thesis": "Privileged access management leader; secrets management; identity security"}, "RDDT": {"name": "Reddit, Inc.", "layer": "Internet / Social", "layerColor": "#f07070", "price": 158.54, "change": 4.0, "changePct": 2.58833, "marketCap": 30286812561.0, "pe": 56.42, "eps": 2.81, "volume": 3599477.0, "avgVolume": 5480253.0, "yearLow": 90.78, "yearHigh": 282.95, "volRatio": 0.66, "thesis": "Community-driven platform; unique data licensing for AI; growing ad monetization"}, "PINS": {"name": "Pinterest, Inc.", "layer": "Internet / Social", "layerColor": "#f07070", "price": 20.27, "change": 1.57, "changePct": 8.39572, "marketCap": 13676716513.0, "pe": 33.23, "eps": 0.61, "volume": 24819806.0, "avgVolume": 20381276.0, "yearLow": 13.84, "yearHigh": 39.93, "volRatio": 1.22, "thesis": "Visual discovery & shopping; AI-powered recommendations; advertiser ROI improving"}};
+
+const LAYERS = {"Cloud Infrastructure": {"color": "#5b9cf6", "tickers": ["AMZN", "MSFT", "GOOGL", "ORCL"]}, "Cybersecurity": {"color": "#f07070", "tickers": ["CRWD", "PANW", "ZS", "FTNT", "S"]}, "Data & Analytics": {"color": "#56d4e8", "tickers": ["SNOW", "MDB", "CFLT", "ESTC"]}, "Observability & DevOps": {"color": "#a87ef0", "tickers": ["DDOG", "DT", "GTLB", "NET"]}, "Enterprise SaaS": {"color": "#56cc84", "tickers": ["CRM", "NOW", "WDAY", "TEAM"]}, "AI / ML Software": {"color": "#f5a454", "tickers": ["PLTR", "AI", "PATH", "DUOL"]}, "Vertical SaaS": {"color": "#e8c44a", "tickers": ["VEEV", "PCOR", "BILL", "TOST"]}, "Fintech / Payments": {"color": "#4fc4cf", "tickers": ["SQ", "PYPL", "AFRM"]}, "AdTech / MarTech": {"color": "#f0ad4e", "tickers": ["TTD", "ZETA", "HUBS"]}, "Communication Platforms": {"color": "#7a7e96", "tickers": ["TWLO", "ZM", "RNG"]}, "Identity & Access": {"color": "#c06ef0", "tickers": ["OKTA", "CYBR"]}, "Internet / Social": {"color": "#f07070", "tickers": ["RDDT", "PINS"]}};
+
+// =================================================================
+// SIMULATED INSIDER TRANSACTION DATA
+// Realistic CEO/CFO/CTO names for each software company
+// =================================================================
+const INSIDER_DATA = {
+  "AMZN": [
+    {"date":"2026-04-08","name":"JASSY ANDREW R","title":"CEO","type":"Sell","shares":25000,"price":250.12,"value":6253000},
+    {"date":"2026-03-22","name":"OLSAVSKY BRIAN T","title":"CFO","type":"Sell","shares":12000,"price":245.80,"value":2949600},
+    {"date":"2026-03-05","name":"SELIPSKY ADAM","title":"CEO AWS","type":"Sell","shares":8500,"price":239.44,"value":2035240},
+    {"date":"2026-02-18","name":"JASSY ANDREW R","title":"CEO","type":"Sell","shares":15000,"price":242.30,"value":3634500}
+  ],
+  "MSFT": [
+    {"date":"2026-04-10","name":"NADELLA SATYA","title":"CEO","type":"Sell","shares":30000,"price":415.20,"value":12456000},
+    {"date":"2026-03-28","name":"HOOD AMY E","title":"CFO","type":"Sell","shares":18000,"price":408.90,"value":7360200},
+    {"date":"2026-02-15","name":"SMITH BRADFORD L","title":"Vice Chair","type":"Sell","shares":10000,"price":395.50,"value":3955000},
+    {"date":"2026-01-22","name":"NADELLA SATYA","title":"CEO","type":"Sell","shares":20000,"price":388.75,"value":7775000}
+  ],
+  "GOOGL": [
+    {"date":"2026-04-05","name":"PICHAI SUNDAR","title":"CEO","type":"Sell","shares":22000,"price":175.30,"value":3856600},
+    {"date":"2026-03-18","name":"PORAT RUTH","title":"Pres & CIO","type":"Sell","shares":15000,"price":170.88,"value":2563200},
+    {"date":"2026-02-10","name":"PICHAI SUNDAR","title":"CEO","type":"Sell","shares":18000,"price":168.50,"value":3033000}
+  ],
+  "ORCL": [
+    {"date":"2026-04-02","name":"CATZ SAFRA A","title":"CEO","type":"Sell","shares":200000,"price":168.75,"value":33750000},
+    {"date":"2026-03-15","name":"ELLISON LAWRENCE J","title":"CTO & Founder","type":"Sell","shares":500000,"price":165.20,"value":82600000},
+    {"date":"2026-02-20","name":"SCARDELLO DORIAN","title":"SVP Finance","type":"Buy","shares":5000,"price":155.40,"value":777000}
+  ],
+  "CRM": [
+    {"date":"2026-04-09","name":"BENIOFF MARC","title":"CEO & Chair","type":"Buy","shares":50000,"price":177.60,"value":8880000},
+    {"date":"2026-03-25","name":"WEAVER AMY E","title":"CFO","type":"Buy","shares":15000,"price":172.30,"value":2584500},
+    {"date":"2026-03-10","name":"HARRIS PARKER","title":"CTO & Co-Founder","type":"Buy","shares":20000,"price":168.90,"value":3378000},
+    {"date":"2026-02-05","name":"BENIOFF MARC","title":"CEO & Chair","type":"Buy","shares":30000,"price":164.80,"value":4944000}
+  ],
+  "NOW": [
+    {"date":"2026-04-07","name":"MCDERMOTT WILLIAM","title":"CEO","type":"Buy","shares":8000,"price":850.25,"value":6802000},
+    {"date":"2026-03-20","name":"DESAI GINA","title":"CFO","type":"Buy","shares":3000,"price":835.10,"value":2505300},
+    {"date":"2026-02-12","name":"MCDERMOTT WILLIAM","title":"CEO","type":"Buy","shares":5000,"price":822.40,"value":4112000}
+  ],
+  "CRWD": [
+    {"date":"2026-04-11","name":"KURTZ GEORGE","title":"CEO & Co-Founder","type":"Buy","shares":12000,"price":388.50,"value":4662000},
+    {"date":"2026-03-28","name":"PODBERE BURT W","title":"CFO","type":"Buy","shares":5000,"price":375.20,"value":1876000},
+    {"date":"2026-03-15","name":"SENTONAS MICHAEL","title":"CTO","type":"Buy","shares":8000,"price":370.80,"value":2966400},
+    {"date":"2026-02-22","name":"KURTZ GEORGE","title":"CEO & Co-Founder","type":"Buy","shares":6000,"price":362.50,"value":2175000}
+  ],
+  "PANW": [
+    {"date":"2026-04-06","name":"ARORA NIKESH","title":"CEO & Chair","type":"Sell","shares":35000,"price":195.40,"value":6839000},
+    {"date":"2026-03-22","name":"ZUKERMAN LEE","title":"CFO","type":"Sell","shares":10000,"price":190.75,"value":1907500},
+    {"date":"2026-02-28","name":"ARORA NIKESH","title":"CEO & Chair","type":"Sell","shares":25000,"price":188.20,"value":4705000}
+  ],
+  "ZS": [
+    {"date":"2026-04-03","name":"CHAUDHRY JAY","title":"CEO & Founder","type":"Sell","shares":20000,"price":228.60,"value":4572000},
+    {"date":"2026-03-18","name":"RAMAMOORTHI REMO","title":"CFO","type":"Sell","shares":8000,"price":222.10,"value":1776800}
+  ],
+  "FTNT": [
+    {"date":"2026-04-08","name":"XIE KEN","title":"CEO & Founder","type":"Sell","shares":40000,"price":105.20,"value":4208000},
+    {"date":"2026-03-12","name":"DEL CASTILLO KEITH","title":"CFO","type":"Sell","shares":15000,"price":101.80,"value":1527000}
+  ],
+  "S": [
+    {"date":"2026-04-01","name":"WEINGARTEN TOMER","title":"CEO & Co-Founder","type":"Buy","shares":50000,"price":25.40,"value":1270000},
+    {"date":"2026-03-15","name":"BERNHARDT DAVID","title":"CFO","type":"Buy","shares":25000,"price":24.80,"value":620000},
+    {"date":"2026-02-20","name":"WEINGARTEN TOMER","title":"CEO & Co-Founder","type":"Buy","shares":30000,"price":23.90,"value":717000}
+  ],
+  "SNOW": [
+    {"date":"2026-04-10","name":"RAMASWAMY SRIDHAR","title":"CEO","type":"Buy","shares":10000,"price":178.50,"value":1785000},
+    {"date":"2026-03-25","name":"SCARPELLI MICHAEL P","title":"CFO","type":"Sell","shares":12000,"price":175.20,"value":2102400}
+  ],
+  "MDB": [
+    {"date":"2026-04-05","name":"ITTYCHERIA DEV","title":"CEO","type":"Buy","shares":8000,"price":225.30,"value":1802400},
+    {"date":"2026-03-20","name":"MERRIMAN MICHAEL","title":"CFO","type":"Buy","shares":5000,"price":218.90,"value":1094500}
+  ],
+  "CFLT": [
+    {"date":"2026-04-02","name":"KREPS JAY","title":"CEO & Co-Founder","type":"Buy","shares":30000,"price":32.80,"value":984000},
+    {"date":"2026-03-18","name":"CHAND ROHAN","title":"CFO","type":"Buy","shares":20000,"price":31.50,"value":630000}
+  ],
+  "ESTC": [
+    {"date":"2026-03-28","name":"BANON ASH","title":"CTO & Founder","type":"Sell","shares":15000,"price":112.40,"value":1686000},
+    {"date":"2026-03-10","name":"SRISKANDARAJAH KEN","title":"CFO","type":"Sell","shares":8000,"price":109.80,"value":878400}
+  ],
+  "DDOG": [
+    {"date":"2026-04-09","name":"POMEL OLIVIER","title":"CEO & Co-Founder","type":"Buy","shares":15000,"price":126.80,"value":1902000},
+    {"date":"2026-03-22","name":"AGARWAL DAVID","title":"CFO","type":"Buy","shares":8000,"price":122.50,"value":980000},
+    {"date":"2026-02-15","name":"POMEL OLIVIER","title":"CEO & Co-Founder","type":"Buy","shares":10000,"price":118.30,"value":1183000}
+  ],
+  "DT": [
+    {"date":"2026-04-01","name":"GREIFENEDER BERND","title":"CTO & Founder","type":"Buy","shares":10000,"price":52.40,"value":524000},
+    {"date":"2026-03-12","name":"BURNS JIM","title":"CFO","type":"Buy","shares":8000,"price":50.80,"value":406400}
+  ],
+  "GTLB": [
+    {"date":"2026-04-05","name":"SIJBRANDIJ SID","title":"CEO & Co-Founder","type":"Sell","shares":25000,"price":58.90,"value":1472500},
+    {"date":"2026-03-15","name":"STATHATOS BRIAN","title":"CFO","type":"Sell","shares":12000,"price":56.20,"value":674400}
+  ],
+  "NET": [
+    {"date":"2026-04-08","name":"PRINCE MATTHEW","title":"CEO & Co-Founder","type":"Sell","shares":30000,"price":128.60,"value":3858000},
+    {"date":"2026-03-25","name":"ZATLYN MICHELLE","title":"COO & Co-Founder","type":"Sell","shares":15000,"price":125.30,"value":1879500},
+    {"date":"2026-02-18","name":"PRINCE MATTHEW","title":"CEO & Co-Founder","type":"Sell","shares":20000,"price":121.50,"value":2430000}
+  ],
+  "WDAY": [
+    {"date":"2026-04-03","name":"ESCHENBACH CARL","title":"CEO","type":"Buy","shares":6000,"price":225.40,"value":1352400},
+    {"date":"2026-03-18","name":"FERNANDEZ ZANE","title":"CFO","type":"Buy","shares":4000,"price":220.80,"value":883200}
+  ],
+  "TEAM": [
+    {"date":"2026-04-07","name":"CANNON-BROOKES MIKE","title":"Co-CEO & Co-Founder","type":"Sell","shares":20000,"price":218.50,"value":4370000},
+    {"date":"2026-03-22","name":"FARQUHAR SCOTT","title":"Co-Founder","type":"Sell","shares":18000,"price":215.20,"value":3873600}
+  ],
+  "PLTR": [
+    {"date":"2026-04-11","name":"KARP ALEXANDER","title":"CEO & Co-Founder","type":"Sell","shares":400000,"price":125.80,"value":50320000},
+    {"date":"2026-04-01","name":"SANKAR SHYAM","title":"CTO","type":"Sell","shares":100000,"price":122.40,"value":12240000},
+    {"date":"2026-03-20","name":"GLAZER DAVID","title":"CFO","type":"Sell","shares":50000,"price":118.90,"value":5945000}
+  ],
+  "AI": [
+    {"date":"2026-04-06","name":"SIEBEL THOMAS","title":"CEO & Founder","type":"Buy","shares":100000,"price":28.50,"value":2850000},
+    {"date":"2026-03-22","name":"ABTS DAVID","title":"CTO","type":"Buy","shares":40000,"price":27.10,"value":1084000},
+    {"date":"2026-02-28","name":"SIEBEL THOMAS","title":"CEO & Founder","type":"Buy","shares":75000,"price":25.80,"value":1935000}
+  ],
+  "PATH": [
+    {"date":"2026-04-02","name":"DINES DANIEL","title":"CEO & Founder","type":"Sell","shares":80000,"price":13.20,"value":1056000},
+    {"date":"2026-03-08","name":"DINES DANIEL","title":"CEO & Founder","type":"Sell","shares":60000,"price":12.80,"value":768000}
+  ],
+  "DUOL": [
+    {"date":"2026-04-08","name":"VON AHN LUIS","title":"CEO & Co-Founder","type":"Sell","shares":12000,"price":378.50,"value":4542000},
+    {"date":"2026-03-15","name":"JERRETT MATTHEW","title":"CFO","type":"Sell","shares":5000,"price":365.20,"value":1826000}
+  ],
+  "VEEV": [
+    {"date":"2026-04-05","name":"GASSNER PETER P","title":"CEO & Founder","type":"Sell","shares":10000,"price":248.90,"value":2489000},
+    {"date":"2026-03-20","name":"MATEO TIM","title":"CFO","type":"Sell","shares":6000,"price":242.50,"value":1455000}
+  ],
+  "PCOR": [
+    {"date":"2026-04-01","name":"COURTEMANCHE TOOEY","title":"CEO & Founder","type":"Buy","shares":15000,"price":72.80,"value":1092000},
+    {"date":"2026-03-18","name":"ERCEG HOWARD","title":"CFO","type":"Buy","shares":8000,"price":70.50,"value":564000},
+    {"date":"2026-02-25","name":"COURTEMANCHE TOOEY","title":"CEO & Founder","type":"Buy","shares":10000,"price":68.20,"value":682000}
+  ],
+  "BILL": [
+    {"date":"2026-04-03","name":"RENE LACERTE","title":"CEO & Founder","type":"Buy","shares":10000,"price":58.90,"value":589000},
+    {"date":"2026-03-20","name":"GURR JOHN","title":"CFO","type":"Buy","shares":5000,"price":56.40,"value":282000}
+  ],
+  "TOST": [
+    {"date":"2026-04-06","name":"AMAN NARANG","title":"CEO & Co-Founder","type":"Buy","shares":20000,"price":42.80,"value":856000},
+    {"date":"2026-03-22","name":"CHUNG ELENA","title":"CFO","type":"Buy","shares":12000,"price":41.20,"value":494400}
+  ],
+  "SQ": [
+    {"date":"2026-04-09","name":"DORSEY JACK","title":"Chairman","type":"Sell","shares":50000,"price":75.60,"value":3780000},
+    {"date":"2026-03-28","name":"AHUJA AMRITA","title":"CFO","type":"Sell","shares":15000,"price":73.20,"value":1098000}
+  ],
+  "PYPL": [
+    {"date":"2026-04-04","name":"CHRISS ALEX","title":"CEO","type":"Buy","shares":25000,"price":72.40,"value":1810000},
+    {"date":"2026-03-18","name":"DHAKAL JAMIE","title":"CFO","type":"Buy","shares":12000,"price":69.80,"value":837600}
+  ],
+  "AFRM": [
+    {"date":"2026-04-07","name":"LEVCHIN MAX","title":"CEO & Founder","type":"Sell","shares":60000,"price":62.30,"value":3738000},
+    {"date":"2026-03-22","name":"LINFORD MICHAEL","title":"CFO","type":"Sell","shares":20000,"price":59.80,"value":1196000}
+  ],
+  "TTD": [
+    {"date":"2026-04-10","name":"GREEN JEFF T","title":"CEO & Founder","type":"Sell","shares":15000,"price":82.50,"value":1237500},
+    {"date":"2026-03-25","name":"STEMPECK BLAKE","title":"CFO","type":"Sell","shares":8000,"price":79.80,"value":638400}
+  ],
+  "ZETA": [
+    {"date":"2026-04-02","name":"STEINBERG DAVID A","title":"CEO & Co-Founder","type":"Buy","shares":40000,"price":22.80,"value":912000},
+    {"date":"2026-03-12","name":"RAMASWAMY CHRIS","title":"CFO","type":"Buy","shares":20000,"price":21.50,"value":430000}
+  ],
+  "HUBS": [
+    {"date":"2026-04-08","name":"SHAH DHARMESH","title":"CTO & Co-Founder","type":"Buy","shares":5000,"price":598.20,"value":2991000},
+    {"date":"2026-03-22","name":"HALLIGAN BRIAN","title":"Exec Chair & Co-Founder","type":"Buy","shares":3000,"price":585.40,"value":1756200}
+  ],
+  "TWLO": [
+    {"date":"2026-04-05","name":"LAWSON KHOZEMA Z","title":"CEO","type":"Sell","shares":20000,"price":118.50,"value":2370000},
+    {"date":"2026-03-18","name":"CALDWELL AIDAN","title":"CFO","type":"Sell","shares":10000,"price":115.20,"value":1152000}
+  ],
+  "ZM": [
+    {"date":"2026-04-01","name":"YUAN ERIC S","title":"CEO & Founder","type":"Sell","shares":35000,"price":77.80,"value":2723000},
+    {"date":"2026-03-15","name":"STECKELBERG KELLY","title":"CFO","type":"Sell","shares":12000,"price":75.40,"value":904800}
+  ],
+  "RNG": [
+    {"date":"2026-03-28","name":"SHETH TAREK","title":"CEO","type":"Buy","shares":8000,"price":38.50,"value":308000},
+    {"date":"2026-03-10","name":"LOOMIS SONALEE","title":"CFO","type":"Buy","shares":5000,"price":37.20,"value":186000}
+  ],
+  "OKTA": [
+    {"date":"2026-04-06","name":"MCKINNON TODD","title":"CEO & Co-Founder","type":"Buy","shares":10000,"price":104.20,"value":1042000},
+    {"date":"2026-03-22","name":"BRADBURY BRETT","title":"CFO","type":"Buy","shares":6000,"price":101.50,"value":609000}
+  ],
+  "CYBR": [
+    {"date":"2026-04-03","name":"MOKADY UDI","title":"CEO","type":"Buy","shares":4000,"price":342.80,"value":1371200},
+    {"date":"2026-03-18","name":"COHEN JOSH","title":"CFO","type":"Buy","shares":2500,"price":338.50,"value":846250}
+  ],
+  "RDDT": [
+    {"date":"2026-04-10","name":"HUFFMAN STEVE","title":"CEO & Co-Founder","type":"Sell","shares":40000,"price":172.30,"value":6892000},
+    {"date":"2026-03-25","name":"ROPER DREW","title":"CFO","type":"Sell","shares":15000,"price":168.50,"value":2527500}
+  ],
+  "PINS": [
+    {"date":"2026-04-04","name":"READY BILL","title":"CEO","type":"Buy","shares":20000,"price":33.80,"value":676000},
+    {"date":"2026-03-20","name":"MORGENFELD JULIA","title":"CFO","type":"Buy","shares":12000,"price":32.50,"value":390000}
+  ]
+};
+
+// =================================================================
+// THEME MANAGEMENT
+// =================================================================
+function getTheme() {
+  try { return safeStorage.getItem('theme') || 'dark'; }
+  catch(e) { return 'dark'; }
+}
+
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  safeStorage.setItem('theme', t);
+}
+
+function toggleTheme() {
+  setTheme(getTheme() === 'dark' ? 'light' : 'dark');
+}
+
+setTheme(getTheme());
+
+// =================================================================
+// SIDEBAR NAVIGATION
+// =================================================================
+(function buildSidebar() {
+  const sb = document.getElementById('sidebar');
+  let html = '<h3 data-i18n="sidebar.layers">Layers</h3>';
+  for (const [name, info] of Object.entries(LAYERS)) {
+    html += '<div class="sidebar-item" onclick="filterByLayer('' + name + '')">' +
+      '<span class="dot" style="background:' + info.color + '"></span>' + name + '</div>';
+  }
+  html += '<h3 style="margin-top:var(--space-6)" data-i18n="sidebar.quickLinks">Quick Links</h3>';
+  html += '<div class="sidebar-item" onclick="scrollToEl('notableGrid')">&#9733; Notable Moves</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl('clusterGrid')">&#9679; Cluster Detection</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl('layerBreakdown')">&#9632; Layer Breakdown</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl('feedContainer')">&#9654; Transaction Feed</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl('contextTable')">&#9638; Market Context</div>';
+  sb.innerHTML = html;
+})();
+
+function filterByLayer(layer) {
+  const sel = document.getElementById('filterLayer');
+  sel.value = layer;
+  renderFeed();
+  scrollToEl('feedContainer');
+}
+
+function scrollToEl(id) {
+  document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+}
+
+// =================================================================
+// FLATTEN ALL TRANSACTIONS & SORT
+// =================================================================
+const allTxns = [];
+for (const [ticker, txns] of Object.entries(INSIDER_DATA)) {
+  for (const t of txns) {
+    allTxns.push({ ...t, ticker });
+  }
+}
+allTxns.sort((a, b) => b.date.localeCompare(a.date));
+
+const insiderTickers = Object.keys(INSIDER_DATA).sort();
+
+// Populate filter dropdowns
+const tickerSel = document.getElementById('filterTicker');
+insiderTickers.forEach(t => {
+  const o = document.createElement('option');
+  o.value = t;
+  o.textContent = t;
+  tickerSel.appendChild(o);
+});
+
+const layerSel = document.getElementById('filterLayer');
+Object.keys(LAYERS).forEach(l => {
+  const o = document.createElement('option');
+  o.value = l;
+  o.textContent = l;
+  layerSel.appendChild(o);
+});
+
+// =================================================================
+// FORMAT HELPERS
+// =================================================================
+const fmt = n => {
+  if (Math.abs(n) >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+  if (Math.abs(n) >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+  if (Math.abs(n) >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+  return '$' + n.toFixed(0);
+};
+const fmtN = n => n.toLocaleString();
+const fmtPct = n => (n >= 0 ? '+' : '') + n.toFixed(2) + '%';
+
+function getLayerForTicker(t) { return QUOTES[t] ? QUOTES[t].layer : 'Unknown'; }
+function getLayerColor(t) { return QUOTES[t] ? QUOTES[t].layerColor : '#7a7e96'; }
+
+// =================================================================
+// CALCULATE AGGREGATE STATS
+// =================================================================
+const buys = allTxns.filter(t => t.type === 'Buy');
+const sells = allTxns.filter(t => t.type === 'Sell');
+const totalBuyVal = buys.reduce((s, t) => s + t.value, 0);
+const totalSellVal = sells.reduce((s, t) => s + t.value, 0);
+const netActivity = totalBuyVal - totalSellVal;
+const largest = allTxns.reduce((a, b) => a.value > b.value ? a : b);
+
+// Most active insider by count
+const insiderCounts = {};
+allTxns.forEach(t => { insiderCounts[t.name] = (insiderCounts[t.name] || 0) + 1; });
+const mostActive = Object.entries(insiderCounts).sort((a, b) => b[1] - a[1])[0];
+
+// =================================================================
+// SMART MONEY SIGNAL BANNER
+// =================================================================
+const sigEl = document.getElementById('smartSignal');
+sigEl.innerHTML = '<div class="signal-box ' + (netActivity >= 0 ? 'signal-green' : 'signal-red') + '">' +
+  '<div class="signal-dot"></div>' +
+  '<span data-i18n="insider.signal">Smart Money Signal: ' +
+  (netActivity >= 0 ? 'NET BUYING' : 'NET SELLING') +
+  ' &mdash; ' + fmt(Math.abs(netActivity)) +
+  ' net ' + (netActivity >= 0 ? 'inflow' : 'outflow') +
+  ' across ' + insiderTickers.length + ' software tickers (' +
+  buys.length + ' buys / ' + sells.length + ' sells)</span>' +
+  '</div>';
+
+// =================================================================
+// KPI STAT CARDS
+// =================================================================
+document.getElementById('statsGrid').innerHTML =
+  '<div class="card">' +
+    '<div class="stat-label" data-i18n="insider.totalBuys">Total Buys</div>' +
+    '<div class="stat-value" style="color:var(--green)">' + buys.length + '</div>' +
+    '<div class="stat-sub">' + fmt(totalBuyVal) + ' total value</div>' +
+  '</div>' +
+  '<div class="card">' +
+    '<div class="stat-label" data-i18n="insider.totalSells">Total Sells</div>' +
+    '<div class="stat-value" style="color:var(--red)">' + sells.length + '</div>' +
+    '<div class="stat-sub">' + fmt(totalSellVal) + ' total value</div>' +
+  '</div>' +
+  '<div class="card">' +
+    '<div class="stat-label" data-i18n="insider.netActivity">Net Activity</div>' +
+    '<div class="stat-value" style="color:var(' + (netActivity >= 0 ? '--green' : '--red') + ')">' + fmt(Math.abs(netActivity)) + '</div>' +
+    '<div class="stat-sub">' + (netActivity >= 0 ? 'Net Buying' : 'Net Selling') + '</div>' +
+  '</div>' +
+  '<div class="card">' +
+    '<div class="stat-label" data-i18n="insider.largestTxn">Largest Transaction</div>' +
+    '<div class="stat-value" style="font-size:var(--text-xl)">' + fmt(largest.value) + '</div>' +
+    '<div class="stat-sub">' + largest.name + ' — ' + largest.ticker + ' (' + largest.type + ')</div>' +
+  '</div>';
+
+// =================================================================
+// CHART: BUY/SELL RATIO BY LAYER (horizontal bar)
+// =================================================================
+const layerBuys = {};
+const layerSells = {};
+const layerNames = Object.keys(LAYERS);
+const layerColors = layerNames.map(l => LAYERS[l].color);
+layerNames.forEach(l => { layerBuys[l] = 0; layerSells[l] = 0; });
+allTxns.forEach(tx => {
+  const layer = getLayerForTicker(tx.ticker);
+  if (tx.type === 'Buy') layerBuys[layer] = (layerBuys[layer] || 0) + tx.value;
+  else layerSells[layer] = (layerSells[layer] || 0) + tx.value;
+});
+
+try {
+  new Chart(document.getElementById('chartLayerRatio'), {
+    type: 'bar',
+    data: {
+      labels: layerNames,
+      datasets: [
+        {
+          label: 'Buys',
+          data: layerNames.map(l => layerBuys[l] || 0),
+          backgroundColor: 'rgba(86,204,132,0.7)',
+          borderRadius: 4
+        },
+        {
+          label: 'Sells',
+          data: layerNames.map(l => -(layerSells[l] || 0)),
+          backgroundColor: 'rgba(240,112,112,0.7)',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#7a7e96', font: { size: 11 } } },
+        tooltip: {
+          callbacks: {
+            label: c => c.dataset.label + ': ' + fmt(Math.abs(c.raw))
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7a7e96', callback: v => fmt(Math.abs(v)) },
+          grid: { color: 'rgba(30,34,48,0.5)' }
+        },
+        y: {
+          ticks: { color: '#7a7e96', font: { size: 10 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+} catch(e) { console.warn('Chart error:', e); }
+
+// =================================================================
+// CHART: NET BUYING BY TICKER (horizontal bar, top 20)
+// =================================================================
+const netByTicker = {};
+insiderTickers.forEach(t => { netByTicker[t] = 0; });
+allTxns.forEach(tx => {
+  netByTicker[tx.ticker] += tx.type === 'Buy' ? tx.value : -tx.value;
+});
+const sortedTickers = insiderTickers.slice().sort((a, b) => netByTicker[b] - netByTicker[a]).slice(0, 20);
+const netVals = sortedTickers.map(t => netByTicker[t]);
+const netColors = sortedTickers.map(t => netByTicker[t] >= 0 ? getLayerColor(t) + 'b3' : 'rgba(240,112,112,0.7)');
+
+try {
+  new Chart(document.getElementById('chartNetBuying'), {
+    type: 'bar',
+    data: {
+      labels: sortedTickers,
+      datasets: [{
+        label: 'Net Value ($)',
+        data: netVals,
+        backgroundColor: netColors,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => fmt(c.raw) } }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7a7e96', callback: v => fmt(v) },
+          grid: { color: 'rgba(30,34,48,0.5)' }
+        },
+        y: {
+          ticks: { color: '#7a7e96', font: { family: "'JetBrains Mono'", size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+} catch(e) { console.warn('Chart error:', e); }
+
+// =================================================================
+// CHART: BUY vs SELL PIE
+// =================================================================
+try {
+  new Chart(document.getElementById('chartPie'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Buys (' + buys.length + ')', 'Sells (' + sells.length + ')'],
+      datasets: [{
+        data: [totalBuyVal, totalSellVal],
+        backgroundColor: ['rgba(86,204,132,0.8)', 'rgba(240,112,112,0.8)'],
+        borderWidth: 0,
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '55%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { color: '#7a7e96', font: { size: 12 } }
+        },
+        tooltip: {
+          callbacks: {
+            label: c => c.label + ': ' + fmt(c.raw) + ' (' +
+              (c.raw / (totalBuyVal + totalSellVal) * 100).toFixed(1) + '%)'
+          }
+        }
+      }
+    }
+  });
+} catch(e) { console.warn('Chart error:', e); }
+
+// =================================================================
+// CHART: ACTIVITY TIMELINE BY MONTH
+// =================================================================
+const monthlyData = {};
+allTxns.forEach(tx => {
+  const month = tx.date.substring(0, 7); // YYYY-MM
+  if (!monthlyData[month]) monthlyData[month] = { buys: 0, sells: 0 };
+  if (tx.type === 'Buy') monthlyData[month].buys += tx.value;
+  else monthlyData[month].sells += tx.value;
+});
+const months = Object.keys(monthlyData).sort();
+
+try {
+  new Chart(document.getElementById('chartTimeline'), {
+    type: 'bar',
+    data: {
+      labels: months.map(m => {
+        const [y, mo] = m.split('-');
+        return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(mo)-1] + ' ' + y.slice(2);
+      }),
+      datasets: [
+        {
+          label: 'Buys',
+          data: months.map(m => monthlyData[m].buys),
+          backgroundColor: 'rgba(86,204,132,0.7)',
+          borderRadius: 4
+        },
+        {
+          label: 'Sells',
+          data: months.map(m => -monthlyData[m].sells),
+          backgroundColor: 'rgba(240,112,112,0.7)',
+          borderRadius: 4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#7a7e96', font: { size: 11 } } },
+        tooltip: { callbacks: { label: c => c.dataset.label + ': ' + fmt(Math.abs(c.raw)) } }
+      },
+      scales: {
+        y: {
+          ticks: { color: '#7a7e96', callback: v => fmt(Math.abs(v)) },
+          grid: { color: 'rgba(30,34,48,0.5)' }
+        },
+        x: {
+          ticks: { color: '#7a7e96', font: { size: 11 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+} catch(e) { console.warn('Chart error:', e); }
+
+// =================================================================
+// NOTABLE INSIDER MOVES (bullish buys > $1M)
+// =================================================================
+const notableBuys = buys.filter(t => t.value >= 1000000).sort((a, b) => b.value - a.value).slice(0, 9);
+const ng = document.getElementById('notableGrid');
+if (notableBuys.length === 0) {
+  ng.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:var(--space-6)">No notable buys above $1M</div>';
+} else {
+  ng.innerHTML = notableBuys.map(t => {
+    const q = QUOTES[t.ticker];
+    return '<div class="notable-card" onclick="openPanel('' + t.ticker + '')">' +
+      '<div class="header"><span class="ticker">' + t.ticker + '</span><span class="badge badge-buy">BULLISH BUY</span></div>' +
+      '<div class="amount" style="color:var(--green)">' + fmt(t.value) + '</div>' +
+      '<div class="detail"><strong>' + t.name + '</strong> (' + (t.title || '') + ')</div>' +
+      '<div class="detail">' + fmtN(t.shares) + ' shares @ $' + t.price.toFixed(2) + ' on ' + t.date + '</div>' +
+      (q ? '<div class="detail" style="margin-top:var(--space-2);color:' + q.layerColor + '">' + q.name + ' — ' + q.layer + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+// =================================================================
+// CLUSTER DETECTION (multiple insiders buying same stock)
+// =================================================================
+const tickerBuyInsiders = {};
+buys.forEach(t => {
+  if (!tickerBuyInsiders[t.ticker]) tickerBuyInsiders[t.ticker] = [];
+  if (!tickerBuyInsiders[t.ticker].includes(t.name)) tickerBuyInsiders[t.ticker].push(t.name);
+});
+const clusters = Object.entries(tickerBuyInsiders)
+  .filter(([, names]) => names.length >= 2)
+  .sort((a, b) => b[1].length - a[1].length);
+
+const cg = document.getElementById('clusterGrid');
+if (clusters.length === 0) {
+  cg.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--muted);padding:var(--space-6)">No clusters detected</div>';
+} else {
+  cg.innerHTML = clusters.map(([ticker, names]) => {
+    const q = QUOTES[ticker];
+    const txns = INSIDER_DATA[ticker].filter(t => t.type === 'Buy');
+    const totalVal = txns.reduce((s, t) => s + t.value, 0);
+    const dateRange = txns.map(t => t.date).sort();
+    return '<div class="cluster-card" onclick="openPanel('' + ticker + '')">' +
+      '<h4><span class="badge badge-cluster">CLUSTER</span> ' + ticker + ' — ' + names.length + ' insiders buying</h4>' +
+      '<div style="font-family:var(--font-mono);font-weight:700;font-size:var(--text-lg);color:var(--green)">' + fmt(totalVal) + '</div>' +
+      (q ? '<div style="font-size:var(--text-xs);color:' + q.layerColor + ';margin-top:var(--space-1)">' + q.name + ' — ' + q.layer + '</div>' : '') +
+      '<div style="font-size:var(--text-xs);color:var(--muted);margin-top:var(--space-1)">Period: ' + dateRange[0] + ' to ' + dateRange[dateRange.length - 1] + '</div>' +
+      '<div class="members">' + names.map(n => '&bull; ' + n).join('<br>') + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+// =================================================================
+// INSIDER ACTIVITY BREAKDOWN BY LAYER (timeline bars)
+// =================================================================
+const lbEl = document.getElementById('layerBreakdown');
+const maxLayerVal = Math.max(...layerNames.map(l => (layerBuys[l] || 0) + (layerSells[l] || 0)));
+lbEl.innerHTML = layerNames.map(l => {
+  const bv = layerBuys[l] || 0;
+  const sv = layerSells[l] || 0;
+  const total = bv + sv;
+  if (total === 0) return '';
+  const bPct = (bv / maxLayerVal * 100).toFixed(1);
+  const sPct = (sv / maxLayerVal * 100).toFixed(1);
+  return '<div class="timeline-bar">' +
+    '<div class="label" style="color:' + LAYERS[l].color + '">' + l.split(' ')[0] + '</div>' +
+    '<div class="bar-wrap">' +
+      '<div class="bar" style="width:' + bPct + '%;background:var(--green)"></div>' +
+      '<div class="bar" style="width:' + sPct + '%;background:var(--red)"></div>' +
+    '</div>' +
+    '<div class="val">' + fmt(total) + '</div>' +
+  '</div>';
+}).join('');
+
+// =================================================================
+// TRANSACTION FEED WITH FILTERS
+// =================================================================
+function renderFeed() {
+  const tickerVal = document.getElementById('filterTicker').value;
+  const typeVal = document.getElementById('filterType').value;
+  const layerVal = document.getElementById('filterLayer').value;
+  const fromD = document.getElementById('filterFrom').value;
+  const toD = document.getElementById('filterTo').value;
+
+  let filtered = allTxns.filter(t => {
+    if (tickerVal !== 'ALL' && t.ticker !== tickerVal) return false;
+    if (typeVal !== 'ALL' && t.type !== typeVal) return false;
+    if (layerVal !== 'ALL' && getLayerForTicker(t.ticker) !== layerVal) return false;
+    if (fromD && t.date < fromD) return false;
+    if (toD && t.date > toD) return false;
+    return true;
+  });
+
+  const container = document.getElementById('feedContainer');
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="padding:var(--space-6);text-align:center;color:var(--muted)">No transactions match filters</div>';
+    return;
+  }
+
+  container.innerHTML = filtered.map(t => {
+    const lc = getLayerColor(t.ticker);
+    return '<div class="txn-card" onclick="openPanel('' + t.ticker + '')">' +
+      '<div class="txn-date">' + t.date + '</div>' +
+      '<div class="txn-info">' +
+        '<div class="txn-name">' + t.name + ' <span style="color:var(--muted);font-weight:400;font-size:var(--text-xs)">' + (t.title || '') + '</span></div>' +
+        '<div><span class="txn-ticker" style="color:' + lc + '">' + t.ticker + '</span> ' +
+          '<span class="badge ' + (t.type === 'Buy' ? 'badge-buy' : 'badge-sell') + '">' + t.type + '</span></div>' +
+        '<div class="txn-details">' + fmtN(t.shares) + ' shares @ $' + t.price.toFixed(2) + '</div>' +
+      '</div>' +
+      '<div class="txn-value">' +
+        '<div class="amount" style="color:var(' + (t.type === 'Buy' ? '--green' : '--red') + ')">' + fmt(t.value) + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+document.getElementById('filterTicker').addEventListener('change', renderFeed);
+document.getElementById('filterType').addEventListener('change', renderFeed);
+document.getElementById('filterLayer').addEventListener('change', renderFeed);
+document.getElementById('filterFrom').addEventListener('change', renderFeed);
+document.getElementById('filterTo').addEventListener('change', renderFeed);
+renderFeed();
+
+// =================================================================
+// MARKET CONTEXT TABLE
+// =================================================================
+const tbody = document.querySelector('#contextTable tbody');
+insiderTickers.forEach(ticker => {
+  const q = QUOTES[ticker];
+  if (!q) return;
+  const txns = INSIDER_DATA[ticker];
+  const netVal = txns.reduce((s, t) => s + (t.type === 'Buy' ? t.value : -t.value), 0);
+  const chgStyle = q.changePct >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+  const netStyle = netVal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
+  tbody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel('' + ticker + '')">' +
+    '<td style="color:' + q.layerColor + ';font-weight:600">' + ticker + '</td>' +
+    '<td style="font-family:Inter,sans-serif">' + (q.name.length > 28 ? q.name.slice(0, 28) + '...' : q.name) + '</td>' +
+    '<td><span class="badge badge-layer" style="background:' + q.layerColor + '22;color:' + q.layerColor + '">' + q.layer + '</span></td>' +
+    '<td>$' + q.price.toFixed(2) + '</td>' +
+    '<td style="' + chgStyle + '">' + fmtPct(q.changePct) + '</td>' +
+    '<td>' + fmtN(q.volume) + '</td>' +
+    '<td>' + fmt(q.marketCap) + '</td>' +
+    '<td>' + (q.pe > 0 ? q.pe.toFixed(1) : 'N/A') + '</td>' +
+    '<td>' + txns.length + '</td>' +
+    '<td style="' + netStyle + '">' + (netVal >= 0 ? '+' : '-') + fmt(Math.abs(netVal)) + '</td>' +
+  '</tr>';
+});
+
+// =================================================================
+// SIDE PANEL DRAWER
+// =================================================================
+function openPanel(ticker) {
+  const q = QUOTES[ticker];
+  const txns = INSIDER_DATA[ticker] || [];
+  if (!q) return;
+
+  const netVal = txns.reduce((s, t) => s + (t.type === 'Buy' ? t.value : -t.value), 0);
+  const buyCount = txns.filter(t => t.type === 'Buy').length;
+  const sellCount = txns.filter(t => t.type === 'Sell').length;
+  const totalVal = txns.reduce((s, t) => s + t.value, 0);
+
+  const panel = document.getElementById('panelContent');
+  panel.innerHTML =
+    '<h2 style="color:' + q.layerColor + '">' + ticker + '</h2>' +
+    '<div class="meta">' + q.name + ' &bull; ' + q.layer + '</div>' +
+    '<div style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4);line-height:1.6">' + q.thesis + '</div>' +
+
+    '<div class="stat-row"><span class="label">Price</span><span class="val">$' + q.price.toFixed(2) + '</span></div>' +
+    '<div class="stat-row"><span class="label">Change</span><span class="val" style="color:var(' + (q.changePct >= 0 ? '--green' : '--red') + ')">' + fmtPct(q.changePct) + '</span></div>' +
+    '<div class="stat-row"><span class="label">Market Cap</span><span class="val">' + fmt(q.marketCap) + '</span></div>' +
+    '<div class="stat-row"><span class="label">P/E Ratio</span><span class="val">' + (q.pe > 0 ? q.pe.toFixed(1) : 'N/A') + '</span></div>' +
+    '<div class="stat-row"><span class="label">Volume</span><span class="val">' + fmtN(q.volume) + '</span></div>' +
+    '<div class="stat-row"><span class="label">52-Week Range</span><span class="val">$' + q.yearLow.toFixed(2) + ' – $' + q.yearHigh.toFixed(2) + '</span></div>' +
+    '<div class="stat-row"><span class="label">Vol Ratio</span><span class="val">' + q.volRatio.toFixed(2) + 'x</span></div>' +
+
+    '<hr style="border:none;border-top:1px solid var(--border);margin:var(--space-4) 0">' +
+    '<h3 style="font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-3)">Insider Summary</h3>' +
+    '<div class="stat-row"><span class="label">Total Transactions</span><span class="val">' + txns.length + '</span></div>' +
+    '<div class="stat-row"><span class="label">Buys / Sells</span><span class="val"><span style="color:var(--green)">' + buyCount + '</span> / <span style="color:var(--red)">' + sellCount + '</span></span></div>' +
+    '<div class="stat-row"><span class="label">Total Value</span><span class="val">' + fmt(totalVal) + '</span></div>' +
+    '<div class="stat-row"><span class="label">Net Value</span><span class="val" style="color:var(' + (netVal >= 0 ? '--green' : '--red') + ')">' + (netVal >= 0 ? '+' : '') + fmt(netVal) + '</span></div>' +
+
+    '<hr style="border:none;border-top:1px solid var(--border);margin:var(--space-4) 0">' +
+    '<h3 style="font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-3)">Transaction History</h3>' +
+    txns.map(t =>
+      '<div style="padding:var(--space-2) 0;border-bottom:1px solid var(--border);font-size:var(--text-xs)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span style="font-weight:600">' + t.name + '</span>' +
+          '<span class="badge ' + (t.type === 'Buy' ? 'badge-buy' : 'badge-sell') + '">' + t.type + '</span>' +
+        '</div>' +
+        '<div style="color:var(--muted);margin-top:2px">' +
+          t.date + ' &bull; ' + (t.title || '') + ' &bull; ' +
+          fmtN(t.shares) + ' shares @ $' + t.price.toFixed(2) + ' &bull; ' +
+          '<span style="font-weight:600;color:var(' + (t.type === 'Buy' ? '--green' : '--red') + ')">' + fmt(t.value) + '</span>' +
+        '</div>' +
+      '</div>'
+    ).join('');
+
+  document.getElementById('panelOverlay').classList.add('open');
+  document.getElementById('sidePanel').classList.add('open');
+}
+
+function closePanel() {
+  document.getElementById('panelOverlay').classList.remove('open');
+  document.getElementById('sidePanel').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closePanel();
+});
+</script>
+
+<!-- ========== i18n SCRIPT ========== -->
+<script src="i18n.js"></script>
+</body>
+</html>

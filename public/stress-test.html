@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stress Test — Software Supply Chain Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script>
+var _memStore={};
+var safeStorage={getItem:function(k){return _memStore[k]||null},setItem:function(k,v){_memStore[k]=v},removeItem:function(k){delete _memStore[k]}};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>if(typeof Chart==="undefined"){var s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js";document.head.appendChild(s);}</script>
+<style>
+:root{
+  --bg:#0d0f14;--surface:#13151d;--s2:#181a24;--s3:#1c1f2a;--s4:#22253a;
+  --text:#dde0f0;--muted:#7a7e96;--primary:#5b9cf6;--border:#1e2230;
+  --success:#56cc84;--warn:#f0ad4e;--error:#f07070;
+  --cyan:#56d4e8;--purple:#a87ef0;--orange:#f5a454;--gold:#e8c44a;
+  --green:#56cc84;--red:#f07070;--blue:#5b9cf6;--teal:#4fc4cf;
+  --font-body:'Inter',sans-serif;--font-mono:'JetBrains Mono',monospace;
+  --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:20px;--space-6:24px;--space-8:32px;
+  --text-xs:0.75rem;--text-sm:0.875rem;--text-base:1rem;--text-lg:1.125rem;--text-xl:1.25rem;--text-2xl:1.5rem;--text-3xl:1.875rem;
+  --radius:8px;--radius-lg:12px;--radius-sm:6px;
+}
+[data-theme="light"]{
+  --bg:#f2f3f7;--surface:#fff;--s2:#ecedf2;--s3:#e4e5ec;--s4:#d5d7e0;
+  --text:#1a1d2e;--muted:#6b7084;--primary:#2563eb;--border:#d1d5db;
+  --success:#059669;--warn:#d97706;--error:#dc2626;
+  --green:#059669;--red:#dc2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.5}
+.mono{font-family:var(--font-mono)}
+
+/* Tab bar */
+.tab-bar{display:flex;gap:2px;background:var(--surface);border-bottom:2px solid var(--border);padding:0 var(--space-4);position:sticky;top:0;z-index:100;overflow-x:auto}
+.tab-link{padding:var(--space-3) var(--space-4);font-size:var(--text-xs);font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab-link:hover{color:var(--text)}
+.tab-link.active{color:var(--primary);border-bottom-color:var(--primary)}
+
+/* Layout */
+.page-layout{display:flex;min-height:calc(100vh - 42px)}
+.sidebar{width:280px;background:var(--surface);border-right:1px solid var(--border);padding:var(--space-5);flex-shrink:0;overflow-y:auto;position:sticky;top:42px;height:calc(100vh - 42px)}
+.sidebar h3{font-size:var(--text-sm);font-weight:700;margin-bottom:var(--space-3);letter-spacing:-0.01em}
+.sidebar-section{margin-bottom:var(--space-5)}
+.content{flex:1;padding:var(--space-5) var(--space-6);max-width:1400px;overflow-x:hidden}
+
+/* Page header */
+.page-header{display:flex;align-items:center;justify-content:space-between;padding:var(--space-4) 0;margin-bottom:var(--space-5);flex-wrap:wrap;gap:var(--space-3)}
+.page-header h1{font-size:var(--text-2xl);font-weight:700;letter-spacing:-0.02em}
+.theme-toggle{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);cursor:pointer;font-size:var(--text-xs);font-weight:600;transition:all .2s}
+.theme-toggle:hover{border-color:var(--primary)}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-5)}
+.card h2{font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-4);letter-spacing:-0.01em}
+.card h3{font-size:var(--text-base);font-weight:600;margin-bottom:var(--space-3)}
+
+/* Grids */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5)}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-5)}
+
+/* Scenario cards in sidebar */
+.scenario-card{background:var(--s2);border:2px solid var(--border);border-radius:var(--radius);padding:var(--space-3);cursor:pointer;transition:all .2s;margin-bottom:var(--space-2)}
+.scenario-card:hover{border-color:var(--muted)}
+.scenario-card.active{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 8%,var(--s2))}
+.scenario-card .sc-icon{font-size:1.2rem;margin-bottom:var(--space-1)}
+.scenario-card .sc-name{font-weight:700;font-size:var(--text-xs);margin-bottom:2px}
+.scenario-card .sc-desc{font-size:10px;color:var(--muted);line-height:1.3}
+
+/* Custom scenario */
+.custom-inputs{display:grid;grid-template-columns:1fr;gap:var(--space-1);margin-top:var(--space-2)}
+.custom-input{display:flex;align-items:center;gap:var(--space-2);font-size:10px}
+.custom-input label{font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.custom-input input{width:50px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:2px 4px;border-radius:3px;font-size:10px;font-family:var(--font-mono);text-align:right}
+.custom-input input:focus{outline:none;border-color:var(--primary)}
+
+/* Impact table */
+.impact-table{width:100%;border-collapse:collapse;font-size:var(--text-xs)}
+.impact-table th{text-align:left;padding:var(--space-2) var(--space-3);border-bottom:2px solid var(--border);color:var(--muted);font-weight:600;white-space:nowrap}
+.impact-table td{padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border);white-space:nowrap}
+.impact-table tr:hover{background:var(--s2)}
+.severity-bar{height:8px;border-radius:4px;background:var(--s2);position:relative;min-width:80px}
+.severity-fill{height:100%;border-radius:4px;position:absolute;left:0;top:0}
+.pos{color:var(--green)}.neg{color:var(--red)}
+.ticker-cell{font-weight:700;color:var(--primary);font-family:var(--font-mono)}
+
+/* Waterfall */
+.waterfall{display:flex;flex-direction:column;gap:var(--space-2)}
+.wf-row{display:flex;align-items:center;gap:var(--space-3)}
+.wf-label{width:140px;font-size:var(--text-xs);font-weight:600;flex-shrink:0}
+.wf-bar-wrap{flex:1;height:28px;background:var(--s2);border-radius:4px;overflow:hidden;position:relative}
+.wf-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:700;color:#fff;transition:width .5s}
+.wf-val{width:60px;text-align:right;font-size:var(--text-xs);font-weight:700;font-family:var(--font-mono);flex-shrink:0}
+
+/* Heat map */
+.heat-grid-st{display:grid;grid-template-columns:repeat(7,1fr);gap:var(--space-2)}
+.heat-cell-st{padding:var(--space-2);border-radius:var(--radius-sm);text-align:center;font-family:var(--font-mono);font-size:10px;font-weight:600;border:1px solid var(--border);cursor:default;transition:transform .15s}
+.heat-cell-st:hover{transform:scale(1.08);z-index:1}
+.heat-cell-st .ht{margin-bottom:1px}
+.heat-cell-st .hs{font-size:9px;opacity:0.8}
+
+/* Portfolio */
+.port-input-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:var(--space-2);margin-bottom:var(--space-4)}
+.port-item{display:flex;align-items:center;gap:var(--space-2);font-size:var(--text-xs)}
+.port-item label{font-weight:600;font-family:var(--font-mono);width:45px}
+.port-item input{width:60px;background:var(--s2);border:1px solid var(--border);color:var(--text);padding:3px 5px;border-radius:3px;font-size:var(--text-xs);font-family:var(--font-mono)}
+.port-item input:focus{outline:none;border-color:var(--primary)}
+.port-summary{background:var(--s2);border-radius:var(--radius-sm);padding:var(--space-4);display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--space-3)}
+.port-metric{text-align:center}
+.port-metric .pm-label{font-size:var(--text-xs);color:var(--muted);margin-bottom:2px}
+.port-metric .pm-value{font-size:var(--text-xl);font-weight:700;font-family:var(--font-mono)}
+
+/* Risk ranking */
+.risk-table{width:100%;border-collapse:collapse;font-size:var(--text-xs)}
+.risk-table th{text-align:left;padding:var(--space-2) var(--space-3);border-bottom:2px solid var(--border);color:var(--muted);font-weight:600}
+.risk-table td{padding:var(--space-2) var(--space-3);border-bottom:1px solid var(--border)}
+.risk-score{display:inline-block;padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px}
+.risk-high{background:rgba(240,112,112,0.2);color:var(--red)}
+.risk-med{background:rgba(240,173,78,0.2);color:var(--warn)}
+.risk-low{background:rgba(86,204,132,0.2);color:var(--green)}
+
+/* Before/after chart */
+.scroll-x{overflow-x:auto}
+
+/* Side panel drawer */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.drawer-overlay.open{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;right:-420px;width:400px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:201;transition:right .3s;overflow-y:auto;padding:var(--space-5)}
+.drawer.open{right:0}
+.drawer h2{font-size:var(--text-lg);font-weight:700;margin-bottom:var(--space-4)}
+.drawer-close{position:absolute;top:var(--space-4);right:var(--space-4);background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer}
+.drawer-close:hover{color:var(--text)}
+
+/* Cascade SVG */
+.cascade-container{position:relative;min-height:420px;overflow-x:auto}
+.cascade-svg{width:100%;height:420px}
+
+@media(max-width:1024px){.page-layout{flex-direction:column}.sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--border);display:flex;flex-wrap:wrap;gap:var(--space-3)}.sidebar-section{margin-bottom:var(--space-3);flex:1;min-width:200px}.grid-2,.grid-3{grid-template-columns:1fr}.heat-grid-st{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:640px){.content{padding:var(--space-4)}.heat-grid-st{grid-template-columns:repeat(4,1fr)}.drawer{width:90vw}}
+</style>
+</head>
+<body>
+<nav class="tab-bar">
+  <a href="index.html" class="tab-link" data-i18n="nav.dashboard">Main Dashboard</a>
+  <a href="correlation.html" class="tab-link" data-i18n="nav.correlation">Correlation</a>
+  <a href="technicals.html" class="tab-link" data-i18n="nav.technicals">Technicals</a>
+  <a href="insider.html" class="tab-link" data-i18n="nav.insider">Insider Activity</a>
+  <a href="options.html" class="tab-link" data-i18n="nav.options">Options Flow</a>
+  <a href="sentiment.html" class="tab-link" data-i18n="nav.sentiment">Sentiment</a>
+  <a href="leaderboard.html" class="tab-link" data-i18n="nav.leaderboard">Leaderboard</a>
+  <a href="stress-test.html" class="tab-link active" data-i18n="nav.stresstest">Stress Test</a>
+</nav>
+
+<div class="page-layout">
+  <!-- Sidebar with scenario controls -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3 data-i18n="stress.selectScenario">Select Scenario</h3>
+      <div id="stScenarioList"></div>
+    </div>
+    <div class="sidebar-section" id="stCustomPanel" style="display:none">
+      <h3 data-i18n="stress.customShock">Custom Shock by Layer (%)</h3>
+      <div class="custom-inputs" id="stCustomInputs"></div>
+    </div>
+    <div class="sidebar-section">
+      <h3 data-i18n="stress.scenarioDetails">Scenario Details</h3>
+      <div id="stScenarioDesc" style="font-size:var(--text-xs);color:var(--muted);line-height:1.5"></div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <div class="content">
+    <header class="page-header">
+      <h1 data-i18n="stress.title">Scenario / Stress Test</h1>
+      <button class="theme-toggle" onclick="toggleTheme()" data-i18n="common.theme">◑ Theme</button>
+    </header>
+
+    <!-- Impact Waterfall + Bar Chart -->
+    <div class="grid-2">
+      <div class="card">
+        <h2 data-i18n="stress.waterfallTitle">Impact Waterfall by Layer</h2>
+        <div class="waterfall" id="stWaterfall"></div>
+      </div>
+      <div class="card">
+        <h2 data-i18n="stress.barTitle">Impact Distribution — All Tickers</h2>
+        <div style="position:relative;height:600px"><canvas id="stImpactBarChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Heat Map -->
+    <div class="card">
+      <h2 data-i18n="stress.heatmapTitle">Scenario Impact Heat Map</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="stress.heatmapDesc">Color intensity reflects projected price impact under this scenario</p>
+      <div class="heat-grid-st" id="stHeatGrid"></div>
+    </div>
+
+    <!-- Before/After Comparison -->
+    <div class="card">
+      <h2 data-i18n="stress.beforeAfterTitle">Before / After Price Comparison</h2>
+      <div style="position:relative;height:500px"><canvas id="stBeforeAfterChart"></canvas></div>
+    </div>
+
+    <!-- Supply Chain Cascade -->
+    <div class="card">
+      <h2 data-i18n="stress.cascadeTitle">Software Value Chain Cascade</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="stress.cascadeDesc">Simplified flow showing how a shock propagates through software layers</p>
+      <div class="cascade-container" id="stCascadeContainer"></div>
+    </div>
+
+    <!-- Portfolio Impact Calculator -->
+    <div class="card">
+      <h2 data-i18n="stress.portfolioTitle">Portfolio Impact Calculator</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-4)" data-i18n="stress.portfolioDesc">Enter share quantities to calculate total portfolio impact</p>
+      <div class="port-input-grid" id="stPortInputs"></div>
+      <div class="port-summary" id="stPortSummary"></div>
+    </div>
+
+    <!-- Full Impact Table -->
+    <div class="card">
+      <h2 data-i18n="stress.tableTitle">Impact Table — All Tickers</h2>
+      <div class="scroll-x">
+        <table class="impact-table" id="stImpactTable">
+          <thead><tr>
+            <th data-i18n="common.ticker">Ticker</th>
+            <th data-i18n="common.name">Name</th>
+            <th data-i18n="common.layer">Layer</th>
+            <th data-i18n="stress.current">Current</th>
+            <th data-i18n="stress.scenario">Scenario</th>
+            <th data-i18n="stress.dollarChange">$ Change</th>
+            <th data-i18n="stress.pctChange">% Change</th>
+            <th data-i18n="stress.severity">Severity</th>
+          </tr></thead>
+          <tbody id="stImpactBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Cross-Scenario Risk Ranking -->
+    <div class="card">
+      <h2 data-i18n="stress.riskTitle">Cross-Scenario Risk Ranking</h2>
+      <p style="font-size:var(--text-xs);color:var(--muted);margin-bottom:var(--space-3)" data-i18n="stress.riskDesc">Aggregate vulnerability across all 5 predefined scenarios (lower = more vulnerable)</p>
+      <div class="scroll-x">
+        <table class="risk-table" id="stRiskTable">
+          <thead><tr>
+            <th>#</th><th data-i18n="common.ticker">Ticker</th><th data-i18n="common.name">Name</th>
+            <th>AI Disruption</th><th>Rate Shock</th><th>Churn Spike</th><th>Cloud Commodit.</th><th>Reg. Crackdown</th>
+            <th data-i18n="stress.avgImpact">Avg Impact</th><th data-i18n="stress.riskLevel">Risk Level</th>
+          </tr></thead>
+          <tbody id="stRiskBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Side panel drawer -->
+<div class="drawer-overlay" id="stDrawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="stDrawer">
+  <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  <h2 id="stDrawerTitle"></h2>
+  <div id="stDrawerContent"></div>
+</div>
+
+<script>
+const QUOTES = {"AMZN":{"name":"Amazon.com, Inc.","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":248.5,"changePct":-0.20882,"marketCap":2667622650000.0,"pe":34.66,"volume":42574235},"MSFT":{"name":"Microsoft Corporation","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":411.22,"changePct":4.60685,"marketCap":3053567568600.0,"pe":25.75,"volume":43012959},"GOOGL":{"name":"Alphabet Inc.","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":337.12,"changePct":1.26461,"marketCap":4078140734731.0,"pe":31.16,"volume":24854068},"ORCL":{"name":"Oracle Corporation","layer":"Cloud Infrastructure","layerColor":"#5b9cf6","price":169.8,"changePct":4.17178,"marketCap":488352610800.0,"pe":30.48,"volume":39108504},"CRWD":{"name":"CrowdStrike Holdings, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":411.16,"changePct":3.1795,"marketCap":104275932240.0,"pe":-674.03,"volume":3099776},"PANW":{"name":"Palo Alto Networks, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":164.11,"changePct":1.5595,"marketCap":111842823382.0,"pe":90.67,"volume":7384306},"ZS":{"name":"Zscaler, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":131.01,"changePct":6.79002,"marketCap":21065190000.0,"pe":-304.67,"volume":3769526},"FTNT":{"name":"Fortinet, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":79.64,"changePct":1.19441,"marketCap":59224134604.0,"pe":32.91,"volume":5664082},"S":{"name":"SentinelOne, Inc.","layer":"Cybersecurity","layerColor":"#f07070","price":13.26,"changePct":4.0,"marketCap":4428521760.0,"pe":-9.68,"volume":6582621},"SNOW":{"name":"Snowflake Inc.","layer":"Data & Analytics","layerColor":"#56d4e8","price":144.48,"changePct":6.65092,"marketCap":49946736000.0,"pe":-39.91,"volume":7574086},"MDB":{"name":"MongoDB, Inc.","layer":"Data & Analytics","layerColor":"#56d4e8","price":244.06,"changePct":4.47774,"marketCap":19614986760.0,"pe":-277.34,"volume":1812257},"CFLT":{"name":"Confluent, Inc.","layer":"Data & Analytics","layerColor":"#56d4e8","price":30.99,"changePct":0.0,"marketCap":11083508824.0,"pe":-36.03,"volume":14322497},"ESTC":{"name":"Elastic N.V.","layer":"Data & Analytics","layerColor":"#56d4e8","price":47.51,"changePct":4.67063,"marketCap":4917332890.0,"pe":-60.14,"volume":1215008},"DDOG":{"name":"Datadog, Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":121.06,"changePct":9.4872,"marketCap":42837241889.0,"pe":390.52,"volume":5235651},"DT":{"name":"Dynatrace, Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":35.45,"changePct":6.55245,"marketCap":10687758356.0,"pe":59.08,"volume":5003525},"GTLB":{"name":"GitLab Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":21.76,"changePct":8.36653,"marketCap":3702072255.0,"pe":-64.0,"volume":6870948},"NET":{"name":"Cloudflare, Inc.","layer":"Observability & DevOps","layerColor":"#a87ef0","price":190.02,"changePct":6.3644,"marketCap":66883296606.0,"pe":-655.24,"volume":5208879},"CRM":{"name":"Salesforce, Inc.","layer":"Enterprise SaaS","layerColor":"#56cc84","price":177.6,"changePct":3.6717,"marketCap":166411204618.0,"pe":22.77,"volume":13275722},"NOW":{"name":"ServiceNow, Inc.","layer":"Enterprise SaaS","layerColor":"#56cc84","price":94.19,"changePct":7.29012,"marketCap":98522740000.0,"pe":56.4,"volume":25676225},"WDAY":{"name":"Workday, Inc.","layer":"Enterprise SaaS","layerColor":"#56cc84","price":124.12,"changePct":5.31139,"marketCap":32903925283.0,"pe":47.92,"volume":3808624},"TEAM":{"name":"Atlassian Corporation","layer":"Enterprise SaaS","layerColor":"#56cc84","price":66.0,"changePct":10.53425,"marketCap":17363443614.0,"pe":-91.67,"volume":10703105},"PLTR":{"name":"Palantir Technologies Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":142.15,"changePct":4.75313,"marketCap":325732460500.0,"pe":225.63,"volume":47901983},"AI":{"name":"C3.ai, Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":9.52,"changePct":13.33333,"marketCap":1349850320.0,"pe":-3.01,"volume":7818648},"PATH":{"name":"UiPath Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":10.61,"changePct":5.88822,"marketCap":5673694540.0,"pe":20.4,"volume":23842900},"DUOL":{"name":"Duolingo, Inc.","layer":"AI / ML Software","layerColor":"#f5a454","price":98.78,"changePct":8.0035,"marketCap":4637739274.0,"pe":11.53,"volume":1947700},"VEEV":{"name":"Veeva Systems Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":167.295,"changePct":5.15746,"marketCap":27500261964.0,"pe":30.81,"volume":2445686},"PCOR":{"name":"Procore Technologies, Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":52.39,"changePct":5.625,"marketCap":8145065284.0,"pe":-78.19,"volume":3079762},"BILL":{"name":"Bill.com Holdings, Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":39.31,"changePct":6.24324,"marketCap":3937159012.0,"pe":-170.91,"volume":1627468},"TOST":{"name":"Toast, Inc.","layer":"Vertical SaaS","layerColor":"#e8c44a","price":28.16,"changePct":3.91144,"marketCap":16586240056.0,"pe":50.29,"volume":7158230},"SQ":{"name":"Block, Inc.","layer":"Fintech / Payments","layerColor":"#4fc4cf","price":83.46,"changePct":0.56633,"marketCap":51729675689.0,"pe":49.98,"volume":1142032},"PYPL":{"name":"PayPal Holdings, Inc.","layer":"Fintech / Payments","layerColor":"#4fc4cf","price":49.57,"changePct":3.33542,"marketCap":45637364050.0,"pe":9.16,"volume":12938087},"AFRM":{"name":"Affirm Holdings, Inc.","layer":"Fintech / Payments","layerColor":"#4fc4cf","price":59.62,"changePct":6.8076,"marketCap":19860056834.0,"pe":73.6,"volume":7529607},"TTD":{"name":"The Trade Desk, Inc.","layer":"AdTech / MarTech","layerColor":"#f0ad4e","price":22.38,"changePct":6.47003,"marketCap":10652366737.0,"pe":24.87,"volume":15375594},"ZETA":{"name":"Zeta Global Holdings Corp.","layer":"AdTech / MarTech","layerColor":"#f0ad4e","price":17.37,"changePct":7.22222,"marketCap":4243985003.0,"pe":-124.07,"volume":6980920},"HUBS":{"name":"HubSpot, Inc.","layer":"AdTech / MarTech","layerColor":"#f0ad4e","price":218.62,"changePct":5.90002,"marketCap":11530128110.0,"pe":251.29,"volume":2216550},"TWLO":{"name":"Twilio Inc.","layer":"Communication Platforms","layerColor":"#7a7e96","price":134.07,"changePct":8.12097,"marketCap":20326731046.0,"pe":638.43,"volume":1857467},"ZM":{"name":"Zoom Communications, Inc.","layer":"Communication Platforms","layerColor":"#7a7e96","price":89.03,"changePct":8.04612,"marketCap":26361867222.0,"pe":14.41,"volume":5933854},"RNG":{"name":"RingCentral, Inc.","layer":"Communication Platforms","layerColor":"#7a7e96","price":38.71,"changePct":4.14312,"marketCap":3463823175.0,"pe":80.65,"volume":1013653},"OKTA":{"name":"Okta, Inc.","layer":"Identity & Access","layerColor":"#c06ef0","price":67.35,"changePct":5.0866,"marketCap":11395651048.0,"pe":51.41,"volume":4394581},"CYBR":{"name":"CyberArk Software Ltd.","layer":"Identity & Access","layerColor":"#c06ef0","price":408.85,"changePct":0.0,"marketCap":20637502330.0,"pe":-139.06,"volume":0},"RDDT":{"name":"Reddit, Inc.","layer":"Internet / Social","layerColor":"#f07070","price":158.54,"changePct":2.58833,"marketCap":30286812561.0,"pe":56.42,"volume":3599477},"PINS":{"name":"Pinterest, Inc.","layer":"Internet / Social","layerColor":"#f07070","price":20.27,"changePct":8.39572,"marketCap":13676716513.0,"pe":33.23,"volume":24819806}};
+
+const LAYERS = {
+  "Cloud Infrastructure":{color:"#5b9cf6",tickers:["AMZN","MSFT","GOOGL","ORCL"]},
+  "Cybersecurity":{color:"#f07070",tickers:["CRWD","PANW","ZS","FTNT","S"]},
+  "Data & Analytics":{color:"#56d4e8",tickers:["SNOW","MDB","CFLT","ESTC"]},
+  "Observability & DevOps":{color:"#a87ef0",tickers:["DDOG","DT","GTLB","NET"]},
+  "Enterprise SaaS":{color:"#56cc84",tickers:["CRM","NOW","WDAY","TEAM"]},
+  "AI / ML Software":{color:"#f5a454",tickers:["PLTR","AI","PATH","DUOL"]},
+  "Vertical SaaS":{color:"#e8c44a",tickers:["VEEV","PCOR","BILL","TOST"]},
+  "Fintech / Payments":{color:"#4fc4cf",tickers:["SQ","PYPL","AFRM"]},
+  "AdTech / MarTech":{color:"#f0ad4e",tickers:["TTD","ZETA","HUBS"]},
+  "Communication Platforms":{color:"#7a7e96",tickers:["TWLO","ZM","RNG"]},
+  "Identity & Access":{color:"#c06ef0",tickers:["OKTA","CYBR"]},
+  "Internet / Social":{color:"#f07070",tickers:["RDDT","PINS"]}
+};
+const TICKERS = Object.keys(QUOTES);
+
+function getTickerLayer(ticker) {
+  for(const [layer, cfg] of Object.entries(LAYERS)) { if(cfg.tickers.includes(ticker)) return layer; }
+  return "Other";
+}
+
+/* Theme */
+function getTheme(){try{return safeStorage.getItem('theme')||'dark'}catch(e){return 'dark'}}
+function setTheme(t){safeStorage.setItem('theme',t);document.documentElement.setAttribute('data-theme',t)}
+function toggleTheme(){const t=getTheme()==='dark'?'light':'dark';setTheme(t);renderAll()}
+setTheme(getTheme());
+
+/* Drawer */
+function openDrawer(title,html){
+  document.getElementById('stDrawerTitle').textContent=title;
+  document.getElementById('stDrawerContent').innerHTML=html;
+  document.getElementById('stDrawerOverlay').classList.add('open');
+  document.getElementById('stDrawer').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('stDrawerOverlay').classList.remove('open');
+  document.getElementById('stDrawer').classList.remove('open');
+}
+
+/* Format */
+function fmt(n,d=2){return n==null?'—':n.toFixed(d)}
+function fmtPct(n){return n==null?'—':(n>=0?'+':'')+n.toFixed(2)+'%'}
+function fmtMoney(n){if(Math.abs(n)>=1e6) return '$'+(n/1e6).toFixed(2)+'M';if(Math.abs(n)>=1e3) return '$'+(n/1e3).toFixed(1)+'K';return '$'+n.toFixed(2)}
+
+/* SOFTWARE-SPECIFIC SCENARIOS */
+const SCENARIOS = [
+  {
+    id:'ai_disruption', name:'AI Disruption', icon:'🤖',
+    desc:'AI platforms replace traditional SaaS features. AI copilots cannibalize workflow tools. Winners: AI-native companies & hyperscalers. Losers: legacy SaaS with undifferentiated features, RPA players.',
+    impacts:{
+      "Cloud Infrastructure": +5,
+      "Cybersecurity": -8,
+      "Data & Analytics": -15,
+      "Observability & DevOps": -12,
+      "Enterprise SaaS": -25,
+      "AI / ML Software": -10,
+      "Vertical SaaS": -20,
+      "Fintech / Payments": -5,
+      "AdTech / MarTech": -18,
+      "Communication Platforms": -30,
+      "Identity & Access": -10,
+      "Internet / Social": -8
+    },
+    overrides:{"PLTR":+10,"AI":-35,"PATH":-45,"DUOL":-20,"AMZN":+8,"MSFT":+10,"GOOGL":+8,"TWLO":-35,"ZM":-40,"TEAM":-30,"WDAY":-28,"NOW":-15,"CRM":-18,"DDOG":-5,"NET":+3}
+  },
+  {
+    id:'rate_shock', name:'Rate Shock (+200bps)', icon:'📈',
+    desc:'Federal Reserve raises rates unexpectedly by 200bps. High-multiple growth stocks crushed. Profitable value names outperform. DCF models collapse for unprofitable SaaS.',
+    impacts:'pe_based'
+  },
+  {
+    id:'churn_spike', name:'Enterprise Churn Spike', icon:'📉',
+    desc:'Macro downturn triggers enterprise spending cuts. NRR drops below 100% across SaaS. Seat-based models hit hardest. Usage-based models see volume decline. SMB segment devastated.',
+    impacts:{
+      "Cloud Infrastructure": -8,
+      "Cybersecurity": -12,
+      "Data & Analytics": -25,
+      "Observability & DevOps": -20,
+      "Enterprise SaaS": -30,
+      "AI / ML Software": -22,
+      "Vertical SaaS": -28,
+      "Fintech / Payments": -15,
+      "AdTech / MarTech": -20,
+      "Communication Platforms": -25,
+      "Identity & Access": -15,
+      "Internet / Social": -18
+    },
+    overrides:{"SNOW":-30,"MDB":-28,"TEAM":-35,"WDAY":-32,"BILL":-35,"PCOR":-30,"S":-25,"GTLB":-30,"HUBS":-28,"ZETA":-25}
+  },
+  {
+    id:'cloud_commoditization', name:'Cloud Commoditization', icon:'☁️',
+    desc:'Hyperscaler price wars compress margins across the stack. AWS, Azure, GCP slash prices 40%. Database-as-a-service and observability platforms face margin erosion. Open-source alternatives gain share.',
+    impacts:{
+      "Cloud Infrastructure": -15,
+      "Cybersecurity": -5,
+      "Data & Analytics": -30,
+      "Observability & DevOps": -25,
+      "Enterprise SaaS": -10,
+      "AI / ML Software": -12,
+      "Vertical SaaS": -8,
+      "Fintech / Payments": -5,
+      "AdTech / MarTech": -8,
+      "Communication Platforms": -12,
+      "Identity & Access": -8,
+      "Internet / Social": -5
+    },
+    overrides:{"SNOW":-35,"MDB":-32,"CFLT":-28,"ESTC":-30,"DDOG":-28,"DT":-25,"NET":-20,"AMZN":-12,"MSFT":-10,"GOOGL":-10,"ORCL":-18}
+  },
+  {
+    id:'regulatory_crackdown', name:'Regulatory Crackdown', icon:'⚖️',
+    desc:'GDPR-style global data privacy, antitrust action against big tech, and AI regulation hammer the sector. Ad targeting restricted. Cloud data sovereignty requirements. AI model auditing mandated.',
+    impacts:{
+      "Cloud Infrastructure": -18,
+      "Cybersecurity": +8,
+      "Data & Analytics": -20,
+      "Observability & DevOps": -10,
+      "Enterprise SaaS": -12,
+      "AI / ML Software": -30,
+      "Vertical SaaS": -10,
+      "Fintech / Payments": -15,
+      "AdTech / MarTech": -35,
+      "Communication Platforms": -15,
+      "Identity & Access": +5,
+      "Internet / Social": -25
+    },
+    overrides:{"GOOGL":-25,"AMZN":-15,"PLTR":-40,"AI":-35,"TTD":-40,"RDDT":-30,"PINS":-28,"CRWD":+10,"PANW":+8,"OKTA":+8,"CYBR":+10}
+  },
+  {
+    id:'custom', name:'Custom Scenario', icon:'🔧',
+    desc:'Define your own shock percentages per software layer.',
+    impacts:{}
+  }
+];
+
+function getTickerImpact(ticker, scenario) {
+  if(scenario.overrides && scenario.overrides[ticker] !== undefined) return scenario.overrides[ticker];
+  if(scenario.impacts === 'pe_based') {
+    const pe = QUOTES[ticker].pe || 20;
+    if(pe < 0) return -20 - Math.min(Math.abs(pe)/20, 15);
+    if(pe > 100) return -25 - Math.min(pe/50, 15);
+    return -3 - Math.min(pe/5, 20);
+  }
+  const layer = getTickerLayer(ticker);
+  if(scenario.impacts[layer] !== undefined) return scenario.impacts[layer];
+  return -5;
+}
+
+let currentScenario = SCENARIOS[0];
+let customShocks = {};
+function initCustomShocks(){for(const layer of Object.keys(LAYERS)) customShocks[layer]=-10;}
+initCustomShocks();
+
+/* Render scenario selector */
+function renderScenarioList() {
+  const el = document.getElementById('stScenarioList');
+  el.innerHTML = SCENARIOS.map(s =>
+    `<div class="scenario-card${s.id===currentScenario.id?' active':''}" data-id="${s.id}">
+      <div class="sc-icon">${s.icon}</div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-desc">${s.desc.slice(0,60)}...</div>
+    </div>`
+  ).join('');
+  el.querySelectorAll('.scenario-card').forEach(card => {
+    card.addEventListener('click', () => {
+      currentScenario = SCENARIOS.find(s=>s.id===card.dataset.id);
+      if(currentScenario.id==='custom') currentScenario.impacts={...customShocks};
+      renderAll();
+    });
+  });
+  document.getElementById('stScenarioDesc').innerHTML = `<strong>${currentScenario.name}</strong><br>${currentScenario.desc}`;
+  
+  // Custom panel
+  const cp = document.getElementById('stCustomPanel');
+  cp.style.display = currentScenario.id==='custom'?'block':'none';
+  if(currentScenario.id==='custom') {
+    const ci = document.getElementById('stCustomInputs');
+    ci.innerHTML = Object.keys(LAYERS).map(layer =>
+      `<div class="custom-input"><label>${layer}</label><input type="number" value="${customShocks[layer]||0}" data-layer="${layer}" min="-100" max="100" step="5">%</div>`
+    ).join('');
+    ci.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', () => {
+        customShocks[inp.dataset.layer]=parseFloat(inp.value)||0;
+        currentScenario.impacts={...customShocks};
+        renderImpactData();
+      });
+    });
+  }
+}
+
+/* Compute impacts */
+function computeImpacts() {
+  return TICKERS.map(ticker => {
+    const q = QUOTES[ticker];
+    const impact = getTickerImpact(ticker, currentScenario);
+    const scenarioPrice = q.price * (1 + impact/100);
+    return { ticker, name:q.name, layer:getTickerLayer(ticker), layerColor:q.layerColor,
+      currentPrice:q.price, scenarioPrice, dollarChange:scenarioPrice-q.price,
+      pctChange:impact, marketCap:q.marketCap, pe:q.pe };
+  }).sort((a,b)=>a.pctChange-b.pctChange);
+}
+
+/* Waterfall */
+function renderWaterfall() {
+  const container = document.getElementById('stWaterfall');
+  const impacts = computeImpacts();
+  const layerImpacts = {};
+  for(const [layer, cfg] of Object.entries(LAYERS)) {
+    const items = impacts.filter(d=>cfg.tickers.includes(d.ticker));
+    const avg = items.length ? items.reduce((s,d)=>s+d.pctChange,0)/items.length : 0;
+    layerImpacts[layer] = {avg, color:cfg.color};
+  }
+  const sorted = Object.entries(layerImpacts).sort((a,b)=>a[1].avg-b[1].avg);
+  const maxAbs = Math.max(...sorted.map(([,v])=>Math.abs(v.avg)),1);
+  container.innerHTML = sorted.map(([layer,data]) => {
+    const pct = Math.abs(data.avg)/maxAbs*100;
+    const col = data.avg <= -20 ? 'var(--red)' : data.avg <= -10 ? 'var(--orange)' : data.avg <= 0 ? 'var(--warn)' : 'var(--green)';
+    const valColor = data.avg >= 0 ? 'var(--green)' : 'var(--red)';
+    return `<div class="wf-row">
+      <div class="wf-label" style="color:${data.color}">${layer}</div>
+      <div class="wf-bar-wrap"><div class="wf-bar" style="width:${pct}%;background:${col}">${data.avg.toFixed(1)}%</div></div>
+      <div class="wf-val" style="color:${valColor}">${data.avg >= 0 ? '+' : ''}${data.avg.toFixed(1)}%</div>
+    </div>`;
+  }).join('');
+}
+
+/* Impact bar chart */
+let stBarChartInst = null;
+function renderImpactChart() {
+  const impacts = computeImpacts();
+  if(stBarChartInst) stBarChartInst.destroy();
+  const ctx = document.getElementById('stImpactBarChart').getContext('2d');
+  const isDark = getTheme()==='dark';
+  try { stBarChartInst = new Chart(ctx, {
+    type:'bar',
+    data:{labels:impacts.map(d=>d.ticker),datasets:[{data:impacts.map(d=>d.pctChange),
+      backgroundColor:impacts.map(d=>{
+        if(d.pctChange>=0) return 'rgba(86,204,132,0.7)';
+        const abs=Math.abs(d.pctChange);
+        if(abs>=30) return 'rgba(240,112,112,0.8)';
+        if(abs>=15) return 'rgba(245,164,84,0.7)';
+        return 'rgba(240,173,78,0.6)';
+      }),borderWidth:0}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmtPct(c.raw)}}},
+      scales:{x:{grid:{color:isDark?'#1e2230':'#d5d7e0'},ticks:{color:isDark?'#7a7e96':'#6b7084',callback:v=>v+'%'}},
+        y:{grid:{display:false},ticks:{color:isDark?'#dde0f0':'#1a1d2e',font:{family:"'JetBrains Mono',monospace",size:10}}}}}
+  }); } catch(e) { console.warn('Chart failed:', e); }
+}
+
+/* Heat map */
+function renderHeatMap() {
+  const impacts = computeImpacts();
+  const grid = document.getElementById('stHeatGrid');
+  const sorted = [...impacts].sort((a,b)=>a.ticker.localeCompare(b.ticker));
+  const maxAbs = Math.max(...sorted.map(d=>Math.abs(d.pctChange)),1);
+  grid.innerHTML = sorted.map(d => {
+    const intensity = Math.abs(d.pctChange)/maxAbs;
+    let bg;
+    if(d.pctChange >= 0) {
+      const r=Math.round(20+(86-20)*intensity),g=Math.round(40+(204-40)*intensity),b=Math.round(40+(132-40)*intensity);
+      bg=`rgb(${r},${g},${b})`;
+    } else {
+      const r=Math.round(40+(240-40)*intensity),g=Math.round(30+(112-30)*intensity*0.3),b=Math.round(30+(112-30)*intensity*0.3);
+      bg=`rgb(${r},${g},${b})`;
+    }
+    return `<div class="heat-cell-st" style="background:${bg}" title="${d.name}: ${fmtPct(d.pctChange)}">
+      <div class="ht">${d.ticker}</div>
+      <div class="hs">${d.pctChange>=0?'+':''}${d.pctChange.toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+}
+
+/* Before/After chart */
+let stBeforeAfterInst = null;
+function renderBeforeAfter() {
+  const impacts = computeImpacts().sort((a,b)=>a.pctChange-b.pctChange).slice(0,20);
+  if(stBeforeAfterInst) stBeforeAfterInst.destroy();
+  const ctx = document.getElementById('stBeforeAfterChart').getContext('2d');
+  const isDark = getTheme()==='dark';
+  try { stBeforeAfterInst = new Chart(ctx, {
+    type:'bar',
+    data:{labels:impacts.map(d=>d.ticker),
+      datasets:[
+        {label:'Current Price',data:impacts.map(d=>d.currentPrice),backgroundColor:'rgba(91,156,246,0.6)',borderRadius:3},
+        {label:'Scenario Price',data:impacts.map(d=>d.scenarioPrice),backgroundColor:'rgba(240,112,112,0.6)',borderRadius:3}
+      ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:isDark?'#dde0f0':'#1a1d2e'}},tooltip:{callbacks:{label:c=>'$'+c.raw.toFixed(2)}}},
+      scales:{x:{grid:{display:false},ticks:{color:isDark?'#dde0f0':'#1a1d2e',font:{family:"'JetBrains Mono',monospace",size:10}}},
+        y:{grid:{color:isDark?'#1e2230':'#d5d7e0'},ticks:{color:isDark?'#7a7e96':'#6b7084',callback:v=>'$'+v}}}}
+  }); } catch(e) { console.warn('Before/after chart failed:', e); }
+}
+
+/* Cascade visualization */
+function renderCascade() {
+  const container = document.getElementById('stCascadeContainer');
+  const impacts = computeImpacts();
+  const layerAvg = {};
+  for(const [layer, cfg] of Object.entries(LAYERS)) {
+    const items = impacts.filter(d=>cfg.tickers.includes(d.ticker));
+    layerAvg[layer] = items.length ? items.reduce((s,d)=>s+d.pctChange,0)/items.length : 0;
+  }
+  const stages = [
+    {label:'Infrastructure',layers:['Cloud Infrastructure']},
+    {label:'Security & Data',layers:['Cybersecurity','Data & Analytics','Identity & Access']},
+    {label:'Platform',layers:['Observability & DevOps','Enterprise SaaS','AI / ML Software']},
+    {label:'Application',layers:['Vertical SaaS','Fintech / Payments','AdTech / MarTech','Communication Platforms','Internet / Social']}
+  ];
+  const w=900,h=420;
+  const stageW=w/4;
+  let svg=`<svg class="cascade-svg" viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">`;
+  // Stage labels
+  stages.forEach((st,i) => {
+    svg+=`<text x="${stageW*i+stageW/2}" y="18" fill="var(--muted)" font-size="11" font-weight="600" text-anchor="middle" font-family="Inter,sans-serif">${st.label}</text>`;
+  });
+  // Nodes
+  const nodePos = {};
+  stages.forEach((st,si) => {
+    const startY=35;
+    const nodeH=Math.min(50, (h-50)/st.layers.length - 8);
+    const gap = (h-50-st.layers.length*nodeH)/Math.max(st.layers.length+1,1);
+    st.layers.forEach((layer,li) => {
+      const x=stageW*si+15;
+      const y=startY+(gap+nodeH)*li;
+      const avg=layerAvg[layer]||0;
+      const abs=Math.abs(avg);
+      const col=avg>=0?'var(--green)':abs>=25?'var(--red)':abs>=15?'var(--orange)':'var(--warn)';
+      const bw=stageW-30;
+      nodePos[layer]={x:x+bw/2,y:y+nodeH/2,right:x+bw,left:x};
+      svg+=`<rect x="${x}" y="${y}" width="${bw}" height="${nodeH}" rx="4" fill="${col}" opacity="0.2"/>`;
+      svg+=`<rect x="${x}" y="${y}" width="${Math.min(bw,bw*(abs/40))}" height="${nodeH}" rx="4" fill="${col}" opacity="0.45"/>`;
+      svg+=`<text x="${x+6}" y="${y+16}" fill="var(--text)" font-size="10" font-weight="600" font-family="Inter,sans-serif">${layer.length>18?layer.slice(0,16)+'..':layer}</text>`;
+      svg+=`<text x="${x+6}" y="${y+30}" fill="var(--text)" font-size="10" font-weight="700" font-family="JetBrains Mono,monospace" opacity="0.8">${avg>=0?'+':''}${avg.toFixed(1)}%</text>`;
+    });
+  });
+  // Connections
+  const conns=[
+    ["Cloud Infrastructure","Cybersecurity"],["Cloud Infrastructure","Data & Analytics"],
+    ["Cloud Infrastructure","Observability & DevOps"],["Cloud Infrastructure","Enterprise SaaS"],
+    ["Cybersecurity","Identity & Access"],["Data & Analytics","Enterprise SaaS"],
+    ["Data & Analytics","AI / ML Software"],["Observability & DevOps","Enterprise SaaS"],
+    ["Enterprise SaaS","Vertical SaaS"],["Enterprise SaaS","Communication Platforms"],
+    ["AI / ML Software","Vertical SaaS"],["AI / ML Software","AdTech / MarTech"],
+    ["Fintech / Payments","Vertical SaaS"],["Identity & Access","Enterprise SaaS"],
+    ["AdTech / MarTech","Internet / Social"]
+  ];
+  conns.forEach(([from,to]) => {
+    const f=nodePos[from],t=nodePos[to];
+    if(f&&t){
+      const avgImp=(Math.abs(layerAvg[from]||0)+Math.abs(layerAvg[to]||0))/2;
+      const opacity=Math.min(0.15+avgImp/50,0.6);
+      const sw=Math.max(1,avgImp/8);
+      const col=(layerAvg[from]||0)>=0&&(layerAvg[to]||0)>=0?'var(--green)':'var(--red)';
+      svg+=`<path d="M${f.right},${f.y} C${f.right+35},${f.y} ${t.left-35},${t.y} ${t.left},${t.y}" fill="none" stroke="${col}" stroke-width="${sw}" opacity="${opacity}"/>`;
+    }
+  });
+  svg+='</svg>';
+  container.innerHTML=svg;
+}
+
+/* Impact table */
+function renderImpactTable() {
+  const impacts = computeImpacts();
+  const maxAbs = Math.max(...impacts.map(d=>Math.abs(d.pctChange)),1);
+  document.getElementById('stImpactBody').innerHTML = impacts.map(d => {
+    const sevPct=Math.abs(d.pctChange)/maxAbs*100;
+    const sevColor=Math.abs(d.pctChange)>=30?'var(--red)':Math.abs(d.pctChange)>=15?'var(--orange)':'var(--warn)';
+    const chgColor=d.pctChange>=0?'var(--green)':'var(--red)';
+    return `<tr>
+      <td class="ticker-cell">${d.ticker}</td>
+      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body)">${d.name}</td>
+      <td style="font-size:10px;font-family:var(--font-body);color:${d.layerColor}">${d.layer}</td>
+      <td class="mono">$${fmt(d.currentPrice)}</td>
+      <td class="mono">$${fmt(d.scenarioPrice)}</td>
+      <td class="mono" style="color:${chgColor}">$${fmt(d.dollarChange)}</td>
+      <td class="mono" style="color:${chgColor}">${fmtPct(d.pctChange)}</td>
+      <td><div class="severity-bar"><div class="severity-fill" style="width:${sevPct}%;background:${d.pctChange>=0?'var(--green)':sevColor}"></div></div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* Portfolio calculator */
+function renderPortfolio() {
+  const container = document.getElementById('stPortInputs');
+  container.innerHTML = TICKERS.map(t =>
+    `<div class="port-item"><label>${t}</label><input type="number" min="0" value="0" data-ticker="${t}" class="st-port-qty"></div>`
+  ).join('');
+  container.querySelectorAll('.st-port-qty').forEach(inp => inp.addEventListener('input', updatePortSummary));
+  updatePortSummary();
+}
+
+function updatePortSummary() {
+  const impacts = computeImpacts();
+  const impactMap = {}; impacts.forEach(d=>impactMap[d.ticker]=d);
+  let totalBefore=0,totalAfter=0,positions=0;
+  document.querySelectorAll('.st-port-qty').forEach(inp => {
+    const qty=parseInt(inp.value)||0;
+    if(qty>0 && impactMap[inp.dataset.ticker]) {
+      positions++;
+      totalBefore+=qty*impactMap[inp.dataset.ticker].currentPrice;
+      totalAfter+=qty*impactMap[inp.dataset.ticker].scenarioPrice;
+    }
+  });
+  const loss=totalAfter-totalBefore;
+  const lossPct=totalBefore>0?(loss/totalBefore*100):0;
+  const lossColor = loss >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('stPortSummary').innerHTML = `
+    <div class="port-metric"><div class="pm-label">Positions</div><div class="pm-value">${positions}</div></div>
+    <div class="port-metric"><div class="pm-label">Current Value</div><div class="pm-value">${fmtMoney(totalBefore)}</div></div>
+    <div class="port-metric"><div class="pm-label">Scenario Value</div><div class="pm-value" style="color:${lossColor}">${fmtMoney(totalAfter)}</div></div>
+    <div class="port-metric"><div class="pm-label">P&L Impact</div><div class="pm-value" style="color:${lossColor}">${fmtMoney(loss)}</div></div>
+    <div class="port-metric"><div class="pm-label">Portfolio Impact</div><div class="pm-value" style="color:${lossColor}">${fmtPct(lossPct)}</div></div>`;
+}
+
+/* Risk ranking */
+function renderRiskRanking() {
+  const predefined = SCENARIOS.filter(s=>s.id!=='custom');
+  const riskData = TICKERS.map(ticker => {
+    const scores = predefined.map(s=>getTickerImpact(ticker,s));
+    const avg=scores.reduce((a,b)=>a+b,0)/scores.length;
+    return {ticker,name:QUOTES[ticker].name,scores,avg};
+  }).sort((a,b)=>a.avg-b.avg);
+  document.getElementById('stRiskBody').innerHTML = riskData.map((d,i) => {
+    const riskLevel=d.avg<=-20?'high':d.avg<=-10?'med':'low';
+    const riskLabel=d.avg<=-20?'HIGH':d.avg<=-10?'MEDIUM':'LOW';
+    return `<tr>
+      <td>${i+1}</td>
+      <td class="ticker-cell">${d.ticker}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body)">${d.name}</td>
+      ${d.scores.map(s=>`<td class="mono" style="color:${s>=0?'var(--green)':'var(--red)'}">${fmtPct(s)}</td>`).join('')}
+      <td class="mono" style="font-weight:700;color:${d.avg>=0?'var(--green)':'var(--red)'}">${fmtPct(d.avg)}</td>
+      <td><span class="risk-score risk-${riskLevel}">${riskLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderImpactData() {
+  try{renderWaterfall()}catch(e){console.warn(e)}
+  try{renderImpactChart()}catch(e){console.warn(e)}
+  renderHeatMap();
+  try{renderBeforeAfter()}catch(e){console.warn(e)}
+  try{renderCascade()}catch(e){console.warn(e)}
+  renderImpactTable();
+  updatePortSummary();
+}
+
+function renderAll() {
+  renderScenarioList();
+  try{renderImpactData()}catch(e){console.warn(e)}
+  renderPortfolio();
+  renderRiskRanking();
+}
+
+renderAll();
+</script>
+<script src="i18n.js"></script>
+</body>
+</html>
