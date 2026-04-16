@@ -1,6 +1,7 @@
 /* ========================================
    Software Supply Chain Dashboard — i18n System
    ======================================== */
+// Use safeStorage if available (from page's own shim), otherwise use own store
 var i18nStorage = (typeof safeStorage !== 'undefined') ? safeStorage : {
   _s: {},
   getItem: function(k) { return this._s[k] || null; },
@@ -37,6 +38,12 @@ var I18N = {
   "Insider &amp; Institutional Activity": { zh: "内部 & 机构交易活动" },
   "Correlation Matrix & Cross-Layer Analysis": { zh: "相关性矩阵 & 跨层分析" },
   "Technical Analysis Dashboard": { zh: "技术分析面板" },
+
+  // ── Cross-Dashboard Nav ──
+  "AI Hardware":            { zh: "AI硬件" },
+  "Software Stack":         { zh: "软件生态" },
+  "Semi Equipment":         { zh: "半导体设备" },
+  "News Feed":              { zh: "新闻动态" },
 
   // ── Layer Names ──
   "Cloud Infrastructure":     { zh: "云基础设施" },
@@ -81,6 +88,7 @@ var I18N = {
   "Infrastructure Layer":      { zh: "基础设施层" },
   "Features":                  { zh: "功能" },
   "Analysis":                  { zh: "分析" },
+  "Tools":                     { zh: "工具" },
 
   // ── KPI Labels ──
   "Cloud Spend 2031":          { zh: "2031年云支出" },
@@ -90,21 +98,52 @@ var I18N = {
   "Median NRR":                { zh: "中位数NRR" },
   "Rule of 40":                { zh: "40法则" },
   "Market Cap":                { zh: "市值" },
+  "Mkt Cap":                   { zh: "市值" },
   "P/E Ratio":                 { zh: "市盈率" },
+  "P/E":                       { zh: "市盈率" },
+  "P/S":                       { zh: "市销率" },
+  "EV/EBITDA":                 { zh: "EV/EBITDA" },
+  "D/E":                       { zh: "负债/股东权益" },
+  "ROE %":                     { zh: "ROE %" },
+  "Gross Margin %":            { zh: "毛利率 %" },
+  "Op Margin %":               { zh: "营业利润率 %" },
+  "Net Margin %":              { zh: "净利率 %" },
+  "FCF Margin %":              { zh: "自由现金流利润率 %" },
   "EPS":                       { zh: "每股收益" },
   "Volume":                    { zh: "成交量" },
   "Avg Volume":                { zh: "平均成交量" },
   "Day Range":                 { zh: "日内区间" },
   "52W Range":                 { zh: "52周区间" },
   "52-Week Range":             { zh: "52周区间" },
+  "52W Position":              { zh: "52周位置" },
   "Div Yield":                 { zh: "股息率" },
   "Dividend Yield":            { zh: "股息率" },
   "Previous Close":            { zh: "前收盘价" },
   "Price":                     { zh: "价格" },
   "Change":                    { zh: "涨跌" },
   "Change %":                  { zh: "涨跌幅" },
+  "Chg %":                     { zh: "涨跌%" },
   "Year Low":                  { zh: "52周最低" },
   "Year High":                 { zh: "52周最高" },
+  "Key Metric":                { zh: "关键指标" },
+  "Weight %":                  { zh: "权重 %" },
+  "$ Amount":                  { zh: "金额 ($)" },
+  "Status":                    { zh: "状态" },
+  "Severity":                  { zh: "严重程度" },
+  "Risk Level":                { zh: "风险级别" },
+
+  // ── Sortable header suffixes ──
+  "Ticker ▲▼":                 { zh: "代码 ▲▼" },
+  "Layer ▲▼":                  { zh: "层 ▲▼" },
+  "P/E ▲▼":                    { zh: "市盈率 ▲▼" },
+  "P/S ▲▼":                    { zh: "市销率 ▲▼" },
+  "EV/EBITDA ▲▼":              { zh: "EV/EBITDA ▲▼" },
+  "D/E ▲▼":                    { zh: "负债率 ▲▼" },
+  "ROE % ▲▼":                  { zh: "ROE % ▲▼" },
+  "Gross Margin % ▲▼":        { zh: "毛利率 % ▲▼" },
+  "Op Margin % ▲▼":           { zh: "营业利润率 % ▲▼" },
+  "Net Margin % ▲▼":          { zh: "净利率 % ▲▼" },
+  "FCF Margin % ▲▼":          { zh: "自由现金流利润率 % ▲▼" },
 
   // ── Conviction Tiers ──
   "Tier 1 — High Conviction":       { zh: "第一梯队 — 高确信度" },
@@ -147,6 +186,7 @@ var I18N = {
   // ── Table Headers ──
   "Ticker":                         { zh: "代码" },
   "Company":                        { zh: "公司" },
+  "Name":                           { zh: "名称" },
   "Layer":                          { zh: "层" },
   "Return":                         { zh: "回报" },
   "Rank":                           { zh: "排名" },
@@ -171,8 +211,12 @@ var I18N = {
   "SMA 20":                         { zh: "20日均线" },
   "SMA 50":                         { zh: "50日均线" },
   "SMA 200":                        { zh: "200日均线" },
+  "SMA-20":                         { zh: "20日均线" },
+  "SMA-50":                         { zh: "50日均线" },
   "RSI":                            { zh: "相对强弱指标" },
+  "RSI-14":                         { zh: "RSI-14" },
   "MACD":                           { zh: "MACD" },
+  "MACD Signal":                    { zh: "MACD 信号" },
   "Bollinger Bands":                { zh: "布林带" },
   "Support":                        { zh: "支撑位" },
   "Resistance":                     { zh: "阻力位" },
@@ -189,6 +233,10 @@ var I18N = {
   "Highly Correlated":              { zh: "高度相关" },
   "Low Correlation":                { zh: "低相关性" },
   "Negative Correlation":           { zh: "负相关" },
+  "30-Day":                         { zh: "30天" },
+  "90-Day":                         { zh: "90天" },
+  "By Layer":                       { zh: "按板块" },
+  "By Avg Corr":                    { zh: "按平均相关性" },
 
   // ── Insider ──
   "Recent Transactions":            { zh: "近期交易" },
@@ -204,6 +252,12 @@ var I18N = {
   "Shares":                         { zh: "股数" },
   "Value":                          { zh: "价值" },
   "Date":                           { zh: "日期" },
+  "Net Value":                      { zh: "净值" },
+  "# Transactions":                 { zh: "交易次数" },
+  "Activity Feed":                  { zh: "交易动态" },
+  "Net Insider Activity by Ticker":         { zh: "各股内部交易净额" },
+  "Buy vs Sell Distribution (by Value)":    { zh: "买入 vs 卖出分布（按金额）" },
+  "Market Context — Insider-Active Tickers":{ zh: "市场概况 — 内部交易活跃个股" },
 
   // ── Options ──
   "Total Premium":                  { zh: "总权利金" },
@@ -219,6 +273,15 @@ var I18N = {
   "Expiry":                         { zh: "到期日" },
   "Premium":                        { zh: "权利金" },
   "OI":                             { zh: "未平仓量" },
+  "Market Tilt":                    { zh: "市场倾向" },
+  "Options Activity Scanner":      { zh: "期权活动扫描" },
+  "Options Sentiment Heat Map":    { zh: "期权情绪热力图" },
+  "Volume vs Average Ratio":       { zh: "成交量 / 均量比" },
+  "Simulated Large Block Trades":  { zh: "模拟大宗交易" },
+  "Vol / Avg":                      { zh: "量/均量" },
+  "Activity":                       { zh: "活跃度" },
+  "Implied Sentiment":              { zh: "隐含情绪" },
+  "Sim P/C Ratio":                  { zh: "模拟P/C比" },
 
   // ── Sentiment ──
   "Overall Sentiment":              { zh: "整体情绪" },
@@ -233,15 +296,27 @@ var I18N = {
   "Reddit":                         { zh: "Reddit" },
   "Twitter / X":                    { zh: "Twitter / X" },
   "StockTwits":                     { zh: "StockTwits" },
+  "Composite Score":                { zh: "综合评分" },
+  "Vol Ratio":                      { zh: "量比" },
+  "Sector Sentiment Breakdown":     { zh: "板块情绪分析" },
+  "Sector Sentiment Comparison":    { zh: "板块情绪对比" },
+  "Top 5 Most Bullish":             { zh: "最看涨前5" },
+  "Top 5 Most Bearish":             { zh: "最看跌前5" },
 
   // ── Leaderboard ──
   "Top Gainers":                    { zh: "涨幅榜" },
   "Top Losers":                     { zh: "跌幅榜" },
+  "Top 5 Performers":              { zh: "涨幅前5" },
+  "Bottom 5 Performers":           { zh: "跌幅前5" },
   "Volume Leaders":                 { zh: "成交量领先" },
   "Momentum Rankings":              { zh: "动量排名" },
   "Layer Performance":              { zh: "各层表现" },
   "Market Cap Leaders":             { zh: "市值排行" },
   "Relative Strength":              { zh: "相对强弱" },
+  "All Tickers — Ranked by Return":     { zh: "全部股票 — 按收益排名" },
+  "Returns by Ticker":                  { zh: "各股收益率" },
+  "Sector Performance (Avg Return)":    { zh: "板块表现（平均收益）" },
+  "Market Cap Treemap":                 { zh: "市值树图" },
 
   // ── Stress Test ──
   "AI Disruption Scenario":         { zh: "AI颠覆情景" },
@@ -258,6 +333,18 @@ var I18N = {
   "Run Stress Test":                { zh: "运行压力测试" },
   "Winners":                        { zh: "赢家" },
   "Losers":                         { zh: "输家" },
+  "Impact Waterfall by Layer":      { zh: "板块影响瀑布图" },
+  "Impact Distribution":            { zh: "影响分布" },
+  "Supply Chain Cascade":           { zh: "供应链级联效应" },
+  "Portfolio Impact Calculator":    { zh: "投资组合影响计算器" },
+  "Impact Table — All Tickers":     { zh: "影响表 — 全部股票" },
+  "Cross-Scenario Risk Ranking":    { zh: "跨情景风险排名" },
+  "Custom Shock by Sector Layer (%)": { zh: "自定义板块冲击 (%)" },
+  "Current":                        { zh: "当前价" },
+  "$ Change":                       { zh: "$ 变动" },
+  "% Change":                       { zh: "% 变动" },
+  "Avg Impact":                     { zh: "平均影响" },
+  "Scenario":                       { zh: "情景" },
 
   // ── Common UI ──
   "Loading...":                     { zh: "加载中..." },
@@ -279,6 +366,10 @@ var I18N = {
   "Full Ecosystem Research":        { zh: "完整生态系统研究" },
   "Software Value Chain":           { zh: "软件价值链" },
   "Full Ecosystem Research · Apr 2026": { zh: "完整生态系统研究 · 2026年4月" },
+  "Toggle Theme":                   { zh: "切换主题" },
+  "◑ Theme":                        { zh: "◑ 主题" },
+  "Upcoming":                       { zh: "即将公布" },
+  "Reported":                       { zh: "已公布" },
 
   // ── Portfolio Simulator ──
   "Initial Capital":                { zh: "初始资金" },
@@ -286,156 +377,277 @@ var I18N = {
   "Calculate":                      { zh: "计算" },
   "Projected Returns":              { zh: "预计回报" },
   "Equal Weight":                   { zh: "等权重" },
-
-  // ── Company Names ──
-  "Amazon.com, Inc.":               { zh: "亚马逊" },
-  "Microsoft Corporation":          { zh: "微软" },
-  "Alphabet Inc.":                  { zh: "谷歌母公司" },
-  "Oracle Corporation":             { zh: "甲骨文" },
-  "CrowdStrike Holdings, Inc.":     { zh: "CrowdStrike" },
-  "Palo Alto Networks, Inc.":       { zh: "帕洛阿尔托网络" },
-  "Zscaler, Inc.":                  { zh: "Zscaler" },
-  "Fortinet, Inc.":                 { zh: "飞塔" },
-  "SentinelOne, Inc.":              { zh: "SentinelOne" },
-  "Snowflake Inc.":                 { zh: "Snowflake" },
-  "MongoDB, Inc.":                  { zh: "MongoDB" },
-  "Confluent, Inc.":                { zh: "Confluent" },
-  "Elastic N.V.":                   { zh: "Elastic" },
-  "Datadog, Inc.":                  { zh: "Datadog" },
-  "Dynatrace, Inc.":                { zh: "Dynatrace" },
-  "GitLab Inc.":                    { zh: "GitLab" },
-  "Cloudflare, Inc.":               { zh: "Cloudflare" },
-  "Salesforce, Inc.":               { zh: "Salesforce" },
-  "ServiceNow, Inc.":               { zh: "ServiceNow" },
-  "Workday, Inc.":                  { zh: "Workday" },
-  "Atlassian Corporation":          { zh: "Atlassian" },
-  "Palantir Technologies Inc.":     { zh: "Palantir" },
-  "C3.ai, Inc.":                    { zh: "C3.ai" },
-  "UiPath Inc.":                    { zh: "UiPath" },
-  "Duolingo, Inc.":                 { zh: "多邻国" },
-  "Veeva Systems Inc.":             { zh: "Veeva Systems" },
-  "Procore Technologies, Inc.":     { zh: "Procore" },
-  "BILL Holdings, Inc.":            { zh: "BILL" },
-  "Toast, Inc.":                    { zh: "Toast" },
-  "Block, Inc.":                    { zh: "Block (Square)" },
-  "PayPal Holdings, Inc.":          { zh: "PayPal" },
-  "Affirm Holdings, Inc.":          { zh: "Affirm" },
-  "The Trade Desk, Inc.":           { zh: "The Trade Desk" },
-  "Zeta Global Holdings Corp.":     { zh: "Zeta Global" },
-  "HubSpot, Inc.":                  { zh: "HubSpot" },
-  "Twilio Inc.":                    { zh: "Twilio" },
-  "Zoom Communications, Inc.":      { zh: "Zoom" },
-  "RingCentral, Inc.":              { zh: "RingCentral" },
-  "Okta, Inc.":                     { zh: "Okta" },
-  "CyberArk Software Ltd.":        { zh: "CyberArk" },
-  "Reddit, Inc.":                   { zh: "Reddit" },
-  "Pinterest, Inc.":                { zh: "Pinterest" },
+  "Enter share quantities to see simulated portfolio impact": { zh: "输入持仓股数查看模拟投资组合影响" },
 
   // ── Theme ──
   "Light Mode":                     { zh: "亮色模式" },
   "Dark Mode":                      { zh: "暗色模式" },
+
+  // ── Misc Labels ──
+  "Supply":                         { zh: "\u4f9b\u7ed9" },
+  "Demand":                         { zh: "需求" },
+  "Revenue":                        { zh: "营收" },
+  "Growth":                         { zh: "增长" },
+  "Margin":                         { zh: "利润率" },
+  "Capex":                          { zh: "资本支出" },
+  "YoY":                            { zh: "同比" },
+  "QoQ":                            { zh: "环比" },
+  "Market Share":                   { zh: "市场份额" },
+  "Sized by market cap, colored by return for selected period": { zh: "面积按市值，颜色按所选期间收益率" },
+
+  // ── Language toggle ──
   "EN":                             { zh: "EN" },
+  "中文":                           { zh: "中文" },
   "中":                             { zh: "中" },
 };
 
-/**
- * Translate a key. Returns Chinese if available and lang=zh, else returns key.
- * Normalizes dashes for cross-encoding compatibility.
- */
+/* ── Company Name Translations ── */
+var I18N_COMPANIES = {
+  "Amazon.com, Inc.": "亚马逊",
+  "Microsoft Corporation": "微软",
+  "Alphabet Inc.": "谷歌母公司",
+  "Oracle Corporation": "甲骨文",
+  "CrowdStrike Holdings, Inc.": "CrowdStrike",
+  "Palo Alto Networks, Inc.": "帕洛阿尔托网络",
+  "Zscaler, Inc.": "Zscaler",
+  "Fortinet, Inc.": "飞塔",
+  "SentinelOne, Inc.": "SentinelOne",
+  "Snowflake Inc.": "Snowflake",
+  "MongoDB, Inc.": "MongoDB",
+  "Confluent, Inc.": "Confluent",
+  "Elastic N.V.": "Elastic",
+  "Datadog, Inc.": "Datadog",
+  "Dynatrace, Inc.": "Dynatrace",
+  "GitLab Inc.": "GitLab",
+  "Cloudflare, Inc.": "Cloudflare",
+  "Salesforce, Inc.": "Salesforce",
+  "ServiceNow, Inc.": "ServiceNow",
+  "Workday, Inc.": "Workday",
+  "Atlassian Corporation": "Atlassian",
+  "Palantir Technologies Inc.": "Palantir",
+  "C3.ai, Inc.": "C3.ai",
+  "UiPath Inc.": "UiPath",
+  "Duolingo, Inc.": "多邻国",
+  "Veeva Systems Inc.": "Veeva Systems",
+  "Procore Technologies, Inc.": "Procore",
+  "BILL Holdings, Inc.": "BILL",
+  "Toast, Inc.": "Toast",
+  "Block, Inc.": "Block (Square)",
+  "PayPal Holdings, Inc.": "PayPal",
+  "Affirm Holdings, Inc.": "Affirm",
+  "The Trade Desk, Inc.": "The Trade Desk",
+  "Zeta Global Holdings Corp.": "Zeta Global",
+  "HubSpot, Inc.": "HubSpot",
+  "Twilio Inc.": "Twilio",
+  "Zoom Communications, Inc.": "Zoom",
+  "RingCentral, Inc.": "RingCentral",
+  "Okta, Inc.": "Okta",
+  "CyberArk Software Ltd.": "CyberArk",
+  "Reddit, Inc.": "Reddit",
+  "Pinterest, Inc.": "Pinterest",
+};
+
+/* ── Translation Function ── */
 function t(key) {
-  if (I18N_LANG !== 'zh') return key;
-  // Try exact match first
-  if (I18N[key] && I18N[key].zh) return I18N[key].zh;
-  // Try with normalized dashes (en-dash, em-dash → hyphen)
-  var nk = key.replace(/[\u2013\u2014]/g, '-').replace(/&amp;/g, '&');
-  if (I18N[nk] && I18N[nk].zh) return I18N[nk].zh;
+  if (I18N_LANG === 'en') return key;
+  var entry = I18N[key];
+  if (entry && entry.zh) return entry.zh;
+  // Try normalized lookup (replace various dash types with standard em-dash)
+  var normalized = key.replace(/[\u2012\u2013\u2014\u2015\u2212—–-]+/g, '\u2014');
+  if (normalized !== key) {
+    entry = I18N[normalized];
+    if (entry && entry.zh) return entry.zh;
+  }
   return key;
 }
 
-/**
- * Apply translations to all elements with data-i18n attribute
- */
+function tCompany(name) {
+  if (I18N_LANG === 'en') return name;
+  return I18N_COMPANIES[name] || name;
+}
+
+/* ── Apply translations to static DOM elements ── */
 function applyI18n() {
-  var els = document.querySelectorAll('[data-i18n]');
-  els.forEach(function(el) {
-    var key = el.getAttribute('data-i18n');
-    if (I18N_LANG === 'zh') {
-      el.textContent = t(key);
-    } else {
-      el.textContent = key;
+  // Translate tab links
+  document.querySelectorAll('.tab-link').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate h1, h2, h3
+  document.querySelectorAll('h1, h2, h3').forEach(function(el) {
+    // Skip if it contains child elements that aren't just text
+    if (el.querySelector('button, input, select')) return;
+    var orig = el.getAttribute('data-i18n') || el.innerHTML.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.innerHTML = t(orig);
+  });
+
+  // Translate buttons (but not period buttons like 1D, 1W etc., and not sb-item which are handled separately)
+  document.querySelectorAll('button').forEach(function(el) {
+    if (el.classList.contains('sb-item')) return;
+    var txt = el.textContent.trim();
+    if (/^[0-9]/.test(txt) || txt === '×' || txt === '&times;' || txt.length > 60) return;
+    var orig = el.getAttribute('data-i18n') || txt;
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    var translated = t(orig);
+    if (translated !== orig) el.textContent = translated;
+  });
+
+  // Translate th elements
+  document.querySelectorAll('th').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    var translated = t(orig);
+    if (translated !== orig) el.textContent = translated;
+  });
+
+  // Translate p subtitles
+  document.querySelectorAll('p').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (I18N[orig]) {
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      el.textContent = t(orig);
     }
   });
 
-  // Also translate tab links
-  var tabs = document.querySelectorAll('.tab-link');
-  tabs.forEach(function(tab) {
-    var key = tab.getAttribute('data-i18n') || tab.textContent.trim();
-    if (I18N_LANG === 'zh' && I18N[key]) {
-      tab.textContent = I18N[key].zh;
+  // Translate nav section buttons on index.html
+  document.querySelectorAll('.nav-btn, .section-btn, [data-section]').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate sidebar items (sb-item buttons) — preserve inner <span> dot
+  document.querySelectorAll('.sb-item').forEach(function(el) {
+    // The button has <span class="dot">...</span> + text node
+    var textNodes = [];
+    el.childNodes.forEach(function(n) {
+      if (n.nodeType === 3 && n.textContent.trim()) textNodes.push(n);
+    });
+    if (textNodes.length > 0) {
+      var orig = el.getAttribute('data-i18n') || textNodes[0].textContent.trim();
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      textNodes[0].textContent = t(orig);
     }
   });
 
-  // Translate sidebar items
-  var sbItems = document.querySelectorAll('.sb-item');
-  sbItems.forEach(function(btn) {
-    var span = btn.querySelector('.dot');
-    var text = btn.textContent.trim();
-    if (I18N_LANG === 'zh') {
-      var translated = t(text);
-      if (span) {
-        btn.textContent = '';
-        btn.appendChild(span);
-        btn.appendChild(document.createTextNode(translated));
-      } else {
-        btn.textContent = translated;
-      }
+  // Translate sidebar section titles
+  document.querySelectorAll('.sb-section-title').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate card-title, sbar-label, kpi-label, section-header, stat-label elements
+  document.querySelectorAll('.card-title, .sbar-label, .sec-title, .section-title, .section-header, .stat-title, .stat-label, .mr-label, .sc-metric-label, .rsk-title, .sidebar-group-title, .sidebar-category, .kpi-label, .section-desc').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+    el.textContent = t(orig);
+  });
+
+  // Translate descriptions and subtitles with broad matching
+  document.querySelectorAll('.sec-sub, .section-sub, .card-sub, .subtitle').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (I18N[orig]) {
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      el.textContent = t(orig);
     }
   });
 
-  // Translate section titles
-  var titles = document.querySelectorAll('.sb-section-title, .section-title, .card-title, .kpi-label, .section-desc');
-  titles.forEach(function(el) {
-    var key = el.getAttribute('data-i18n') || el.textContent.trim();
-    if (I18N_LANG === 'zh') {
-      el.textContent = t(key);
-    }
-  });
-
-  // Update h1 title
-  var h1 = document.querySelector('.topbar h1');
-  if (h1) {
-    var key = h1.getAttribute('data-i18n') || h1.textContent.trim();
-    if (I18N_LANG === 'zh') {
-      h1.textContent = t(key);
-    }
+  // Update lang toggle button text
+  var langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    langBtn.textContent = I18N_LANG === 'en' ? '中文' : 'EN';
   }
 }
 
-/**
- * Toggle between English and Chinese
- */
+/* ── Translate dynamic content (company names, layer names in table cells) ── */
+function applyI18nDynamic() {
+  // Translate company names in table cells
+  document.querySelectorAll('td').forEach(function(el) {
+    var txt = el.textContent.trim();
+    if (I18N_COMPANIES[txt]) {
+      el.textContent = I18N_LANG === 'en' ? txt : I18N_COMPANIES[txt];
+    }
+    // Check for layer names in cells
+    if (I18N[txt] && I18N[txt].zh) {
+      el.textContent = t(txt);
+    }
+  });
+
+  // Translate layer names in any element with class containing 'layer', 'sector', 'category'
+  document.querySelectorAll('[class*="layer"], [class*="sector"], [class*="category"], .hl-name, .sector-name').forEach(function(el) {
+    var txt = el.textContent.trim();
+    if (I18N_COMPANIES[txt]) {
+      el.textContent = I18N_LANG === 'en' ? txt : I18N_COMPANIES[txt];
+    }
+    if (I18N[txt] && I18N[txt].zh) {
+      el.textContent = t(txt);
+    }
+  });
+
+  // Translate labels in cards, divs with financial text
+  document.querySelectorAll('.card-label, .metric-label, .stat-label, dt, label').forEach(function(el) {
+    var txt = el.textContent.trim();
+    if (I18N[txt] && I18N[txt].zh) {
+      el.textContent = t(txt);
+    }
+  });
+
+  // Translate option/select elements
+  document.querySelectorAll('option').forEach(function(el) {
+    var orig = el.getAttribute('data-i18n') || el.textContent.trim();
+    if (I18N[orig] && I18N[orig].zh) {
+      if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
+      el.textContent = t(orig);
+    }
+  });
+}
+
+/* ── Toggle Language ── */
 function toggleLang() {
-  I18N_LANG = (I18N_LANG === 'en') ? 'zh' : 'en';
+  I18N_LANG = I18N_LANG === 'en' ? 'zh' : 'en';
   i18nStorage.setItem('lang', I18N_LANG);
-  
-  // Update the language button text
-  var langBtn = document.getElementById('lang-btn');
-  if (langBtn) {
-    langBtn.textContent = (I18N_LANG === 'en') ? '中' : 'EN';
-  }
-  
   applyI18n();
-  
-  // If page has refreshI18n callback, call it for dynamic content
-  if (typeof refreshI18n === 'function') refreshI18n();
+  // Re-render dynamic content if renderAll exists
+  if (typeof renderAll === 'function') {
+    try { renderAll(); } catch(e) {}
+  }
+  if (typeof renderTable === 'function' && typeof renderAll !== 'function') {
+    try { renderTable(); } catch(e) {}
+  }
+  // Apply dynamic translations after re-render
+  applyI18nDynamic();
 }
 
-// Apply on load
-document.addEventListener('DOMContentLoaded', function() {
-  // Set initial button text
-  var langBtn = document.getElementById('lang-btn');
-  if (langBtn) {
-    langBtn.textContent = (I18N_LANG === 'en') ? '中' : 'EN';
-  }
+/* ── Inject language toggle button into tab bar ── */
+function injectLangToggle() {
+  var nav = document.querySelector('.tab-bar');
+  if (!nav) return;
+  // Check if already exists
+  if (document.getElementById('langToggle')) return;
+  var btn = document.createElement('button');
+  btn.id = 'langToggle';
+  btn.className = 'lang-toggle-btn';
+  btn.textContent = I18N_LANG === 'en' ? '中文' : 'EN';
+  btn.onclick = toggleLang;
+  btn.style.cssText = 'margin-left:auto;padding:4px 14px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:inherit;font-size:13px;font-weight:600;cursor:pointer;letter-spacing:0.5px;transition:all 0.2s;white-space:nowrap;';
+  btn.onmouseenter = function() { btn.style.background = 'rgba(99,102,241,0.25)'; };
+  btn.onmouseleave = function() { btn.style.background = 'rgba(255,255,255,0.06)'; };
+  nav.appendChild(btn);
+}
+
+/* ── Auto-init on DOM ready ── */
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() {
+    injectLangToggle();
+    applyI18n();
+    applyI18nDynamic();
+  });
+} else {
+  injectLangToggle();
   applyI18n();
-});
+  applyI18nDynamic();
+}
