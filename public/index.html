@@ -2637,5 +2637,59 @@ function goDash(target) {
 <!-- Dashboard Enhancements: Search, Watchlist, Dark Mode, Compare -->
 <link rel="stylesheet" href="dashboard_enhancements.css">
 <script src="dashboard_enhancements.js"></script>
+
+<script>
+/* Live price refresh — pulls current quotes from /api/quotes (Yahoo Finance proxy)
+   and updates each card's Price metric. Silently keeps hardcoded fallback on failure. */
+(function(){
+  function fmtPrice(p){ return '$' + p.toFixed(2); }
+
+  var cards = document.querySelectorAll('.sc');
+  var tickerToEl = {};
+  var symbols = [];
+
+  for (var i = 0; i < cards.length; i++) {
+    var card = cards[i];
+    var tEl = card.querySelector('.sc-ticker');
+    if (!tEl) continue;
+    var sym = tEl.textContent.trim();
+    if (!sym) continue;
+
+    var metrics = card.querySelectorAll('.sc-metric');
+    for (var j = 0; j < metrics.length; j++) {
+      var lbl = metrics[j].querySelector('.sc-metric-label');
+      if (lbl && lbl.textContent.trim() === 'Price') {
+        var val = metrics[j].querySelector('.sc-metric-val');
+        if (val) {
+          tickerToEl[sym] = val;
+          symbols.push(sym);
+        }
+        break;
+      }
+    }
+  }
+
+  if (!symbols.length) return;
+
+  fetch('/api/quotes?symbols=' + encodeURIComponent(symbols.join(',')))
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(data){
+      if (!data) return;
+      Object.keys(tickerToEl).forEach(function(sym){
+        var q = data[sym];
+        if (!q || typeof q.price !== 'number') return;
+        tickerToEl[sym].textContent = fmtPrice(q.price);
+        if (window.SW_DATA && window.SW_DATA.tickers && window.SW_DATA.tickers[sym]) {
+          var t = window.SW_DATA.tickers[sym];
+          t.price = q.price;
+          if (typeof q.change === 'number') t.change = q.change;
+          if (typeof q.changePct === 'number') t.changePct = q.changePct;
+          if (typeof q.previousClose === 'number') t.previousClose = q.previousClose;
+        }
+      });
+    })
+    .catch(function(){});
+})();
+</script>
 </body>
 </html>
