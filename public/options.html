@@ -562,13 +562,14 @@ td {
 
   <!-- Main Content -->
   <div class="main">
-    <!-- Disclaimer Banner -->
-    <div class="disclaimer">
+    <!-- Disclaimer Banner (loadFlow() removes this once live Yahoo data is in) -->
+    <div class="disclaimer" data-simulated-banner>
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M8 1L1 14h14L8 1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
         <path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
       </svg>
       <span data-i18n="Simulated options data derived from volume & momentum signals — not real options flow">Simulated options data derived from volume &amp; momentum signals — not real options flow</span>
+      <span style="margin-left:auto;font-size:var(--text-xs);color:var(--muted)">Live options flow: <span id="flow-updated-at">loading…</span></span>
     </div>
 
     <!-- Market Tilt Gauge + KPI Summary -->
@@ -1346,6 +1347,178 @@ mpSorted.forEach(d => {
     '<td style="color:' + dirColor + ';font-family:Inter,sans-serif">' + direction + '</td>' +
   '</tr>';
 });
+
+// =================================================================
+// LIVE OPTIONS FLOW OVERLAY
+// Fetches /api/options-flow (Yahoo v7 chain proxy) and overwrites the
+// header KPIs, gauge, and unusual-activity feed with real numbers.
+// The simulated render above runs first so sections without a live
+// equivalent (gamma exposure, max pain, heatmap) keep working, and so
+// the page degrades gracefully if the proxy is unreachable.
+// =================================================================
+(function () {
+  const universe = Object.keys(window.QUOTES || {});
+  if (!universe.length) return;
+
+  function fmtUsd(n) {
+    if (!isFinite(n) || n === 0) return '$0';
+    const abs = Math.abs(n);
+    if (abs >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (abs >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'M';
+    if (abs >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+    return '$' + n.toFixed(0);
+  }
+
+  function tiltScoreFor(callVol, putVol, callPrem, putPrem) {
+    const vTotal = callVol + putVol;
+    const pTotal = callPrem + putPrem;
+    const vol  = vTotal ? callVol  / vTotal : 0.5;
+    const prem = pTotal ? callPrem / pTotal : 0.5;
+    return Math.round((0.5 * vol + 0.5 * prem) * 100);
+  }
+
+  function aggregate(perTicker) {
+    let callVol = 0, putVol = 0, callPrem = 0, putPrem = 0;
+    const unusualFeed = [];
+    const layerMap = {};
+    let bull = 0, bear = 0;
+
+    for (const [sym, d] of Object.entries(perTicker)) {
+      if (!d) continue;
+      callVol  += d.callVol  || 0;
+      putVol   += d.putVol   || 0;
+      callPrem += d.callPrem || 0;
+      putPrem  += d.putPrem  || 0;
+      const layer = window.QUOTES?.[sym]?.layer;
+      if (layer) {
+        layerMap[layer] ??= { call: 0, put: 0 };
+        layerMap[layer].call += d.callVol || 0;
+        layerMap[layer].put  += d.putVol  || 0;
+      }
+      if (typeof d.pcRatio === 'number') {
+        if (d.pcRatio < 0.85) bull++;
+        else if (d.pcRatio > 1.15) bear++;
+      }
+      for (const u of d.unusual || []) unusualFeed.push({ sym, ...u });
+    }
+    const totalPrem = callPrem + putPrem;
+    const avgPC = callVol ? +(putVol / callVol).toFixed(2) : null;
+    return {
+      callVol, putVol, callPrem, putPrem, totalPrem, avgPC, bull, bear,
+      tilt: tiltScoreFor(callVol, putVol, callPrem, putPrem),
+      unusualFeed: unusualFeed.sort((a, b) => b.premium - a.premium),
+      layerMap,
+    };
+  }
+
+  function paint(payload) {
+    const agg = aggregate(payload.tickers || {});
+
+    const totalEl = document.getElementById('totalPremium');
+    if (totalEl) totalEl.textContent = fmtUsd(agg.totalPrem);
+    const subEl = document.getElementById('premiumSub');
+    if (subEl) subEl.textContent = fmtUsd(agg.callPrem) + ' calls / ' + fmtUsd(agg.putPrem) + ' puts';
+
+    if (agg.avgPC != null) {
+      const pcEl = document.getElementById('pcRatioVal');
+      if (pcEl) {
+        pcEl.textContent = agg.avgPC.toFixed(2);
+        pcEl.style.color = agg.avgPC < 1 ? 'var(--green)' : 'var(--red)';
+      }
+      const pcSub = document.getElementById('pcRatioSub');
+      if (pcSub) pcSub.textContent = agg.avgPC < 1 ? 'Call-heavy (bullish tilt)' : 'Put-heavy (bearish tilt)';
+    }
+
+    const unusualNamesArr = [...new Set(agg.unusualFeed.map(u => u.sym))];
+    const ucEl = document.getElementById('unusualCount');
+    if (ucEl) ucEl.textContent = unusualNamesArr.length;
+    const unEl = document.getElementById('unusualNames');
+    if (unEl) unEl.textContent = unusualNamesArr.slice(0, 5).join(', ') + (unusualNamesArr.length > 5 ? '…' : '');
+
+    const universeSize = Object.keys(payload.tickers || {}).length || 1;
+    const bcEl = document.getElementById('bullCount');
+    if (bcEl) bcEl.textContent = agg.bull;
+    const bpEl = document.getElementById('bullPct');
+    if (bpEl) bpEl.textContent = ((agg.bull / universeSize) * 100).toFixed(0) + '% of universe';
+    const beEl = document.getElementById('bearCount');
+    if (beEl) beEl.textContent = agg.bear;
+    const bePctEl = document.getElementById('bearPct');
+    if (bePctEl) bePctEl.textContent = ((agg.bear / universeSize) * 100).toFixed(0) + '% of universe';
+
+    const netEl = document.getElementById('netCallPrem');
+    if (netEl) {
+      const net = agg.callPrem - agg.putPrem;
+      netEl.textContent = fmtUsd(net);
+      netEl.style.color = net >= 0 ? 'var(--green)' : 'var(--red)';
+    }
+    const netSub = document.getElementById('callPremSub');
+    if (netSub) {
+      if (agg.putPrem > 0) {
+        const pct = (agg.callPrem / agg.putPrem - 1) * 100;
+        netSub.textContent = (pct >= 0 ? 'Call premium exceeds put by ' : 'Put premium exceeds call by ') + Math.abs(pct).toFixed(1) + '%';
+      } else {
+        netSub.textContent = 'No put premium recorded';
+      }
+    }
+
+    const canvas = document.getElementById('gaugeChart');
+    if (canvas && typeof drawGauge === 'function') {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawGauge(ctx, agg.tilt);
+      const lbl = document.getElementById('gaugeLabel');
+      if (lbl) {
+        const word  = agg.tilt > 60 ? 'Bullish' : agg.tilt < 40 ? 'Bearish' : 'Neutral';
+        const color = agg.tilt > 60 ? 'var(--green)' : agg.tilt < 40 ? 'var(--red)' : 'var(--yellow)';
+        lbl.innerHTML = '<span class="mono" style="font-size:var(--text-2xl);font-weight:700;color:' + color + '">'
+          + agg.tilt.toFixed(0) + '</span><br><span style="font-size:var(--text-xs);color:var(--muted)">Aggregate Call/Put Tilt: ' + word + '</span>';
+      }
+    }
+
+    const ufEl = document.getElementById('unusualFeed');
+    if (ufEl) {
+      const top = agg.unusualFeed.slice(0, 20);
+      if (!top.length) {
+        ufEl.innerHTML = '<div style="padding:var(--space-6);text-align:center;color:var(--muted)">No unusual activity detected</div>';
+      } else {
+        ufEl.innerHTML = top.map(function (u) {
+          const sideColor = u.side === 'CALL' ? 'var(--green)' : 'var(--red)';
+          const ivPct = isFinite(u.iv) ? (u.iv * 100).toFixed(1) + '%' : '—';
+          return '<div class="feed-row" onclick="openPanel(\'' + u.sym + '\')" style="cursor:pointer;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--border);font-size:var(--text-xs)">'
+            + '<div style="display:flex;justify-content:space-between;align-items:center">'
+              + '<span><span style="color:var(--primary);font-weight:700">' + u.sym + '</span> '
+              + '<span style="color:' + sideColor + ';font-weight:600">' + u.side + '</span> '
+              + '$' + u.strike.toFixed(2) + ' exp ' + u.exp + '</span>'
+              + '<span style="font-family:var(--font-mono);font-weight:700;color:' + sideColor + '">' + fmtUsd(u.premium) + '</span>'
+            + '</div>'
+            + '<div style="color:var(--muted);margin-top:2px">vol ' + u.volume.toLocaleString() + ' / OI ' + u.openInterest.toLocaleString() + ' · IV ' + ivPct + '</div>'
+          + '</div>';
+        }).join('');
+      }
+    }
+
+    const ts = document.getElementById('flow-updated-at');
+    if (ts) ts.textContent = new Date(payload.asOf).toLocaleTimeString();
+    document.querySelectorAll('[data-simulated-banner]').forEach(function (n) { n.remove(); });
+  }
+
+  async function loadFlow() {
+    try {
+      const url = '/api/options-flow?symbols=' + encodeURIComponent(universe.join(','));
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('options-flow ' + r.status);
+      const payload = await r.json();
+      paint(payload);
+    } catch (e) {
+      console.warn('options flow load failed; keeping simulated values', e);
+      const ts = document.getElementById('flow-updated-at');
+      if (ts) ts.textContent = 'unavailable';
+    }
+  }
+
+  loadFlow();
+  setInterval(loadFlow, 60000);
+})();
 
 // =================================================================
 // SIDE PANEL DRAWER
