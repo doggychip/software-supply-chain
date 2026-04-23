@@ -176,6 +176,126 @@ app.get('/api/news', (req, res) => {
   res.json(NEWS_DATA);
 });
 
+// ---- Options chain (single ticker, raw pass-through from Yahoo v7) ----
+// Caveat: Yahoo's v7 options endpoint has been tightening; if you start
+// seeing 401/403 here, they've added crumb auth on this path too.
+app.get('/api/options/:ticker', async (req, res) => {
+  const sym = req.params.ticker.toUpperCase();
+  const yahooSym = SYMBOL_ALIASES[sym] || sym;
+  const url = `https://query2.finance.yahoo.com/v7/finance/options/${encodeURIComponent(yahooSym)}`;
+  try {
+    const r = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+    if (!r.ok) return res.status(r.status).json({ error: `Yahoo returned ${r.status}` });
+    const j = await r.json();
+    res.set('cache-control', 'public, max-age=60');
+    res.json(j);
+  } catch (e) {
+    res.status(502).json({ error: e.message });
+  }
+});
+
+// Concurrency-limited fan-out — Yahoo's options endpoint rate-limits aggressively.
+async function mapLimit(items, limit, worker) {
+  const results = new Array(items.length);
+  let i = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      results[idx] = await worker(items[idx], idx);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
+// ---- Aggregated options flow across many tickers ----
+// GET /api/options-flow?symbols=AMZN,MSFT&unusualMinVol=500&unusualVolToOI=3
+// Returns nearest-expiration call/put aggregates plus a naive "unusual" list
+// (volume > openInterest * unusualVolToOI && volume > unusualMinVol).
+app.get('/api/options-flow', async (req, res) => {
+  const requested = (req.query.symbols || '').split(',').map(s => s.trim()).filter(Boolean);
+  const symbols = (requested.length ? requested : CANONICAL_TICKERS).map(s => s.toUpperCase());
+  if (!symbols.length) return res.status(400).json({ error: 'symbols required' });
+
+  const unusualMinVol  = +req.query.unusualMinVol  || 500;
+  const unusualVolToOI = +req.query.unusualVolToOI || 3;
+
+  const cacheKey = `options-flow:${symbols.join(',')}:${unusualMinVol}:${unusualVolToOI}`;
+  const hit = cacheGet(cacheKey);
+  if (hit) {
+    res.set('cache-control', 'public, max-age=120');
+    return res.json(hit);
+  }
+
+  const perTicker = {};
+  await mapLimit(symbols, 5, async (sym) => {
+    if (SKIP_LIVE.has(sym)) return;
+    const yahooSym = SYMBOL_ALIASES[sym] || sym;
+    try {
+      const r = await fetch(
+        `https://query2.finance.yahoo.com/v7/finance/options/${encodeURIComponent(yahooSym)}`,
+        { headers: { 'User-Agent': 'Mozilla/5.0' } }
+      );
+      if (!r.ok) return;
+      const j = await r.json();
+      const result = j?.optionChain?.result?.[0];
+      if (!result) return;
+
+      const quote = result.quote || {};
+      const chain = result.options?.[0]; // nearest expiration
+      if (!chain) return;
+
+      let callVol = 0, putVol = 0, callPrem = 0, putPrem = 0;
+      let callOI = 0, putOI = 0;
+      const unusual = [];
+
+      const scan = (legs, side) => {
+        for (const c of legs || []) {
+          const v  = c.volume || 0;
+          const oi = c.openInterest || 0;
+          const last = c.lastPrice || 0;
+          const prem = v * last * 100;
+          if (side === 'CALL') { callVol += v; callOI += oi; callPrem += prem; }
+          else                 { putVol  += v; putOI  += oi; putPrem  += prem; }
+          if (oi > 0 && v > oi * unusualVolToOI && v > unusualMinVol) {
+            unusual.push({
+              side,
+              strike: c.strike,
+              volume: v,
+              openInterest: oi,
+              last,
+              premium: prem,
+              iv: c.impliedVolatility,
+              exp: chain.expirationDate,
+            });
+          }
+        }
+      };
+      scan(chain.calls, 'CALL');
+      scan(chain.puts,  'PUT');
+
+      perTicker[sym] = {
+        price: quote.regularMarketPrice,
+        expiration: chain.expirationDate,
+        callVol, putVol, callPrem, putPrem, callOI, putOI,
+        pcRatio: callVol ? +(putVol / callVol).toFixed(3) : null,
+        totalPrem: callPrem + putPrem,
+        totalVol: callVol + putVol,
+        unusual: unusual.sort((a, b) => b.premium - a.premium).slice(0, 3),
+      };
+    } catch { /* skip this ticker */ }
+  });
+
+  const payload = { asOf: Date.now(), tickers: perTicker };
+  cacheSet(cacheKey, payload);
+  res.set('cache-control', 'public, max-age=120');
+  res.json(payload);
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
