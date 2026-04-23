@@ -1,26 +1,23 @@
 /* bootstrap-quotes.js
-   Fetches live quotes from /api/quotes once per page load and exposes:
+   On page load:
+     1. fetches /api/quotes (current price/change per ticker)
+     2. fetches /api/history?range=6mo&interval=1d (full 126-bar history)
+        so indicator math (RSI/SMA/MACD/Bollinger/etc.) runs on current
+        data instead of the snapshot baked in at deploy time.
+   Exposes window.__quotesReady as a Promise that resolves after both
+   fetches settle and any known globals have been patched in-place.
 
-     window.__quotesReady  – Promise<Record<symbol, quote>>
+   Patches (when present):
+     - window.SW_DATA.tickers   — .price/.change/.changePct/.previousClose
+     - window.SW_DATA.conviction — array with .ticker entries
+     - window.QUOTES            — flat map keyed by ticker
+     - window.PRICE_DATA        — replaced entirely with live bars per symbol
+     - index.html `.sc` supply-chain card DOM (Price metric)
 
-   Pages should gate their render on it, e.g.:
+   Per-page globals must be declared `var` (not `const`) for these patches
+   to reach them, since non-module `const` does not attach to window.
 
-     window.__quotesReady.then(function(quotes){ renderAll(); });
-
-   Patches any globals it finds so downstream code reads the live values:
-     - window.SW_DATA.tickers / .conviction
-     - window.QUOTES (flat map keyed by ticker — used by options/leaderboard/
-       sentiment/stress-test/correlation/technicals)
-     - window.PRICE_DATA (overwrites the last bar's close)
-
-   Note: the per-page data objects must be declared with `var` (not `const`)
-   for the global patches to apply, since non-module `const` does not attach
-   to window.
-
-   Also updates any supply-chain card DOM nodes on index.html
-   (`.sc` cards with a `.sc-ticker` and a Price metric).
-
-   Silently falls back to the hardcoded values if the fetch fails. */
+   Fails silently: if either fetch errors, the hardcoded values remain. */
 (function () {
   function fmtPrice(p) { return '$' + p.toFixed(2); }
 
@@ -38,14 +35,13 @@
     });
   }
 
-  function patchPriceData(priceData, quotes) {
-    if (!priceData || typeof priceData !== 'object') return;
-    Object.keys(quotes).forEach(function (sym) {
-      var bars = priceData[sym];
-      if (!Array.isArray(bars) || bars.length < 2) return;
-      var q = quotes[sym];
-      if (typeof q.price === 'number') bars[bars.length - 1].c = q.price;
-      if (typeof q.previousClose === 'number') bars[bars.length - 2].c = q.previousClose;
+  function replacePriceData(priceData, historyMap) {
+    if (!priceData || !historyMap) return;
+    Object.keys(historyMap).forEach(function (sym) {
+      var bars = historyMap[sym];
+      if (Array.isArray(bars) && bars.length && priceData[sym]) {
+        priceData[sym] = bars;
+      }
     });
   }
 
@@ -75,8 +71,14 @@
     .then(function (r) { return r.ok ? r.json() : { quotes: {} }; })
     .catch(function () { return { quotes: {} }; });
 
-  window.__quotesReady = quotesPromise.then(function (payload) {
-    var quotes = (payload && payload.quotes) || {};
+  var historyPromise = fetch('/api/history?range=6mo&interval=1d')
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .catch(function () { return {}; });
+
+  window.__quotesReady = Promise.all([quotesPromise, historyPromise]).then(function (parts) {
+    var quotes = (parts[0] && parts[0].quotes) || {};
+    var history = parts[1] || {};
+
     if (window.SW_DATA && window.SW_DATA.tickers) patchTickerMap(window.SW_DATA.tickers, quotes);
     if (window.SW_DATA && Array.isArray(window.SW_DATA.conviction)) {
       window.SW_DATA.conviction.forEach(function (c) {
@@ -87,10 +89,11 @@
       });
     }
     if (window.QUOTES) patchTickerMap(window.QUOTES, quotes);
-    if (window.PRICE_DATA) patchPriceData(window.PRICE_DATA, quotes);
-    // DOM patch is index.html-specific but harmless elsewhere.
+    if (window.PRICE_DATA) replacePriceData(window.PRICE_DATA, history);
+
     if (document.readyState !== 'loading') patchIndexCards(quotes);
     else document.addEventListener('DOMContentLoaded', function () { patchIndexCards(quotes); });
+
     return quotes;
   });
 })();
