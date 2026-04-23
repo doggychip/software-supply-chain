@@ -101,27 +101,70 @@ app.get('/api/history/:sym', async (req, res) => {
   try {
     const sym = req.params.sym.toUpperCase();
     const range = (req.query.range || '6mo').toString();
-    const cacheKey = `history:${sym}:${range}`;
+    const interval = (req.query.interval || '1d').toString();
+    const cacheKey = `history:${sym}:${range}:${interval}`;
     const hit = cacheGet(cacheKey);
     if (hit) {
       res.set('cache-control', 'public, max-age=300');
       return res.json(hit);
     }
     const yahooSym = SYMBOL_ALIASES[sym] || sym;
-    const data = await fetchYahooChart(yahooSym, range, '1d');
+    const data = await fetchYahooChart(yahooSym, range, interval);
     const result = data?.chart?.result?.[0];
     if (!result) return res.status(404).json({ symbol: sym, bars: [] });
     const ts = result.timestamp || [];
     const q = result.indicators?.quote?.[0] || {};
     const bars = ts.map((t, i) => ({
       d: new Date(t * 1000).toISOString().slice(0, 10),
-      c: q.close?.[i],
-      v: q.volume?.[i]
+      c: q.close?.[i] == null ? null : +q.close[i].toFixed(2),
+      v: q.volume?.[i] ?? 0
     })).filter(b => b.c != null);
     const payload = { symbol: sym, bars };
     cacheSet(cacheKey, payload);
     res.set('cache-control', 'public, max-age=300');
     res.json(payload);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Batch history: GET /api/history?symbols=AMZN,MSFT&range=6mo&interval=1d
+// Returns { SYM: [{d,c,v}, ...] } for each requested symbol.
+// If `symbols` is omitted, returns bars for all canonical tickers.
+app.get('/api/history', async (req, res) => {
+  try {
+    const requested = (req.query.symbols || '').split(',').map(s => s.trim()).filter(Boolean);
+    const symbols = (requested.length ? requested : CANONICAL_TICKERS).map(s => s.toUpperCase());
+    const range = (req.query.range || '6mo').toString();
+    const interval = (req.query.interval || '1d').toString();
+    if (!symbols.length) return res.json({});
+
+    const out = {};
+    await Promise.all(symbols.map(async (sym) => {
+      if (SKIP_LIVE.has(sym)) return;
+      const cacheKey = `history:${sym}:${range}:${interval}`;
+      const hit = cacheGet(cacheKey);
+      if (hit) { out[sym] = hit.bars; return; }
+      const yahooSym = SYMBOL_ALIASES[sym] || sym;
+      try {
+        const data = await fetchYahooChart(yahooSym, range, interval);
+        const result = data?.chart?.result?.[0];
+        if (!result) return;
+        const ts = result.timestamp || [];
+        const q = result.indicators?.quote?.[0] || {};
+        const bars = ts.map((t, i) => ({
+          d: new Date(t * 1000).toISOString().slice(0, 10),
+          c: q.close?.[i] == null ? null : +q.close[i].toFixed(2),
+          v: q.volume?.[i] ?? 0
+        })).filter(b => b.c != null);
+        if (bars.length) {
+          cacheSet(cacheKey, { symbol: sym, bars });
+          out[sym] = bars;
+        }
+      } catch (_) {}
+    }));
+    res.set('cache-control', 'public, max-age=300');
+    res.json(out);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
