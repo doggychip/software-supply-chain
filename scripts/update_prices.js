@@ -138,6 +138,46 @@ async function runAiSchema(src) {
 
 const SW_DATA_LINE = /^var SW_DATA = (\{.*\});\s*$/;
 
+// Conviction-list rules — reverse-engineered from the existing list:
+//   - "Reasonable P/E" is a hard prerequisite (0 < pe < 50)
+//   - Each additional criterion below adds one point to the score
+//   - Final score = reasons.length + 1 (base point for being eligible)
+//   - Top N sorted by score desc; ties broken by insertion order
+const CONVICTION_RULES = {
+  reasonablePeMax: 50,
+  largeCapMin: 50e9,
+  highVolRatio: 1.2,
+  strongMomentumPct: 3.0,
+  topN: 15,
+};
+
+function rebuildConviction(data) {
+  const r = CONVICTION_RULES;
+  const candidates = [];
+  for (const [ticker, t] of Object.entries(data.tickers)) {
+    if (typeof t.pe !== 'number' || t.pe <= 0 || t.pe >= r.reasonablePeMax) continue;
+    const reasons = ['Reasonable P/E'];
+    if (typeof t.marketCap === 'number' && t.marketCap >= r.largeCapMin) reasons.push('Large cap');
+    if (typeof t.eps === 'number' && t.eps > 0) reasons.push('Profitable');
+    if (typeof t.volRatio === 'number' && t.volRatio >= r.highVolRatio) reasons.push('High relative volume');
+    if (typeof t.changePct === 'number' && t.changePct >= r.strongMomentumPct) reasons.push('Strong momentum');
+
+    candidates.push({
+      ticker,
+      name: t.name,
+      layer: t.layer,
+      score: reasons.length + 1,
+      reasons,
+      price: t.price,
+      pe: t.pe,
+      marketCap: t.marketCap,
+      changePct: t.changePct,
+    });
+  }
+  candidates.sort((a, b) => b.score - a.score); // stable sort preserves insertion order
+  return candidates.slice(0, r.topN);
+}
+
 async function runSoftwareSchema(src) {
   const lines = src.split('\n');
   let lineIdx = -1;
@@ -202,6 +242,13 @@ async function runSoftwareSchema(src) {
 
   console.log(`\n${ok} updated, ${fail} failed.`);
   if (ok === 0) return null;
+
+  if (Array.isArray(data.conviction)) {
+    data.conviction = rebuildConviction(data);
+    console.log(`Regenerated conviction list (${data.conviction.length} entries).`);
+  }
+  // data.macro is hand-curated research benchmarks (Gartner forecasts, etc.) —
+  // not derivable from quotes. Left untouched.
 
   lines[lineIdx] = `var SW_DATA = ${JSON.stringify(data)};`;
   return lines.join('\n');
