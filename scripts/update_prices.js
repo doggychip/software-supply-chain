@@ -1,10 +1,17 @@
 #!/usr/bin/env node
 /*
- * Refresh TICKER_DATA price fields in public/index.html from Yahoo Finance.
+ * Refresh ticker prices in public/index.html from Yahoo Finance.
  *
- * Updates per ticker: price, chg, chgPct, hi52, lo52.
- * Leaves mcap, pe, name, layers, thesis, tags untouched — those are editorial.
- * Skips tickers with price:0 in the source (e.g. Korean .KS listings).
+ * Auto-detects schema:
+ *   - "ai" schema:    const TICKER_DATA = { 'NVDA': { price, chg, chgPct, hi52, lo52, ... } }
+ *                     Updates: price, chg, chgPct, hi52, lo52 (line-level rewrite)
+ *
+ *   - "software" schema: var SW_DATA = {"layers":..., "tickers":{"AMZN":{...}}, ...};
+ *                     Updates per ticker: price, previousClose, change, changePct,
+ *                     dayHigh, dayLow, yearHigh, yearLow, volume.
+ *                     Leaves priceHistory, thesis, marketCap, pe, eps, layer, etc. untouched.
+ *
+ * Editorial fields (thesis, tags, layers, names, market cap, P/E) are never touched.
  *
  * Usage: node scripts/update_prices.js [--dry-run]
  */
@@ -18,9 +25,6 @@ const DELAY_MS = 150;
 const USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
   '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-
-const TICKER_BLOCK_START = /^const TICKER_DATA = \{\s*$/m;
-const TICKER_LINE = /^(\s*)'([^']+)':\s*\{\s*(.*)\}\s*,?\s*$/;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -47,10 +51,23 @@ async function fetchQuote(ticker) {
     prev,
     hi52: meta.fiftyTwoWeekHigh,
     lo52: meta.fiftyTwoWeekLow,
+    dayHigh: meta.regularMarketDayHigh,
+    dayLow: meta.regularMarketDayLow,
+    volume: meta.regularMarketVolume,
   };
 }
 
-function rewriteLine(line, q) {
+function round(n, dp) {
+  const m = Math.pow(10, dp);
+  return Math.round(n * m) / m;
+}
+
+/* ── AI schema (TICKER_DATA) ─────────────────────────────────── */
+
+const TICKER_BLOCK_START = /^const TICKER_DATA = \{\s*$/m;
+const TICKER_LINE = /^(\s*)'([^']+)':\s*\{\s*(.*)\}\s*,?\s*$/;
+
+function rewriteAiLine(line, q) {
   const chg = q.price - q.prev;
   const chgPct = (chg / q.prev) * 100;
   const fmt = (n) => n.toFixed(2);
@@ -68,15 +85,13 @@ function rewriteLine(line, q) {
   return out;
 }
 
-function currentPrice(line) {
+function aiCurrentPrice(line) {
   const m = line.match(/price:\s*(-?\d+(?:\.\d+)?)/);
   return m ? parseFloat(m[1]) : null;
 }
 
-async function main() {
-  const src = fs.readFileSync(INDEX_PATH, 'utf8');
+async function runAiSchema(src) {
   const lines = src.split('\n');
-
   let blockStart = -1;
   for (let i = 0; i < lines.length; i++) {
     if (TICKER_BLOCK_START.test(lines[i])) {
@@ -84,31 +99,25 @@ async function main() {
       break;
     }
   }
-  if (blockStart === -1) {
-    console.error('Could not locate TICKER_DATA block in index.html');
-    process.exit(1);
-  }
+  if (blockStart === -1) return null;
 
   const updates = [];
   for (let i = blockStart; i < lines.length; i++) {
-    const line = lines[i];
-    if (/^\};/.test(line)) break;
-    const m = line.match(TICKER_LINE);
+    if (/^\};/.test(lines[i])) break;
+    const m = lines[i].match(TICKER_LINE);
     if (!m) continue;
-    const ticker = m[2];
-    const price = currentPrice(line);
-    if (price === 0 || price === null) continue; // skip placeholders (e.g. .KS)
-    updates.push({ i, ticker });
+    const price = aiCurrentPrice(lines[i]);
+    if (price === 0 || price === null) continue;
+    updates.push({ i, ticker: m[2] });
   }
 
-  console.log(`Updating ${updates.length} tickers from Yahoo Finance...`);
-
+  console.log(`[ai schema] Updating ${updates.length} tickers from Yahoo Finance...`);
   let ok = 0;
   let fail = 0;
   for (const { i, ticker } of updates) {
     try {
       const q = await fetchQuote(ticker);
-      lines[i] = rewriteLine(lines[i], q);
+      lines[i] = rewriteAiLine(lines[i], q);
       console.log(
         `  ✓ ${ticker.padEnd(12)} $${q.price.toFixed(2)} ` +
           `(prev $${q.prev.toFixed(2)}, 52w $${q.lo52?.toFixed(2) ?? '?'}–$${q.hi52?.toFixed(2) ?? '?'})`
@@ -120,18 +129,110 @@ async function main() {
     }
     await sleep(DELAY_MS);
   }
+  console.log(`\n${ok} updated, ${fail} failed.`);
+  if (ok === 0) return null;
+  return lines.join('\n');
+}
+
+/* ── Software schema (SW_DATA JSON blob) ────────────────────── */
+
+const SW_DATA_LINE = /^var SW_DATA = (\{.*\});\s*$/;
+
+async function runSoftwareSchema(src) {
+  const lines = src.split('\n');
+  let lineIdx = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].startsWith('var SW_DATA = {')) {
+      lineIdx = i;
+      break;
+    }
+  }
+  if (lineIdx === -1) return null;
+
+  const m = lines[lineIdx].match(SW_DATA_LINE);
+  if (!m) {
+    console.error('Found SW_DATA line but could not extract JSON literal');
+    return null;
+  }
+
+  let data;
+  try {
+    data = JSON.parse(m[1]);
+  } catch (err) {
+    console.error('Failed to parse SW_DATA JSON:', err.message);
+    return null;
+  }
+
+  if (!data.tickers) {
+    console.error('SW_DATA has no .tickers field');
+    return null;
+  }
+
+  const tickers = Object.keys(data.tickers);
+  console.log(`[software schema] Updating ${tickers.length} tickers from Yahoo Finance...`);
+
+  let ok = 0;
+  let fail = 0;
+  for (const tk of tickers) {
+    try {
+      const q = await fetchQuote(tk);
+      const t = data.tickers[tk];
+      const change = q.price - q.prev;
+      const changePct = (change / q.prev) * 100;
+      t.price = round(q.price, 4);
+      t.previousClose = round(q.prev, 4);
+      t.change = round(change, 2);
+      t.changePct = round(changePct, 5);
+      if (typeof q.hi52 === 'number') t.yearHigh = round(q.hi52, 4);
+      if (typeof q.lo52 === 'number') t.yearLow = round(q.lo52, 4);
+      if (typeof q.dayHigh === 'number') t.dayHigh = round(q.dayHigh, 4);
+      if (typeof q.dayLow === 'number') t.dayLow = round(q.dayLow, 4);
+      if (typeof q.volume === 'number') t.volume = q.volume;
+      console.log(
+        `  ✓ ${tk.padEnd(8)} $${q.price.toFixed(2)} ` +
+          `(prev $${q.prev.toFixed(2)}, ${change >= 0 ? '+' : ''}${changePct.toFixed(2)}%)`
+      );
+      ok++;
+    } catch (err) {
+      console.warn(`  ✗ ${tk.padEnd(8)} ${err.message}`);
+      fail++;
+    }
+    await sleep(DELAY_MS);
+  }
 
   console.log(`\n${ok} updated, ${fail} failed.`);
+  if (ok === 0) return null;
+
+  lines[lineIdx] = `var SW_DATA = ${JSON.stringify(data)};`;
+  return lines.join('\n');
+}
+
+/* ── Entry ──────────────────────────────────────────────────── */
+
+async function main() {
+  const src = fs.readFileSync(INDEX_PATH, 'utf8');
+
+  let updated = null;
+  if (/^const TICKER_DATA = \{/m.test(src)) {
+    updated = await runAiSchema(src);
+  } else if (/^var SW_DATA = \{/m.test(src)) {
+    updated = await runSoftwareSchema(src);
+  } else {
+    console.error(
+      'Unknown schema — expected `const TICKER_DATA = {` or `var SW_DATA = {`'
+    );
+    process.exit(1);
+  }
 
   if (DRY_RUN) {
     console.log('Dry run — not writing file.');
     return;
   }
-  if (ok === 0) {
+  if (!updated) {
     console.error('No updates — leaving file unchanged.');
     process.exit(1);
   }
-  fs.writeFileSync(INDEX_PATH, lines.join('\n'));
+  fs.writeFileSync(INDEX_PATH, updated);
   console.log(`Wrote ${INDEX_PATH}`);
 }
 
