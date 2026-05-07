@@ -14,6 +14,52 @@ const SYMBOL_ALIASES = { SQ: 'XYZ' };
 // CYBR was acquired by PANW and delisted — skip live fetch, fall through to hardcoded.
 const SKIP_LIVE = new Set(['CYBR']);
 
+// ── Input validation & fetch hardening ─────────────────────────────
+// Tickers: 1–10 chars, leading letter, allow letters/digits/dot/dash (BRK.B, RDS-A).
+// Caps protect against unbounded fan-out → Yahoo rate limit / OOM via cache key.
+const TICKER_RE = /^[A-Z][A-Z0-9.-]{0,9}$/;
+const MAX_SYMBOLS = 200;
+const FETCH_TIMEOUT_MS = 10000;
+const FETCH_CONCURRENCY = 5;
+
+function validateTicker(s) {
+  if (s == null) throw new Error('ticker required');
+  const u = String(s).toUpperCase().trim();
+  if (!TICKER_RE.test(u)) throw new Error(`invalid ticker: ${s}`);
+  return u;
+}
+
+function validateSymbols(raw) {
+  const list = String(raw || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+  if (list.length > MAX_SYMBOLS) throw new Error(`too many symbols (max ${MAX_SYMBOLS})`);
+  for (const s of list) if (!TICKER_RE.test(s)) throw new Error(`invalid ticker: ${s}`);
+  return list;
+}
+
+async function fetchWithTimeout(url, opts = {}, ms = FETCH_TIMEOUT_MS) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms);
+  try {
+    return await fetch(url, { ...opts, signal: ctl.signal });
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+// Concurrency-limited fan-out — Yahoo rate-limits aggressively at high parallelism.
+async function mapLimit(items, limit, worker) {
+  const results = new Array(items.length);
+  let i = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      results[idx] = await worker(items[idx], idx);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
 // Canonical ticker list derived from sw_data.json (falls back silently if missing).
 let CANONICAL_TICKERS = [];
 try {
@@ -34,7 +80,7 @@ function cacheSet(key, v) { _cache.set(key, { t: Date.now(), v }); }
 
 async function fetchYahooChart(symbol, range = '1d', interval = '1d') {
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`;
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
   });
   if (!response.ok) throw new Error(`Yahoo ${response.status}`);
@@ -42,21 +88,32 @@ async function fetchYahooChart(symbol, range = '1d', interval = '1d') {
 }
 
 app.get('/api/quote/:symbol', async (req, res) => {
+  let sym;
   try {
-    const sym = req.params.symbol.toUpperCase();
+    sym = validateTicker(req.params.symbol);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  try {
     const yahooSym = SYMBOL_ALIASES[sym] || sym;
     const data = await fetchYahooChart(yahooSym, '6mo', '1d');
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(`/api/quote/${sym} failed:`, err.message);
+    res.status(502).json({ error: 'upstream fetch failed' });
   }
 });
 
 // Multi-quote endpoint. If `symbols` is omitted, returns all canonical tickers.
 app.get('/api/quotes', async (req, res) => {
+  let requested;
   try {
-    const requested = (req.query.symbols || '').split(',').map(s => s.trim()).filter(Boolean);
-    const symbols = (requested.length ? requested : CANONICAL_TICKERS).map(s => s.toUpperCase());
+    requested = validateSymbols(req.query.symbols);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  try {
+    const symbols = (requested.length ? requested : CANONICAL_TICKERS);
     if (!symbols.length) return res.json({ updatedAt: Date.now(), quotes: {} });
 
     const cacheKey = 'quotes:' + symbols.join(',');
@@ -67,7 +124,7 @@ app.get('/api/quotes', async (req, res) => {
     }
 
     const quotes = {};
-    await Promise.all(symbols.map(async (sym) => {
+    await mapLimit(symbols, FETCH_CONCURRENCY, async (sym) => {
       if (SKIP_LIVE.has(sym)) return;
       const yahooSym = SYMBOL_ALIASES[sym] || sym;
       try {
@@ -84,22 +141,31 @@ app.get('/api/quotes', async (req, res) => {
           exchange: meta.exchangeName,
           asOf: meta.regularMarketTime
         };
-      } catch (_) {}
-    }));
+      } catch (err) {
+        // Per-symbol failures are logged but don't fail the whole batch.
+        console.warn(`/api/quotes ${sym}:`, err.message);
+      }
+    });
 
     const payload = { updatedAt: Date.now(), quotes };
     cacheSet(cacheKey, payload);
     res.set('cache-control', `public, max-age=${Math.floor(CACHE_TTL_MS / 1000)}`);
     res.json(payload);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('/api/quotes failed:', err.message);
+    res.status(502).json({ error: 'upstream fetch failed' });
   }
 });
 
 // Historical bars: GET /api/history/:sym?range=6mo
 app.get('/api/history/:sym', async (req, res) => {
+  let sym;
   try {
-    const sym = req.params.sym.toUpperCase();
+    sym = validateTicker(req.params.sym);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  try {
     const range = (req.query.range || '6mo').toString();
     const interval = (req.query.interval || '1d').toString();
     const cacheKey = `history:${sym}:${range}:${interval}`;
@@ -124,7 +190,8 @@ app.get('/api/history/:sym', async (req, res) => {
     res.set('cache-control', 'public, max-age=300');
     res.json(payload);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(`/api/history/${sym} failed:`, err.message);
+    res.status(502).json({ error: 'upstream fetch failed' });
   }
 });
 
@@ -132,15 +199,20 @@ app.get('/api/history/:sym', async (req, res) => {
 // Returns { SYM: [{d,c,v}, ...] } for each requested symbol.
 // If `symbols` is omitted, returns bars for all canonical tickers.
 app.get('/api/history', async (req, res) => {
+  let requested;
   try {
-    const requested = (req.query.symbols || '').split(',').map(s => s.trim()).filter(Boolean);
-    const symbols = (requested.length ? requested : CANONICAL_TICKERS).map(s => s.toUpperCase());
+    requested = validateSymbols(req.query.symbols);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  try {
+    const symbols = (requested.length ? requested : CANONICAL_TICKERS);
     const range = (req.query.range || '6mo').toString();
     const interval = (req.query.interval || '1d').toString();
     if (!symbols.length) return res.json({});
 
     const out = {};
-    await Promise.all(symbols.map(async (sym) => {
+    await mapLimit(symbols, FETCH_CONCURRENCY, async (sym) => {
       if (SKIP_LIVE.has(sym)) return;
       const cacheKey = `history:${sym}:${range}:${interval}`;
       const hit = cacheGet(cacheKey);
@@ -161,12 +233,15 @@ app.get('/api/history', async (req, res) => {
           cacheSet(cacheKey, { symbol: sym, bars });
           out[sym] = bars;
         }
-      } catch (_) {}
-    }));
+      } catch (err) {
+        console.warn(`/api/history ${sym}:`, err.message);
+      }
+    });
     res.set('cache-control', 'public, max-age=300');
     res.json(out);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('/api/history failed:', err.message);
+    res.status(502).json({ error: 'upstream fetch failed' });
   }
 });
 
@@ -180,11 +255,16 @@ app.get('/api/news', (req, res) => {
 // Caveat: Yahoo's v7 options endpoint has been tightening; if you start
 // seeing 401/403 here, they've added crumb auth on this path too.
 app.get('/api/options/:ticker', async (req, res) => {
-  const sym = req.params.ticker.toUpperCase();
+  let sym;
+  try {
+    sym = validateTicker(req.params.ticker);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
   const yahooSym = SYMBOL_ALIASES[sym] || sym;
   const url = `https://query2.finance.yahoo.com/v7/finance/options/${encodeURIComponent(yahooSym)}`;
   try {
-    const r = await fetch(url, {
+    const r = await fetchWithTimeout(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
@@ -194,31 +274,23 @@ app.get('/api/options/:ticker', async (req, res) => {
     res.set('cache-control', 'public, max-age=60');
     res.json(j);
   } catch (e) {
-    res.status(502).json({ error: e.message });
+    console.error(`/api/options/${sym} failed:`, e.message);
+    res.status(502).json({ error: 'upstream fetch failed' });
   }
 });
-
-// Concurrency-limited fan-out — Yahoo's options endpoint rate-limits aggressively.
-async function mapLimit(items, limit, worker) {
-  const results = new Array(items.length);
-  let i = 0;
-  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (i < items.length) {
-      const idx = i++;
-      results[idx] = await worker(items[idx], idx);
-    }
-  });
-  await Promise.all(runners);
-  return results;
-}
 
 // ---- Aggregated options flow across many tickers ----
 // GET /api/options-flow?symbols=AMZN,MSFT&unusualMinVol=500&unusualVolToOI=3
 // Returns nearest-expiration call/put aggregates plus a naive "unusual" list
 // (volume > openInterest * unusualVolToOI && volume > unusualMinVol).
 app.get('/api/options-flow', async (req, res) => {
-  const requested = (req.query.symbols || '').split(',').map(s => s.trim()).filter(Boolean);
-  const symbols = (requested.length ? requested : CANONICAL_TICKERS).map(s => s.toUpperCase());
+  let requested;
+  try {
+    requested = validateSymbols(req.query.symbols);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  const symbols = (requested.length ? requested : CANONICAL_TICKERS);
   if (!symbols.length) return res.status(400).json({ error: 'symbols required' });
 
   const unusualMinVol  = +req.query.unusualMinVol  || 500;
@@ -232,13 +304,13 @@ app.get('/api/options-flow', async (req, res) => {
   }
 
   const perTicker = {};
-  await mapLimit(symbols, 5, async (sym) => {
+  await mapLimit(symbols, FETCH_CONCURRENCY, async (sym) => {
     if (SKIP_LIVE.has(sym)) return;
     const yahooSym = SYMBOL_ALIASES[sym] || sym;
     try {
-      const r = await fetch(
+      const r = await fetchWithTimeout(
         `https://query2.finance.yahoo.com/v7/finance/options/${encodeURIComponent(yahooSym)}`,
-        { headers: { 'User-Agent': 'Mozilla/5.0' } }
+        { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' } }
       );
       if (!r.ok) return;
       const j = await r.json();
@@ -287,7 +359,9 @@ app.get('/api/options-flow', async (req, res) => {
         totalVol: callVol + putVol,
         unusual: unusual.sort((a, b) => b.premium - a.premium).slice(0, 3),
       };
-    } catch { /* skip this ticker */ }
+    } catch (err) {
+      console.warn(`/api/options-flow ${sym}:`, err.message);
+    }
   });
 
   const payload = { asOf: Date.now(), tickers: perTicker };
