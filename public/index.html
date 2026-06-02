@@ -427,7 +427,7 @@ img,svg{display:block;max-width:100%}
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><polyline points="7 8 10 11 7 14"/><line x1="13" y1="14" x2="17" y2="14"/></svg>
     <span data-i18n="Software Value Chain">Software Value Chain</span>
   </div>
-  <div class="sub" data-i18n="Full Ecosystem Research · Apr 2026">Full Ecosystem Research &middot; Apr 2026</div>
+  <div class="sub"><span data-i18n="Full Ecosystem Research">Full Ecosystem Research</span> &middot; <span data-dynamic-date="month-year">Apr 2026</span></div>
 </div>
 
 <div class="sb-section">
@@ -480,7 +480,7 @@ img,svg{display:block;max-width:100%}
     <span class="pill live" data-i18n="LIVE">&#9679; LIVE DATA</span>
     <span class="pill" data-i18n="12 Layers">12 Layers</span>
     <span class="pill" data-i18n="42 Companies">42 Companies</span>
-    <span class="pill">Apr 16, 2026</span>
+    <span class="pill" data-dynamic-date="full">Apr 16, 2026</span>
   </div>
 </div>
 
@@ -1253,7 +1253,7 @@ img,svg{display:block;max-width:100%}
 <div class="section-header">
   <div>
     <div class="section-title" data-i18n="Conviction List">&#127919; Conviction List &mdash; Top Picks by Signal Strength</div>
-    <div class="section-desc" data-i18n="Top picks based on fundamentals, technicals, options flow, and momentum">Ranked by fundamentals, moat strength, growth trajectory, and valuation &middot; Updated Apr 16, 2026</div>
+    <div class="section-desc">Ranked by fundamentals, moat strength, growth trajectory, and valuation &middot; Updated <span data-dynamic-date="full">Apr 16, 2026</span></div>
   </div>
 </div>
 
@@ -2388,13 +2388,16 @@ window.addEventListener('load',function(){
    FEATURE: VALUATION TABLE
    ══════════════════════════════════════════════════════════════ */
 (function(){
-  const tickers = SW_DATA.tickers;
   const layers = SW_DATA.layers;
 
-  // Build data
-  let data = Object.entries(tickers).map(([tk,d])=>({
-    ticker:tk, name:d.name, layer:d.layer, price:d.price, mcap:d.marketCap/1e9, pe:d.pe, eps:d.eps, divYield:d.divYield, yearLow:d.yearLow, yearHigh:d.yearHigh
-  }));
+  // Live-prices integration: read SW_DATA.tickers on every build (not a
+  // snapshot) so the table picks up fresh prices from /api/quotes polling.
+  function buildData() {
+    return Object.entries(SW_DATA.tickers).map(([tk,d])=>({
+      ticker:tk, name:d.name, layer:d.layer, price:d.price, mcap:d.marketCap/1e9, pe:d.pe, eps:d.eps, divYield:d.divYield, yearLow:d.yearLow, yearHigh:d.yearHigh
+    }));
+  }
+  let data = buildData();
 
   // Populate layer filter
   const filterEl = document.getElementById('valLayerFilter');
@@ -2416,6 +2419,7 @@ window.addEventListener('load',function(){
   }
 
   function renderTable(){
+    data = buildData(); // pick up any live-prices mutations to SW_DATA.tickers
     const filter = filterEl.value;
     let rows = filter==='all' ? data : data.filter(r=>r.layer===filter);
 
@@ -2460,6 +2464,8 @@ window.addEventListener('load',function(){
 
   filterEl.addEventListener('change', renderTable);
   renderTable();
+  // Live-prices: re-render whenever fresh quotes arrive from /api/quotes
+  (window.dashboardRenderers = window.dashboardRenderers || []).push(renderTable);
 })();
 
 /* ══════════════════════════════════════════════════════════════
@@ -2637,6 +2643,65 @@ function goDash(target) {
 <!-- Dashboard Enhancements: Search, Watchlist, Dark Mode, Compare -->
 <link rel="stylesheet" href="dashboard_enhancements.css">
 <script src="dashboard_enhancements.js"></script>
+<!-- SW conviction-card price sync — walks every .cv-card and overwrites
+     its .cv-price + .cv-price-chg from SW_DATA.tickers[ticker]. Runs on load
+     (so initial render matches sw_data.json baseline, not the hardcoded HTML
+     prices) and on every /api/quotes refresh via window.dashboardRenderers. -->
+<script>
+(function () {
+  function syncConvictionCardPrices() {
+    if (typeof SW_DATA === 'undefined' || !SW_DATA.tickers) return;
+    document.querySelectorAll('.cv-card').forEach(function (card) {
+      var tEl = card.querySelector('.cv-card-ticker');
+      if (!tEl) return;
+      var ticker = (tEl.textContent || '').trim();
+      var d = SW_DATA.tickers[ticker];
+      if (!d) return;
+
+      var priceEl = card.querySelector('.cv-price');
+      if (priceEl && typeof d.price === 'number' && d.price > 0) {
+        priceEl.textContent = '$' + d.price.toFixed(2);
+      }
+      var chgEl = card.querySelector('.cv-price-chg');
+      if (chgEl && typeof d.change === 'number' && typeof d.changePct === 'number') {
+        var up = d.change >= 0;
+        chgEl.className = 'cv-price-chg ' + (up ? 'up' : 'dn');
+        var sign = up ? '+' : '';
+        chgEl.textContent =
+          sign + d.change.toFixed(2) + ' (' + sign + d.changePct.toFixed(2) + '%)';
+      }
+    });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', syncConvictionCardPrices);
+  } else {
+    syncConvictionCardPrices();
+  }
+  (window.dashboardRenderers = window.dashboardRenderers || []).push(syncConvictionCardPrices);
+})();
+</script>
+
+<!-- Auto-update any element with data-dynamic-date so "Apr 2026" / "Apr 16, 2026"
+     stay current without manual edits. setInterval re-stomps every 2s so i18n
+     language switches can't overwrite us with the original key. -->
+<script>
+(function () {
+  function refreshDynamicDates() {
+    var now = new Date();
+    var full = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    var monthYear = now.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    document.querySelectorAll('[data-dynamic-date="full"]').forEach(function (el) { el.textContent = full; });
+    document.querySelectorAll('[data-dynamic-date="month-year"]').forEach(function (el) { el.textContent = monthYear; });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', refreshDynamicDates);
+  } else {
+    refreshDynamicDates();
+  }
+  setInterval(refreshDynamicDates, 2000);
+})();
+</script>
+<script src="/live-prices.js"></script>
 <script src="bootstrap-quotes.js"></script>
 </body>
 </html>
