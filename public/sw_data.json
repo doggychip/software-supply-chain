@@ -1910,7 +1910,10 @@
       ],
       "mktCap": "$11.1B",
       "wk52High": 31,
-      "wk52Low": 15.64
+      "wk52Low": 15.64,
+      "status": "acquired",
+      "acquiredBy": "IBM",
+      "acquiredDate": "2026-03-17"
     },
     "ESTC": {
       "name": "Elastic N.V.",
@@ -6071,7 +6074,10 @@
       ],
       "mktCap": "$20.6B",
       "wk52High": 526.19,
-      "wk52Low": 288.63
+      "wk52Low": 288.63,
+      "status": "acquired",
+      "acquiredBy": "Palo Alto Networks",
+      "acquiredDate": "2026-02-11"
     },
     "RDDT": {
       "name": "Reddit, Inc.",
@@ -8998,5 +9004,6 @@
       "marketCap": 4921618432,
       "changePct": 14.17125
     }
-  ]
+  ],
+  "editorialAsOf": "2026-06-02"
 }
