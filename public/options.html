@@ -1508,6 +1508,9 @@ mpSorted.forEach(d => {
       const r = await fetch(url);
       if (!r.ok) throw new Error('options-flow ' + r.status);
       const payload = await r.json();
+      if (!payload.tickers || Object.keys(payload.tickers).length === 0) {
+        throw new Error('options-flow returned no live ticker data');
+      }
       paint(payload);
     } catch (e) {
       console.warn('options flow load failed; keeping simulated values', e);

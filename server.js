@@ -9,8 +9,9 @@ const app = createDashboardServer({
   tickerData: path.join(__dirname, 'public', 'sw_data.json'),
   // SQ was renamed to XYZ (Block). Fetch from Yahoo under XYZ, expose as SQ.
   symbolAliases: { SQ: 'XYZ' },
-  // CYBR was acquired by PANW and delisted — skip live fetch, use baked-in values.
-  skipLive: ['CYBR'],
+  // Acquired/delisted companies: skip live fetch and retain the baked snapshot.
+  // CYBR was acquired by PANW; CFLT was acquired by IBM.
+  skipLive: ['CYBR', 'CFLT'],
   newsDataPath: path.join(__dirname, 'news_data.json'),
   dashboardName: 'Software Supply Chain',
 });
