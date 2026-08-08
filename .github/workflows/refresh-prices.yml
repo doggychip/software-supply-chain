@@ -43,14 +43,18 @@ jobs:
             exit 1
           fi
 
+      - name: Log evidence-score snapshots (best-effort)
+        run: npx log-scores public/sw_data.json --out history/scores.jsonl || true
+
       - name: Commit & push if changed
         run: |
-          if git diff --quiet; then
+          if git diff --quiet && [ -z "$(git status --porcelain history/ 2>/dev/null)" ]; then
             echo "No price changes — nothing to commit."
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
           git add public/sw_data.json public/index.html
+          git add history/scores.jsonl 2>/dev/null || true
           git commit -m "chore: scheduled price refresh"
           git push
