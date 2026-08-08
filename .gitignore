@@ -1,4 +1,7 @@
 node_modules/
 package-lock.json
+.venv-zhihuiti/
+.zhihuiti/
+__pycache__/
 *.log
 .DS_Store
