@@ -273,6 +273,7 @@ correlation_html = f"""<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 {SAFE_STORAGE}
 {CHARTJS}
+<script src="bootstrap-quotes.js"></script>
 <style>
 {SHARED_CSS}
 .heatmap-wrap{{position:relative;overflow:auto;margin-bottom:var(--space-4)}}
@@ -381,7 +382,7 @@ correlation_html = f"""<!DOCTYPE html>
 {side_panel_html()}
 
 <script>
-const PRICE_DATA = {price_json};
+var PRICE_DATA = {price_json};
 const QUOTES = {quotes_json};
 const LAYERS = {layers_js};
 const LAYER_COLORS = {layer_colors_js};
@@ -947,11 +948,17 @@ document.querySelectorAll('[data-sort]').forEach(btn => {{
 // Side panel
 {side_panel_js()}
 
-// Init
-drawLegend();
-computeCorrelations();
-// Set "all" as active in sidebar
+// Init after verified history replaces the build snapshot.
 document.querySelector('.sidebar-item[data-layer="all"]').classList.add('active');
+window.__quotesReady.then(function(){{
+  if (!window.__marketDataStatus || !window.__marketDataStatus.historyOk) {{
+    var main = document.querySelector('.page-body');
+    if (main) main.innerHTML = '<div class="card"><h2>Correlation data unavailable</h2><p style="color:var(--muted)">Current price history could not be verified, so no correlation matrix is shown.</p></div>';
+    return;
+  }}
+  drawLegend();
+  computeCorrelations();
+}});
 </script>
 <script src="i18n.js"></script>
 </body>
@@ -971,6 +978,7 @@ technicals_html = f"""<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 {SAFE_STORAGE}
 {CHARTJS}
+<script src="bootstrap-quotes.js"></script>
 <style>
 {SHARED_CSS}
 .ticker-grid{{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:var(--space-6)}}
@@ -1089,7 +1097,7 @@ technicals_html = f"""<!DOCTYPE html>
 {side_panel_html()}
 
 <script>
-const PRICE_DATA = {price_json};
+var PRICE_DATA = {price_json};
 const QUOTES = {quotes_json};
 const LAYERS = {layers_js};
 const LAYER_COLORS = {layer_colors_js};
@@ -1570,12 +1578,19 @@ function rebuildCharts() {{
 // Side panel
 {side_panel_js()}
 
-// ── INIT ──
+// ── INIT after verified history replaces the build snapshot ──
 document.querySelector('.sidebar-item[data-layer="all"]').classList.add('active');
-renderTickerGrid();
-try {{ buildCharts(selectedTicker); }} catch(e) {{ console.warn('Chart build failed:', e); }}
-updateSummary(selectedTicker);
-buildSignalsTable();
+window.__quotesReady.then(function(){{
+  if (!window.__marketDataStatus || !window.__marketDataStatus.historyOk) {{
+    var main = document.querySelector('.page-body');
+    if (main) main.innerHTML = '<div class="card"><h2>Technical data unavailable</h2><p style="color:var(--muted)">Current price history could not be verified, so no indicators are shown.</p></div>';
+    return;
+  }}
+  renderTickerGrid();
+  try {{ buildCharts(selectedTicker); }} catch(e) {{ console.warn('Chart build failed:', e); }}
+  updateSummary(selectedTicker);
+  buildSignalsTable();
+}});
 </script>
 <script src="i18n.js"></script>
 </body>

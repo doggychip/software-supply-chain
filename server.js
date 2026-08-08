@@ -12,7 +12,6 @@ const app = createDashboardServer({
   // Acquired/delisted companies: skip live fetch and retain the baked snapshot.
   // CYBR was acquired by PANW; CFLT was acquired by IBM.
   skipLive: ['CYBR', 'CFLT'],
-  newsDataPath: path.join(__dirname, 'news_data.json'),
   dashboardName: 'Software Supply Chain',
 });
 

@@ -919,6 +919,11 @@ document.getElementById('panelOverlay').addEventListener('click', () => {
 // Set "all" as active in sidebar
 document.querySelector('.sidebar-item[data-layer="all"]').classList.add('active');
 window.__quotesReady.then(function(){
+  if (!window.__marketDataStatus || !window.__marketDataStatus.historyOk) {
+    var main = document.querySelector('.main');
+    if (main) main.innerHTML = '<div class="card" style="margin:24px"><h2>Correlation data unavailable</h2><p style="color:var(--muted)">Current price history could not be verified, so no correlation matrix is shown.</p></div>';
+    return;
+  }
   drawLegend();
   computeCorrelations();
 });

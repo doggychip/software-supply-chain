@@ -1011,6 +1011,11 @@ document.getElementById('panelOverlay').addEventListener('click', () => {
 // ── INIT ──
 document.querySelector('.sidebar-item[data-layer="all"]').classList.add('active');
 window.__quotesReady.then(function(){
+  if (!window.__marketDataStatus || !window.__marketDataStatus.historyOk) {
+    var main = document.querySelector('.main');
+    if (main) main.innerHTML = '<div class="card" style="margin:24px"><h2>Technical data unavailable</h2><p style="color:var(--muted)">Current price history could not be verified, so no indicators are shown.</p></div>';
+    return;
+  }
   renderTickerGrid();
   try { buildCharts(selectedTicker); } catch(e) { console.warn('Chart build failed:', e); }
   try { updateSummary(selectedTicker); } catch(e) { console.warn('Summary failed:', e); }
