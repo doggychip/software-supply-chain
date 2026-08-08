@@ -562,6 +562,9 @@ function applyI18n() {
 
   // Translate card-title, sbar-label, kpi-label, section-header, stat-label elements
   document.querySelectorAll('.card-title, .sbar-label, .sec-title, .section-title, .section-header, .stat-title, .stat-label, .mr-label, .sc-metric-label, .rsk-title, .sidebar-group-title, .sidebar-category, .kpi-label, .section-desc').forEach(function(el) {
+    // Compound titles can contain icons, badges, and live-data elements. Replacing
+    // textContent would remove those children and break later page updates.
+    if (el.children.length > 0) return;
     var orig = el.getAttribute('data-i18n') || el.textContent.trim();
     if (!el.getAttribute('data-i18n')) el.setAttribute('data-i18n', orig);
     el.textContent = t(orig);

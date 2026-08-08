@@ -1013,15 +1013,15 @@ setTheme(getTheme());
   const sb = document.getElementById('sidebar');
   let html = '<h3 data-i18n="Software Layers">Layers</h3>';
   for (const [name, info] of Object.entries(LAYERS)) {
-    html += '<div class="sidebar-item" onclick="filterByLayer('' + name + '')">' +
+    html += '<div class="sidebar-item" onclick="filterByLayer(\'' + name + '\')">' +
       '<span class="dot" style="background:' + info.color + '"></span>' + name + '</div>';
   }
   html += '<h3 style="margin-top:var(--space-6)" data-i18n="Quicklinks">Quick Links</h3>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('notableGrid')">&#9733; Notable Moves</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('clusterGrid')">&#9679; Cluster Detection</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('layerBreakdown')">&#9632; Layer Breakdown</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('feedContainer')">&#9654; Transaction Feed</div>';
-  html += '<div class="sidebar-item" onclick="scrollToEl('contextTable')">&#9638; Market Context</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'notableGrid\')">&#9733; Notable Moves</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'clusterGrid\')">&#9679; Cluster Detection</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'layerBreakdown\')">&#9632; Layer Breakdown</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'feedContainer\')">&#9654; Transaction Feed</div>';
+  html += '<div class="sidebar-item" onclick="scrollToEl(\'contextTable\')">&#9638; Market Context</div>';
   sb.innerHTML = html;
 })();
 
@@ -1342,7 +1342,7 @@ if (notableBuys.length === 0) {
 } else {
   ng.innerHTML = notableBuys.map(t => {
     const q = QUOTES[t.ticker];
-    return '<div class="notable-card" onclick="openPanel('' + t.ticker + '')">' +
+    return '<div class="notable-card" onclick="openPanel(\'' + t.ticker + '\')">' +
       '<div class="header"><span class="ticker">' + t.ticker + '</span><span class="badge badge-buy">BULLISH BUY</span></div>' +
       '<div class="amount" style="color:var(--green)">' + fmt(t.value) + '</div>' +
       '<div class="detail"><strong>' + t.name + '</strong> (' + (t.title || '') + ')</div>' +
@@ -1373,7 +1373,7 @@ if (clusters.length === 0) {
     const txns = INSIDER_DATA[ticker].filter(t => t.type === 'Buy');
     const totalVal = txns.reduce((s, t) => s + t.value, 0);
     const dateRange = txns.map(t => t.date).sort();
-    return '<div class="cluster-card" onclick="openPanel('' + ticker + '')">' +
+    return '<div class="cluster-card" onclick="openPanel(\'' + ticker + '\')">' +
       '<h4><span class="badge badge-cluster">CLUSTER</span> ' + ticker + ' — ' + names.length + ' insiders buying</h4>' +
       '<div style="font-family:var(--font-mono);font-weight:700;font-size:var(--text-lg);color:var(--green)">' + fmt(totalVal) + '</div>' +
       (q ? '<div style="font-size:var(--text-xs);color:' + q.layerColor + ';margin-top:var(--space-1)">' + q.name + ' — ' + q.layer + '</div>' : '') +
@@ -1432,7 +1432,7 @@ function renderFeed() {
 
   container.innerHTML = filtered.map(t => {
     const lc = getLayerColor(t.ticker);
-    return '<div class="txn-card" onclick="openPanel('' + t.ticker + '')">' +
+    return '<div class="txn-card" onclick="openPanel(\'' + t.ticker + '\')">' +
       '<div class="txn-date">' + t.date + '</div>' +
       '<div class="txn-info">' +
         '<div class="txn-name">' + t.name + ' <span style="color:var(--muted);font-weight:400;font-size:var(--text-xs)">' + (t.title || '') + '</span></div>' +
@@ -1465,7 +1465,7 @@ insiderTickers.forEach(ticker => {
   const netVal = txns.reduce((s, t) => s + (t.type === 'Buy' ? t.value : -t.value), 0);
   const chgStyle = q.changePct >= 0 ? 'color:var(--green)' : 'color:var(--red)';
   const netStyle = netVal >= 0 ? 'color:var(--green)' : 'color:var(--red)';
-  tbody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel('' + ticker + '')">' +
+  tbody.innerHTML += '<tr style="cursor:pointer" onclick="openPanel(\'' + ticker + '\')">' +
     '<td style="color:' + q.layerColor + ';font-weight:600">' + ticker + '</td>' +
     '<td style="font-family:Inter,sans-serif">' + (q.name.length > 28 ? q.name.slice(0, 28) + '...' : q.name) + '</td>' +
     '<td><span class="badge badge-layer" style="background:' + q.layerColor + '22;color:' + q.layerColor + '">' + q.layer + '</span></td>' +

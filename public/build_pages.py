@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Generate correlation.html and technicals.html for the Software Value Chain Dashboard."""
 import json, textwrap
+from pathlib import Path
 
-with open('/home/user/workspace/software-supply-chain/public/sw_data.json') as f:
+PUBLIC_DIR = Path(__file__).resolve().parent
+
+with (PUBLIC_DIR / 'sw_data.json').open() as f:
     sw = json.load(f)
 
 # Build compact price data: {TICKER: [{d, c, v}, ...]}
@@ -31,8 +34,8 @@ for ticker, info in sw['tickers'].items():
     for i, p in enumerate(ph):
         # Simulate volume: use avgVolume with some variation
         import random
-        random.seed(hash(ticker) + i)
-        v = int(avgVol * (0.6 + random.random() * 0.8))
+        rng = random.Random(f'{ticker}:{i}')
+        v = int(avgVol * (0.6 + rng.random() * 0.8))
         bars.append({"d": DATES[i], "c": round(p, 2), "v": v})
     price_data[ticker] = bars
 
@@ -1579,10 +1582,10 @@ buildSignalsTable();
 </html>"""
 
 # Write files
-with open('/home/user/workspace/software-supply-chain/public/correlation.html', 'w') as f:
+with (PUBLIC_DIR / 'correlation.html').open('w') as f:
     f.write(correlation_html)
 print(f"Written correlation.html: {len(correlation_html)} chars, {correlation_html.count(chr(10))} lines")
 
-with open('/home/user/workspace/software-supply-chain/public/technicals.html', 'w') as f:
+with (PUBLIC_DIR / 'technicals.html').open('w') as f:
     f.write(technicals_html)
 print(f"Written technicals.html: {len(technicals_html)} chars, {technicals_html.count(chr(10))} lines")
