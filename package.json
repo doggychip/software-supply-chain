@@ -11,7 +11,7 @@
     "update-prices:dry": "update-prices ./public/sw_data.json --dry-run && update-prices ./public/index.html --dry-run"
   },
   "dependencies": {
-    "dashboard-core": "git+https://github.com/doggychip/dashboard-core.git#v1.0.8",
+    "dashboard-core": "git+https://github.com/doggychip/dashboard-core.git#v1.0.9",
     "express": "^4.21.0"
   },
   "engines": {

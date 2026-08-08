@@ -2440,7 +2440,7 @@ window.addEventListener('load',function(){
       +'<td>'+fmt(r.mcap,1)+'</td>'
       +'<td>'+fmt(r.pe,1)+'</td>'
       +'<td>'+fmt(r.eps)+'</td>'
-      +'<td>'+(r.divYield>0?fmt(r.divYield,2)+'%':'<span class="val-neutral">&mdash;</span>')+'</td>'
+      +'<td>'+(r.divYield>0?fmt(r.divYield*100,2)+'%':'<span class="val-neutral">&mdash;</span>')+'</td>'
       +'<td>'+fmt(r.yearLow)+'</td>'
       +'<td>'+fmt(r.yearHigh)+'</td>'
       +'</tr>').join('');
