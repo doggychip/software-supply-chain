@@ -1,0 +1,56 @@
+name: refresh-prices
+
+# Daily automated price refresh — keeps priceHistory/mcap/PE baselines fresh
+# so the momentum math and sparklines measure what they claim. Refreshes BOTH
+# sw_data.json (the server's data source) and the inline SW_DATA in index.html.
+# 21:30 UTC ≈ 30 min after US market close.
+on:
+  schedule:
+    - cron: '30 21 * * 1-5'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-prices
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm install
+
+      - name: Refresh prices from Yahoo
+        run: npm run update-prices
+
+      - name: Sanity gate — no implausible day-changes
+        run: |
+          bad=$(grep -oE '"changePct":-?[0-9.]+' public/sw_data.json \
+            | sed 's/"changePct"://' \
+            | awk '{ v=$1; if (v<0) v=-v; if (v>50) c++ } END { print c+0 }')
+          echo "tickers with |changePct| > 50%: $bad"
+          if [ "$bad" -gt 0 ]; then
+            echo "::error::$bad ticker(s) show a >50% daily move — likely a stale prev-close regression. Not committing."
+            exit 1
+          fi
+
+      - name: Commit & push if changed
+        run: |
+          if git diff --quiet; then
+            echo "No price changes — nothing to commit."
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add public/sw_data.json public/index.html
+          git commit -m "chore: scheduled price refresh"
+          git push
