@@ -412,10 +412,10 @@ img,svg{display:block;max-width:100%}
   <a href="correlation.html" class="tab-link" data-i18n="Correlation">Correlation</a>
   <a href="technicals.html" class="tab-link" data-i18n="Technicals">Technicals</a>
   <a href="insider.html" class="tab-link" data-i18n="Insider Activity">Insider Activity</a>
-  <a href="options.html" class="tab-link" data-i18n="Options Flow">Options Flow</a>
-  <a href="sentiment.html" class="tab-link" data-i18n="Sentiment">Sentiment</a>
-  <a href="leaderboard.html" class="tab-link" data-i18n="Leaderboard">Leaderboard</a>
-  <a href="stress-test.html" class="tab-link" data-i18n="Stress Test">Stress Test</a>
+  <a href="options.html" class="tab-link">Options Activity</a>
+  <a href="sentiment.html" class="tab-link">Market Conditions</a>
+  <a href="leaderboard.html" class="tab-link">Performance</a>
+  <a href="stress-test.html" class="tab-link">Scenario Calculator</a>
 </nav>
 
 <div class="dashboard-body">
@@ -459,7 +459,7 @@ img,svg{display:block;max-width:100%}
 
 <div class="sb-section">
 <div class="sb-section-title" data-i18n="Analysis">Analysis &amp; Tools</div>
-<button class="sb-item" onclick="nav(this,'s-conviction')"><span class="dot" style="background:var(--green)"></span><span data-i18n="Conviction List">Conviction List</span></button>
+<button class="sb-item" onclick="nav(this,'s-conviction')"><span class="dot" style="background:var(--green)"></span><span>Assessment Method</span></button>
 <button class="sb-item" onclick="nav(this,'s-earnings')"><span class="dot" style="background:var(--warn)"></span><span data-i18n="Earnings Calendar">Earnings Calendar</span></button>
 <button class="sb-item" onclick="nav(this,'s-valuation')"><span class="dot" style="background:var(--cyan)"></span><span data-i18n="Valuation Table">Valuation Table</span></button>
 <button class="sb-item" onclick="nav(this,'s-risk')"><span class="dot" style="background:var(--error)"></span><span data-i18n="Risk Tracker">Risk Tracker</span></button>
@@ -1252,15 +1252,16 @@ img,svg{display:block;max-width:100%}
 <div id="s-conviction" class="section">
 <div class="section-header">
   <div>
-    <div class="section-title" data-i18n="Conviction List">&#127919; Conviction List &mdash; Top Picks by Signal Strength</div>
-    <div class="section-desc">Ranked by fundamentals, moat strength, growth trajectory, and valuation &middot; Updated <span data-dynamic-date="full">Apr 16, 2026</span></div>
+    <div class="section-title">Assessment Method</div>
+    <div class="section-desc">The former unvalidated ranking has been removed. Updated <span data-dynamic-date="full">Apr 16, 2026</span></div>
   </div>
 </div>
 
-<!-- TIER 1 — HIGHEST CONVICTION -->
+<!-- Legacy ranking markup is hidden immediately and replaced by assessment-trust.js. -->
+<style>#s-conviction .cv-tier{display:none}</style>
 <div class="cv-tier">
   <div class="cv-tier-header" style="--tier-accent:var(--green);background:color-mix(in srgb,var(--green) 6%,var(--surface))">
-    <div><div class="cv-tier-label" style="color:var(--green)" data-i18n="Tier 1 — High Conviction">TIER 1 — HIGHEST CONVICTION</div><div class="cv-tier-sub" data-i18n="T1Sub">Platform Leaders + Deep Moats + Strong Fundamentals</div></div>
+    <div><div class="cv-tier-label" style="color:var(--green)">LEGACY RANKING REMOVED</div><div class="cv-tier-sub">This content is not used for assessment.</div></div>
   </div>
   <div class="cv-grid">
     <div class="cv-card cv-t1">
@@ -2394,7 +2395,7 @@ window.addEventListener('load',function(){
   // snapshot) so the table picks up fresh prices from /api/quotes polling.
   function buildData() {
     return Object.entries(SW_DATA.tickers).map(([tk,d])=>({
-      ticker:tk, name:d.name, layer:d.layer, price:d.price, mcap:d.marketCap/1e9, pe:d.pe, eps:d.eps, divYield:d.divYield, yearLow:d.yearLow, yearHigh:d.yearHigh
+      ticker:tk, name:d.name, layer:d.layer, price:d.liveUnavailable?null:d.price, mcap:d.marketCap/1e9, pe:d.pe, eps:d.eps, divYield:d.divYield, yearLow:d.yearLow, yearHigh:d.yearHigh
     }));
   }
   let data = buildData();
@@ -2705,5 +2706,6 @@ function goDash(target) {
 <script src="/signals.js"></script>
 <script src="/signals-ui.js"></script>
 <script src="bootstrap-quotes.js"></script>
+<script src="assessment-trust.js"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* bootstrap-quotes.js
    On page load:
      1. fetches /api/quotes (current price/change per ticker)
-     2. fetches /api/history?range=6mo&interval=1d (full 126-bar history)
+     2. fetches /api/history?range=1y&interval=1d (enough for SMA-200)
         so indicator math (RSI/SMA/MACD/Bollinger/etc.) runs on current
         data instead of the snapshot baked in at deploy time.
    Exposes window.__quotesReady as a Promise that resolves after both
@@ -17,12 +17,14 @@
    Per-page globals must be declared `var` (not `const`) for these patches
    to reach them, since non-module `const` does not attach to window.
 
-   Fails silently: if either fetch errors, the hardcoded values remain. */
+   Exposes source status so pages can show an unavailable state instead of
+   silently presenting baked snapshots as current data. */
 (function () {
   function fmtPrice(p) { return '$' + p.toFixed(2); }
 
   function patchTickerMap(map, quotes) {
     if (!map || typeof map !== 'object') return;
+    Object.keys(map).forEach(function (sym) { map[sym].liveUnavailable = !quotes[sym]; });
     Object.keys(quotes).forEach(function (sym) {
       var t = map[sym];
       if (!t) return;
@@ -37,6 +39,10 @@
 
   function replacePriceData(priceData, historyMap) {
     if (!priceData || !historyMap) return;
+    Object.keys(priceData).forEach(function (sym) {
+      var bars = historyMap[sym];
+      if (!Array.isArray(bars) || !bars.length) delete priceData[sym];
+    });
     Object.keys(historyMap).forEach(function (sym) {
       var bars = historyMap[sym];
       if (Array.isArray(bars) && bars.length && priceData[sym]) {
@@ -54,7 +60,18 @@
       if (!tEl) continue;
       var sym = tEl.textContent.trim();
       var q = quotes[sym];
-      if (!q || typeof q.price !== 'number') continue;
+      if (!q || typeof q.price !== 'number') {
+        var missingMetrics = card.querySelectorAll('.sc-metric');
+        for (var m = 0; m < missingMetrics.length; m++) {
+          var missingLabel = missingMetrics[m].querySelector('.sc-metric-label');
+          if (missingLabel && missingLabel.textContent.trim() === 'Price') {
+            var missingValue = missingMetrics[m].querySelector('.sc-metric-val');
+            if (missingValue) missingValue.textContent = '—';
+          }
+        }
+        card.setAttribute('title', 'Live market data unavailable');
+        continue;
+      }
       var metrics = card.querySelectorAll('.sc-metric');
       for (var j = 0; j < metrics.length; j++) {
         var lbl = metrics[j].querySelector('.sc-metric-label');
@@ -68,16 +85,34 @@
   }
 
   var quotesPromise = fetch('/api/quotes')
-    .then(function (r) { return r.ok ? r.json() : { quotes: {} }; })
-    .catch(function () { return { quotes: {} }; });
+    .then(function (r) {
+      if (!r.ok) throw new Error('quotes HTTP ' + r.status);
+      return r.json().then(function (payload) { return { ok: true, payload: payload }; });
+    })
+    .catch(function (error) { return { ok: false, payload: { quotes: {} }, error: error.message }; });
 
-  var historyPromise = fetch('/api/history?range=6mo&interval=1d')
-    .then(function (r) { return r.ok ? r.json() : {}; })
-    .catch(function () { return {}; });
+  var historyPromise = fetch('/api/history?range=1y&interval=1d')
+    .then(function (r) {
+      if (!r.ok) throw new Error('history HTTP ' + r.status);
+      return r.json().then(function (payload) { return { ok: true, payload: payload }; });
+    })
+    .catch(function (error) { return { ok: false, payload: {}, error: error.message }; });
 
   window.__quotesReady = Promise.all([quotesPromise, historyPromise]).then(function (parts) {
-    var quotes = (parts[0] && parts[0].quotes) || {};
-    var history = parts[1] || {};
+    var quotesResult = parts[0] || { ok: false, payload: { quotes: {} } };
+    var historyResult = parts[1] || { ok: false, payload: {} };
+    var quotes = (quotesResult.payload && quotesResult.payload.quotes) || {};
+    var history = historyResult.payload || {};
+    window.__historyData = history;
+    window.__marketDataStatus = {
+      quotesOk: quotesResult.ok && Object.keys(quotes).length > 0,
+      historyOk: historyResult.ok && Object.keys(history).length > 0,
+      quoteCount: Object.keys(quotes).length,
+      historyCount: Object.keys(history).length,
+      asOf: quotesResult.payload && quotesResult.payload.updatedAt || Date.now(),
+      quotesError: quotesResult.error || null,
+      historyError: historyResult.error || null
+    };
 
     if (window.SW_DATA && window.SW_DATA.tickers) patchTickerMap(window.SW_DATA.tickers, quotes);
     if (window.SW_DATA && Array.isArray(window.SW_DATA.conviction)) {
@@ -93,6 +128,14 @@
 
     if (document.readyState !== 'loading') patchIndexCards(quotes);
     else document.addEventListener('DOMContentLoaded', function () { patchIndexCards(quotes); });
+
+    if (Array.isArray(window.dashboardRenderers)) {
+      window.dashboardRenderers.forEach(function (render) {
+        try { render(); } catch (error) { console.warn('[bootstrap-quotes] renderer failed:', error.message); }
+      });
+    }
+
+    window.dispatchEvent(new CustomEvent('quotes-bootstrap-status', { detail: window.__marketDataStatus }));
 
     return quotes;
   });
