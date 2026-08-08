@@ -12,8 +12,19 @@ function read(name) {
 
 function loadAssessmentRuntime() {
   const window = { addEventListener() {}, dashboardRenderers: [] };
-  const document = { readyState: 'loading', addEventListener() {} };
-  const context = { window, document, console, CustomEvent: function CustomEvent() {} };
+  window.window = window;
+  const document = {
+    readyState: 'loading', addEventListener() {},
+    createElement: () => ({ style: {} }), body: { appendChild() {} }, querySelectorAll: () => [],
+  };
+  const context = {
+    window, document, console, CustomEvent: function CustomEvent() {},
+    fetch: async () => ({ ok: true, json: async () => ({ fundamentals: {} }) }),
+    setTimeout: () => {}, setInterval: () => {},
+  };
+  // Core scorer first (assessment-trust delegates to window.computeSignal).
+  const corePath = path.join(__dirname, '..', 'node_modules', 'dashboard-core', 'client', 'signals.js');
+  vm.runInNewContext(fs.readFileSync(corePath, 'utf8'), context, { filename: 'signals.js' });
   vm.runInNewContext(read('assessment-trust.js'), context, { filename: 'assessment-trust.js' });
   return window;
 }
