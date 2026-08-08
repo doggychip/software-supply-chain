@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "zhihuiti-software-supply-chain": {
+      "command": "./.venv-zhihuiti/bin/python",
+      "args": ["agents/software_supply_chain_mcp.py"],
+      "env": {
+        "ZHIHUITI_DB": ".zhihuiti/software-supply-chain.db",
+        "ZHIHUITI_DATA": ".zhihuiti",
+        "ZHIHUITI_TOOLS": "0",
+        "ZHIHUITI_AUTO_EVOLVE": "0",
+        "ZHIHUITI_ALLOW_AUTO_MINT": "0"
+      }
+    }
+  }
+}
