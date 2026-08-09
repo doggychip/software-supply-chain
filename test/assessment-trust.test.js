@@ -46,13 +46,42 @@ test('past and malformed earnings dates fail closed', () => {
   assert.equal(runtime.isFutureDate('not-a-date', now), false);
 });
 
+test('Yahoo reconciliation compares only equal reporting periods', () => {
+  const runtime = loadRuntime();
+  const issuer = { facts: {
+    revenue: { value: 1000, end: '2026-06-30', periodType: 'quarterly' },
+    netIncome: { value: 100, end: '2026-06-30', periodType: 'quarterly' },
+    dilutedEps: { value: 1, end: '2026-06-30', periodType: 'quarterly' },
+  }};
+  const result = runtime.reconcileIssuerWithYahoo(issuer, {
+    revenueHistory: [{ date: '2Q2026', revenue: 1004, earnings: 110 }],
+    epsHistory: [{ quarter: '2026-03-31', epsActual: 1 }],
+  });
+  assert.equal(result.revenue.status, 'aligned');
+  assert.equal(result.netIncome.status, 'differs');
+  assert.equal(result.dilutedEps.status, 'period_mismatch');
+  assert.equal(runtime.quarterEnd('2Q2026'), '2026-06-30');
+  assert.equal(runtime.quarterEnd('unknown'), null);
+});
+
+test('annual SEC facts are never compared with quarterly Yahoo fields', () => {
+  const runtime = loadRuntime();
+  const result = runtime.compareReported(
+    { value: 400, end: '2026-06-30', periodType: 'annual' },
+    100,
+    '2026-06-30',
+  );
+  assert.equal(result.status, 'period_type_mismatch');
+});
+
 test('pages contain no fabricated, generated, or stored financial datasets', () => {
   const combined = fs.readdirSync(publicDir)
     .filter((name) => /\.(html|js|json)$/.test(name))
     .map(read).join('\n');
   assert.doesNotMatch(combined, /INSIDER_DATA|SAMPLE_NEWS|seededRandom|PRICE_HISTORY\s*=|PRICE_DATA\s*=\s*\{"|QUOTES\s*=\s*\{"|priceHistory|HIGHEST CONVICTION|Top Picks by Signal Strength/);
   assert.doesNotMatch(read('options.html'), /Notional activity|totalPrem|Gamma exposure|Max pain/);
-  assert.match(read('index.html'), /no embedded financial snapshot/i);
+  assert.match(read('index.html'), /issuer-filed fundamentals are primary/i);
+  assert.match(read('index.html'), /Yahoo values never replace a missing issuer-filed value/i);
   assert.match(read('correlation.html'), /No embedded or generated price series/i);
   assert.match(read('technicals.html'), /no technical buy\/sell signal/i);
 });
