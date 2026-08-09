@@ -7,11 +7,10 @@ pages plus public market-data proxy endpoints.
 ## Repository shape
 
 - `server.js` configures and exports the dashboard server.
-- `public/sw_data.json` contains the tracked software-company universe.
-- `public/*.html` and `public/i18n.js` implement the dashboard pages.
-- `public/build_pages.py` generates deterministic technical and correlation pages.
-- `test/smoke.test.js` covers page syntax, deterministic generation, acquired
-  tickers, and the server health contract.
+- `public/universe.json` contains only the curated coverage taxonomy. Market and fundamental values must come from live API responses.
+- `public/*.html` implements the dashboard pages.
+- Correlation and technical pages calculate directly from live one-year history.
+- `test/smoke.test.js` covers page syntax, provenance, retired tickers, and the server health contract.
 
 ## Agent remit
 

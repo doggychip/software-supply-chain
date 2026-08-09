@@ -9,7 +9,6 @@
 
    Patches (when present):
      - window.SW_DATA.tickers   — .price/.change/.changePct/.previousClose
-     - window.SW_DATA.conviction — array with .ticker entries
      - window.QUOTES            — flat map keyed by ticker
      - window.PRICE_DATA        — replaced entirely with live bars per symbol
      - index.html `.sc` supply-chain card DOM (Price metric)
@@ -24,7 +23,19 @@
 
   function patchTickerMap(map, quotes) {
     if (!map || typeof map !== 'object') return;
-    Object.keys(map).forEach(function (sym) { map[sym].liveUnavailable = !quotes[sym]; });
+    Object.keys(map).forEach(function (sym) {
+      var t = map[sym];
+      t.liveUnavailable = !quotes[sym];
+      // Clear every market-derived value before applying the live payload.
+      // This prevents a previous deploy's snapshot from surviving a partial
+      // upstream response.
+      ['price','previousClose','change','changePct','changesPct','marketCap','eps','pe','divYield',
+       'yearHigh','yearLow','dayHigh','dayLow','volume','avgVolume','volRatio',
+       'targetMeanPrice','targetMedianPrice','targetHighPrice','targetLowPrice',
+       'recommendationKey','recommendationMean','numberOfAnalystOpinions'].forEach(function (key) {
+        delete t[key];
+      });
+    });
     Object.keys(quotes).forEach(function (sym) {
       var t = map[sym];
       if (!t) return;
@@ -33,7 +44,24 @@
       t.price = q.price;
       if (typeof q.previousClose === 'number') t.previousClose = q.previousClose;
       if (typeof q.change === 'number') t.change = q.change;
-      if (typeof q.changePct === 'number') t.changePct = q.changePct;
+      if (typeof q.changePct === 'number') {
+        t.changePct = q.changePct;
+        t.changesPct = q.changePct;
+      }
+      var x = q.extras || {};
+      if (typeof x.marketCap === 'number') t.marketCap = x.marketCap;
+      if (typeof x.trailingEps === 'number') t.eps = x.trailingEps;
+      if (typeof x.trailingPE === 'number') t.pe = x.trailingPE;
+      if (typeof x.divYield === 'number') t.divYield = x.divYield;
+      if (typeof x.fiftyTwoWeekHigh === 'number') t.yearHigh = x.fiftyTwoWeekHigh;
+      if (typeof x.fiftyTwoWeekLow === 'number') t.yearLow = x.fiftyTwoWeekLow;
+      if (typeof x.dayHigh === 'number') t.dayHigh = x.dayHigh;
+      if (typeof x.dayLow === 'number') t.dayLow = x.dayLow;
+      if (typeof x.regularMarketVolume === 'number') t.volume = x.regularMarketVolume;
+      if (typeof x.averageVolume === 'number') t.avgVolume = x.averageVolume;
+      if (typeof t.volume === 'number' && typeof t.avgVolume === 'number' && t.avgVolume > 0) {
+        t.volRatio = t.volume / t.avgVolume;
+      }
     });
   }
 
@@ -45,7 +73,7 @@
     });
     Object.keys(historyMap).forEach(function (sym) {
       var bars = historyMap[sym];
-      if (Array.isArray(bars) && bars.length && priceData[sym]) {
+      if (Array.isArray(bars) && bars.length) {
         priceData[sym] = bars;
       }
     });
@@ -104,25 +132,21 @@
     var quotes = (quotesResult.payload && quotesResult.payload.quotes) || {};
     var history = historyResult.payload || {};
     window.__historyData = history;
+    var marketTimes = Object.keys(quotes).map(function (symbol) {
+      return quotes[symbol] && typeof quotes[symbol].asOf === 'number' ? quotes[symbol].asOf * 1000 : null;
+    }).filter(Number.isFinite);
     window.__marketDataStatus = {
       quotesOk: quotesResult.ok && Object.keys(quotes).length > 0,
       historyOk: historyResult.ok && Object.keys(history).length > 0,
       quoteCount: Object.keys(quotes).length,
       historyCount: Object.keys(history).length,
-      asOf: quotesResult.payload && quotesResult.payload.updatedAt || Date.now(),
+      asOf: marketTimes.length ? Math.max.apply(null, marketTimes) : null,
+      retrievedAt: quotesResult.payload && quotesResult.payload.updatedAt || Date.now(),
       quotesError: quotesResult.error || null,
       historyError: historyResult.error || null
     };
 
     if (window.SW_DATA && window.SW_DATA.tickers) patchTickerMap(window.SW_DATA.tickers, quotes);
-    if (window.SW_DATA && Array.isArray(window.SW_DATA.conviction)) {
-      window.SW_DATA.conviction.forEach(function (c) {
-        var q = quotes[c.ticker];
-        if (!q || typeof q.price !== 'number') return;
-        c.price = q.price;
-        if (typeof q.changePct === 'number') c.changePct = q.changePct;
-      });
-    }
     if (window.QUOTES) patchTickerMap(window.QUOTES, quotes);
     if (window.PRICE_DATA) replacePriceData(window.PRICE_DATA, history);
 

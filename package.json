@@ -7,9 +7,7 @@
     "start": "node server.js",
     "dev": "node server.js",
     "test": "node --test",
-    "agents:check": "python3 agents/software_supply_chain_mcp.py --self-test",
-    "update-prices": "update-prices ./public/sw_data.json && update-prices ./public/index.html",
-    "update-prices:dry": "update-prices ./public/sw_data.json --dry-run && update-prices ./public/index.html --dry-run"
+    "agents:check": "python3 agents/software_supply_chain_mcp.py --self-test"
   },
   "dependencies": {
     "dashboard-core": "git+https://github.com/doggychip/dashboard-core.git#v1.0.12",

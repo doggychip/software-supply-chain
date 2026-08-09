@@ -1,9 +1,7 @@
-/* Trust layer for the main dashboard.
-   Scores summarize available evidence; they are not return forecasts. */
+/* Normalize live fundamentals into a descriptive record.
+   Deliberately produces no score, rank, recommendation, or return forecast. */
 (function () {
   'use strict';
-
-  var MIN_COVERAGE = 4;
 
   function isFutureDate(value, now) {
     if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
@@ -14,29 +12,47 @@
     return parsed.getTime() >= today.getTime();
   }
 
-  // Delegates to dashboard-core's unified evidence scorer (client/signals.js,
-  // which the page loads first). One scorer, one spec, one test suite — the
-  // divergent local copy that previously lived here was removed in v1.0.12.
-  function computeEvidenceScore(t, historyFresh) {
-    if (typeof window.computeSignal !== 'function') return null;
-    return window.computeSignal(t, historyFresh);
+  function finite(value) { return typeof value === 'number' && Number.isFinite(value); }
+
+  function summarizeEvidence(ticker) {
+    var f = ticker && ticker.fundamentals;
+    if (!f) return null;
+    var history = Array.isArray(f.epsHistory) ? f.epsHistory.slice(-4) : [];
+    var latest = history.length ? history[history.length - 1] : null;
+    var graded = history.filter(function (row) {
+      return finite(row.epsActual) && finite(row.epsEstimate);
+    });
+    var beats = graded.filter(function (row) { return row.epsActual > row.epsEstimate; }).length;
+    var meets = graded.filter(function (row) { return row.epsActual === row.epsEstimate; }).length;
+    var misses = graded.filter(function (row) { return row.epsActual < row.epsEstimate; }).length;
+    var analyst = f.analyst || {};
+    var targetGap = finite(analyst.targetMeanPrice) && finite(ticker.price) && ticker.price > 0
+      ? ((analyst.targetMeanPrice / ticker.price) - 1) * 100 : null;
+
+    return {
+      latestQuarter: latest && latest.quarter || null,
+      epsActual: latest && finite(latest.epsActual) ? latest.epsActual : null,
+      epsEstimate: latest && finite(latest.epsEstimate) ? latest.epsEstimate : null,
+      surprisePct: latest && finite(latest.surprisePct) ? latest.surprisePct : null,
+      quarterCount: graded.length,
+      beats: beats,
+      meets: meets,
+      misses: misses,
+      forwardEpsGrowth: f.forward && finite(f.forward.epsGrowthNextY) ? f.forward.epsGrowthNextY : null,
+      recommendationMean: finite(analyst.recommendationMean) ? analyst.recommendationMean : null,
+      analystCount: finite(analyst.numberOfAnalystOpinions) ? analyst.numberOfAnalystOpinions : null,
+      targetMeanPrice: finite(analyst.targetMeanPrice) ? analyst.targetMeanPrice : null,
+      targetGapPct: targetGap,
+      nextEarningsDate: isFutureDate(f.nextEarningsDate) ? f.nextEarningsDate : null,
+      earningsDateEstimated: f.isEarningsDateEstimate === true,
+    };
   }
 
-  function removeConvictionRanking() {
-    var section = document.getElementById('s-conviction');
-    if (!section) return;
-    section.innerHTML = '<div class="section-header"><div><div class="section-title">Rule-based Screen Removed</div>' +
-      '<div class="section-desc">The former conviction ranking mixed P/E, company size, volume and one-day price movement without predictive validation.</div></div></div>' +
-      '<div style="padding:18px;border:1px solid var(--border);border-radius:10px;background:var(--surface)">' +
-      '<strong>No investment ranking is produced.</strong><div style="margin-top:6px;color:var(--muted);font-size:12px">Use the valuation table and earnings evidence summary as separate descriptive views. They are intentionally not collapsed into a recommendation.</div></div>';
-  }
-
-  function install() {
-    removeConvictionRanking();
-  }
-
-  window.computeEvidenceScore = computeEvidenceScore;
+  // Legacy name retained for callers, but no score is produced.
+  window.computeEvidenceScore = function (ticker) {
+    var summary = summarizeEvidence(ticker);
+    return summary ? Object.assign({ score: null, label: 'Descriptive data only' }, summary) : null;
+  };
+  window.summarizeEvidence = summarizeEvidence;
   window.isFutureDate = isFutureDate;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
-  else install();
 })();
