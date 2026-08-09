@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "asOf": "2026-08-09",
-  "sourceNote": "Curated coverage universe only. Market and fundamental data are fetched live at runtime.",
+  "sourceNote": "Curated coverage universe only. Issuer-filed fundamentals and Yahoo reconciliation data are fetched live at runtime.",
   "layers": {
     "Cloud Infrastructure": {"color":"#5b9cf6","desc":"IaaS/PaaS — compute, storage, networking","tickers":["AMZN","MSFT","GOOGL","ORCL"]},
     "Cybersecurity": {"color":"#f07070","desc":"Endpoint, network, zero-trust, SIEM","tickers":["CRWD","PANW","ZS","FTNT","S"]},

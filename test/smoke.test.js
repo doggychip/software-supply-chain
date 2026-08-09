@@ -50,7 +50,7 @@ test('retired symbols fail closed without calling the upstream', async (t) => {
   assert.equal(upstreamCalls, 0);
 });
 
-test('server exposes provenance, source headers, and current universe count', async (t) => {
+test('server exposes issuer-primary provenance, source headers, and current universe count', async (t) => {
   const server = app.listen(0);
   t.after(() => server.close());
   await new Promise((resolve) => server.once('listening', resolve));
@@ -66,6 +66,21 @@ test('server exposes provenance, source headers, and current universe count', as
   assert.equal(health.dashboard, 'Software Supply Chain');
   assert.equal(health.tickerCount, 56);
   const provenance = await provenanceResponse.json();
-  assert.equal(provenance.marketData.provider, 'Yahoo Finance');
-  assert.match(provenance.fallbackPolicy, /No static market/);
+  assert.equal(provenance.reportedFundamentals.provider, 'SEC EDGAR');
+  assert.equal(provenance.marketReconciliation.provider, 'Yahoo Finance');
+  assert.match(provenance.fallbackPolicy, /No static or Yahoo-derived value replaces/);
+});
+
+test('issuer endpoint rejects symbols outside the curated universe before upstream access', async (t) => {
+  const originalFetch = global.fetch;
+  let upstreamCalls = 0;
+  global.fetch = async () => { upstreamCalls += 1; throw new Error('unexpected upstream request'); };
+  t.after(() => { global.fetch = originalFetch; });
+  const server = app.listen(0);
+  t.after(() => server.close());
+  await new Promise((resolve) => server.once('listening', resolve));
+  const response = await originalFetch(`http://127.0.0.1:${server.address().port}/api/issuer-data?symbols=NOTREAL`);
+  assert.equal(response.status, 400);
+  assert.equal(response.headers.get('x-data-provider'), 'SEC EDGAR (issuer-filed XBRL facts)');
+  assert.equal(upstreamCalls, 0);
 });

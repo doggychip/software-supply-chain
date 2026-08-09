@@ -1,50 +1,133 @@
-<!doctype html><html lang="en" data-theme="dark"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Verified Software Market Data</title><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="trust-pages.css"><script src="assessment-trust.js"></script></head><body>
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Issuer-Reported Software Market Data</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="trust-pages.css">
+  <script src="assessment-trust.js"></script>
+</head>
+<body>
 <nav class="tabs"><a class="active" href="index.html">Main Dashboard</a><a href="correlation.html">Correlation</a><a href="technicals.html">Technicals</a><a href="insider.html">Insider Activity</a><a href="options.html">Options Activity</a><a href="sentiment.html">Market Conditions</a><a href="leaderboard.html">Performance</a><a href="stress-test.html">Scenario Calculator</a><a href="news.html">News</a></nav>
-<main><header><div><h1>Software Stack — Source-Visible Data</h1><div class="sub">Live-only market fields; no embedded financial snapshot, forecast, or investment ranking</div></div><button class="theme" type="button" onclick="toggleTheme()">Theme</button></header>
-<section id="status" class="notice"><strong>Loading current market and fundamental data…</strong>Nothing is displayed from a static market-data fallback.</section>
-<div id="summary" class="grid" hidden><section class="card"><div class="label">Live quote coverage</div><div class="metric" id="quoteCoverage">—</div><div class="muted">Current symbols / curated universe</div></section><section class="card"><div class="label">Fundamental coverage</div><div class="metric" id="fundCoverage">—</div><div class="muted">Third-party Yahoo Finance fields</div></section><section class="card"><div class="label">Latest market timestamp</div><div class="metric" id="marketAsOf" style="font-size:16px">—</div><div class="muted">Timestamp supplied with each quote</div></section></div>
-<section class="card"><h2>Data provenance and limits</h2><ul class="method"><li>Prices, history, options, earnings fields and analyst estimates come from unofficial Yahoo Finance public endpoints through the server proxy.</li><li>The layer map is a curated coverage taxonomy dated <span id="universeDate">—</span>; it is not a market fact or recommendation.</li><li>Analyst targets, consensus and forward growth are estimates—not verified company results.</li><li>When a live field is absent or stale, the dashboard shows “—” or excludes the record. It never substitutes a stored number.</li><li>Verify decision-critical values with the relevant exchange, SEC filing or issuer release.</li></ul></section>
-<section id="quotesCard" class="card" hidden><h2>Live market fields</h2><div class="table-wrap"><table><thead><tr><th>Ticker</th><th>Company</th><th>Layer</th><th>Price</th><th>Change</th><th>Market cap</th><th>Trailing EPS</th><th>Trailing P/E</th><th>Volume</th><th>Market time</th></tr></thead><tbody id="quoteRows"></tbody></table></div><div class="method">Price/change and the timestamp come from Yahoo chart metadata. Other columns appear only when the live quote-summary response supplies them.</div></section>
-<section id="fundCard" class="card" hidden><h2>Descriptive earnings and estimate fields</h2><div class="table-wrap"><table><thead><tr><th>Ticker</th><th>Next earnings</th><th>Latest quarter</th><th>EPS actual</th><th>EPS estimate</th><th>Surprise</th><th>Last 4Q actual vs estimate</th><th>Forward EPS growth*</th><th>Analyst mean*</th><th>Mean target*</th><th>Target gap*</th></tr></thead><tbody id="fundRows"></tbody></table></div><div class="method">* Consensus estimates supplied by Yahoo Finance. No score or ranking is calculated. “Beat” requires actual EPS to be strictly greater than the estimate; equality is reported separately.</div></section>
-</main><script>
+<main>
+  <header>
+    <div><h1>Software Stack — Issuer-Reported Results</h1><div class="sub">Issuer-filed fundamentals are primary; Yahoo Finance is a labeled reconciliation source</div></div>
+    <button class="theme" type="button" onclick="toggleTheme()">Theme</button>
+  </header>
+
+  <section id="status" class="notice"><strong>Loading issuer-filed results…</strong>Missing SEC facts will remain unavailable; Yahoo will not fill them.</section>
+
+  <div id="summary" class="grid" hidden>
+    <section class="card"><div class="label">Issuer filing coverage</div><div class="metric" id="issuerCoverage">—</div><div class="muted">Companies with standardized SEC XBRL facts</div></section>
+    <section class="card"><div class="label">Yahoo quote coverage</div><div class="metric" id="quoteCoverage">—</div><div class="muted">Secondary market-data check only</div></section>
+    <section class="card"><div class="label">Same-period checks</div><div class="metric" id="checkCoverage">—</div><div class="muted">Aligned within 0.5% / comparable fields</div></section>
+  </div>
+
+  <section class="card">
+    <h2>Source hierarchy and limits</h2>
+    <ul class="method">
+      <li><strong>Primary:</strong> standardized US-GAAP or IFRS facts filed by each issuer with SEC EDGAR. Every displayed fact includes its concept, period, unit and filing link.</li>
+      <li>SEC does not guarantee the scope or accuracy of its ticker-to-CIK association file, so the mapped SEC entity name and CIK are shown for inspection.</li>
+      <li><strong>Reconciliation:</strong> Yahoo Finance public endpoints. Yahoo values never replace a missing issuer-filed value.</li>
+      <li>“Aligned” means the period ends match and the numeric difference is at most 0.5%; it does not prove identical accounting bases. Yahoo EPS may be adjusted while SEC diluted EPS is filed GAAP/IFRS.</li>
+      <li>Market prices have no comparable issuer filing value, so Yahoo quotes are shown only as secondary market context.</li>
+      <li>The layer map is a curated taxonomy dated <span id="universeDate">—</span>, not an issuer fact, assessment score or recommendation.</li>
+    </ul>
+  </section>
+
+  <section id="issuerCard" class="card" hidden>
+    <h2>Primary — issuer-filed fundamentals</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ticker</th><th>Company</th><th>Layer</th><th>Latest source filing</th><th>Revenue</th><th>Net income</th><th>Diluted EPS</th></tr></thead>
+      <tbody id="issuerRows"></tbody>
+    </table></div>
+    <div class="method">Values use the issuer's filed unit and are not currency-converted. Quarterly and annual facts are labeled separately. A fact can come from a different filing than another fact in the same row; its own period and form are shown below the value.</div>
+  </section>
+
+  <section id="reconciliationCard" class="card" hidden>
+    <h2>Secondary — Yahoo reconciliation</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ticker</th><th>Yahoo quote</th><th>Market time</th><th>Revenue check</th><th>Earnings check</th><th>Diluted EPS check</th></tr></thead>
+      <tbody id="reconciliationRows"></tbody>
+    </table></div>
+    <div class="method">Reconciliation compares only equal period-end dates. “Different” is disclosed, not corrected or averaged. “Periods differ” is not treated as a discrepancy.</div>
+  </section>
+</main>
+
+<script>
 function toggleTheme(){var e=document.documentElement;e.dataset.theme=e.dataset.theme==='dark'?'light':'dark'}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function finite(v){return typeof v==='number'&&Number.isFinite(v)}
-function money(v){if(!finite(v))return '—';return '$'+v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
-function compactMoney(v){if(!finite(v))return '—';if(Math.abs(v)>=1e12)return '$'+(v/1e12).toFixed(2)+'T';if(Math.abs(v)>=1e9)return '$'+(v/1e9).toFixed(2)+'B';if(Math.abs(v)>=1e6)return '$'+(v/1e6).toFixed(1)+'M';return money(v)}
-function pct(v){return finite(v)?(v>=0?'+':'')+v.toFixed(2)+'%':'—'}
-function number(v,d){return finite(v)?v.toFixed(d==null?2:d):'—'}
 function marketDate(seconds){return finite(seconds)?new Date(seconds*1000):null}
 function isFreshQuote(q){var d=marketDate(q&&q.asOf);return d&&Date.now()-d.getTime()<=7*86400000}
+function money(v,currency){if(!finite(v))return '—';return (currency||'$')+' '+v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})}
+function compact(v){if(!finite(v))return '—';var a=Math.abs(v);if(a>=1e12)return (v/1e12).toFixed(2)+'T';if(a>=1e9)return (v/1e9).toFixed(2)+'B';if(a>=1e6)return (v/1e6).toFixed(1)+'M';return v.toLocaleString(undefined,{maximumFractionDigits:2})}
+function factValue(fact){if(!fact)return '—';var unit=fact.unit||'';var suffix=unit.endsWith('/shares')?' / share':'';var base=unit.replace('/shares','');return esc(base+' '+compact(fact.value)+suffix)}
+function factCell(fact){if(!fact)return '—';var title=esc(fact.taxonomy+':'+fact.concept);return '<span title="'+title+'">'+factValue(fact)+'</span><div class="cell-meta">'+esc(fact.periodType+' through '+fact.end+' · '+fact.form)+'</div>'}
+function safeSecUrl(value){return typeof value==='string'&&value.indexOf('https://www.sec.gov/')===0?value:null}
+function checkCell(check,primary,secondary){
+  if(!check)return '—';
+  if(check.status==='issuer_unavailable')return '<span class="status">Issuer fact unavailable</span>';
+  if(check.status==='yahoo_unavailable')return '<span class="status">Yahoo field unavailable</span>';
+  if(check.status==='period_type_mismatch')return '<span class="status mixed">Annual vs quarterly</span>';
+  if(check.status==='period_mismatch')return '<span class="status mixed">Periods differ</span><div class="cell-meta">SEC '+esc(check.primaryEnd||'—')+' · Yahoo '+esc(check.secondaryEnd||'—')+'</div>';
+  var cls=check.status==='aligned'?'positive':'negative';var label=check.status==='aligned'?'Aligned':'Different';var delta=finite(check.differencePct)?Math.abs(check.differencePct).toFixed(2)+'%':'—';
+  return '<span class="status '+cls+'">'+label+' '+delta+'</span><div class="cell-meta">SEC '+factValue(primary)+' · Yahoo '+esc(compact(secondary))+'</div>';
+}
+function json(url){return fetch(url).then(function(r){if(!r.ok)throw new Error(url+' HTTP '+r.status);return r.json()})}
 
-Promise.all([
-  fetch('/universe.json').then(function(r){if(!r.ok)throw new Error('universe HTTP '+r.status);return r.json()}),
-  fetch('/api/quotes').then(function(r){if(!r.ok)throw new Error('quotes HTTP '+r.status);return r.json()}),
-  fetch('/api/fundamentals').then(function(r){if(!r.ok)throw new Error('fundamentals HTTP '+r.status);return r.json()})
-]).then(function(parts){
-  var universe=parts[0],quotePayload=parts[1],fundPayload=parts[2];
-  var allQuotes=quotePayload.quotes||{},fundamentals=fundPayload.fundamentals||{},tickers=universe.tickers||{};
-  var symbols=Object.keys(tickers).sort();var quotes={};
-  symbols.forEach(function(symbol){var q=allQuotes[symbol];if(q&&finite(q.price)&&q.price>0&&isFreshQuote(q))quotes[symbol]=q});
-  if(!Object.keys(quotes).length)throw new Error('no fresh live quotes');
-  var latest=Math.max.apply(null,Object.values(quotes).map(function(q){return q.asOf*1000}));
-  document.getElementById('quoteCoverage').textContent=Object.keys(quotes).length+'/'+symbols.length;
-  document.getElementById('fundCoverage').textContent=Object.keys(fundamentals).filter(function(s){return tickers[s]}).length+'/'+symbols.length;
-  document.getElementById('marketAsOf').textContent=new Date(latest).toLocaleString();
+var universePromise=json('/universe.json');
+var issuerPromise=json('/api/issuer-data');
+var yahooPromise=Promise.all([json('/api/quotes'),json('/api/fundamentals')]).then(function(parts){return {quotes:parts[0],fundamentals:parts[1]}}).catch(function(error){return {error:error}});
+
+Promise.all([universePromise,issuerPromise,yahooPromise]).then(function(parts){
+  var universe=parts[0],issuerPayload=parts[1],yahoo=parts[2];
+  var tickers=universe.tickers||{},symbols=Object.keys(tickers).sort(),issuers=issuerPayload.issuers||{};
   document.getElementById('universeDate').textContent=universe.asOf||'undated';
+  document.getElementById('issuerCoverage').textContent=Object.keys(issuers).length+'/'+symbols.length;
+
+  symbols.forEach(function(symbol){
+    var issuer=issuers[symbol],meta=tickers[symbol];
+    if(!issuer){
+      var unavailable=document.createElement('tr');
+      unavailable.innerHTML='<td>'+esc(symbol)+'</td><td>'+esc(meta.name)+'<div class="cell-meta">curated universe name</div></td><td>'+esc(meta.layer)+'</td><td><span class="status negative">Unavailable</span><div class="cell-meta">'+esc(issuerPayload.unavailable&&issuerPayload.unavailable[symbol]||'No standardized issuer fact')+'</div></td><td>—</td><td>—</td><td>—</td>';
+      document.getElementById('issuerRows').appendChild(unavailable);return;
+    }
+    var filing=issuer.latestFiling||{},url=safeSecUrl(filing.sourceUrl),source=url?'<a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(filing.form||'Filing')+'</a>':esc(filing.form||'—');
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(symbol)+'</td><td>'+esc(issuer.name||'—')+'<div class="cell-meta">CIK '+esc(issuer.cik)+'</div></td><td>'+esc(meta.layer)+'</td><td>'+source+'<div class="cell-meta">filed '+esc(filing.filed||'—')+' · period '+esc(filing.periodEnd||'—')+'</div></td><td>'+factCell(issuer.facts&&issuer.facts.revenue)+'</td><td>'+factCell(issuer.facts&&issuer.facts.netIncome)+'</td><td>'+factCell(issuer.facts&&issuer.facts.dilutedEps)+'</td>';
+    document.getElementById('issuerRows').appendChild(tr);
+  });
+  document.getElementById('issuerCard').hidden=false;
+
+  var quotes={},fundamentals={};
+  if(!yahoo.error){
+    var allQuotes=yahoo.quotes.quotes||{};fundamentals=yahoo.fundamentals.fundamentals||{};
+    symbols.forEach(function(symbol){var q=allQuotes[symbol];if(q&&finite(q.price)&&q.price>0&&isFreshQuote(q))quotes[symbol]=q});
+  }
+  document.getElementById('quoteCoverage').textContent=yahoo.error?'Unavailable':Object.keys(quotes).length+'/'+symbols.length;
+
+  var aligned=0,comparable=0;
+  symbols.forEach(function(symbol){
+    var issuer=issuers[symbol],facts=issuer&&issuer.facts||{};
+    var q=quotes[symbol],f=fundamentals[symbol],checks=window.reconcileIssuerWithYahoo(issuer,f);
+    Object.values(checks).forEach(function(c){if(c.status==='aligned'||c.status==='differs'){comparable+=1;if(c.status==='aligned')aligned+=1}});
+    var revenueHistory=f&&Array.isArray(f.revenueHistory)?f.revenueHistory:[],epsHistory=f&&Array.isArray(f.epsHistory)?f.epsHistory:[];
+    var reported=revenueHistory.length?revenueHistory[revenueHistory.length-1]:null,eps=epsHistory.length?epsHistory[epsHistory.length-1]:null;
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+esc(symbol)+'</td><td>'+(q?money(q.price,q.currency):'—')+'</td><td>'+(q?esc(marketDate(q.asOf).toLocaleString()):'—')+'</td><td>'+checkCell(checks.revenue,facts.revenue,reported&&reported.revenue)+'</td><td>'+checkCell(checks.netIncome,facts.netIncome,reported&&reported.earnings)+'</td><td>'+checkCell(checks.dilutedEps,facts.dilutedEps,eps&&eps.epsActual)+'</td>';
+    document.getElementById('reconciliationRows').appendChild(tr);
+  });
+  document.getElementById('checkCoverage').textContent=aligned+'/'+comparable;
   document.getElementById('summary').hidden=false;
-
-  symbols.forEach(function(symbol){var q=quotes[symbol];if(!q)return;var x=q.extras||{},meta=tickers[symbol];var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(symbol)+'</td><td>'+esc(meta.name)+'</td><td>'+esc(meta.layer)+'</td><td>'+money(q.price)+'</td><td>'+pct(q.changePct)+'</td><td>'+compactMoney(x.marketCap)+'</td><td>'+number(x.trailingEps)+'</td><td>'+number(x.trailingPE)+'</td><td>'+(finite(x.regularMarketVolume)?x.regularMarketVolume.toLocaleString():'—')+'</td><td>'+esc(marketDate(q.asOf).toLocaleString())+'</td>';
-    document.getElementById('quoteRows').appendChild(tr)
-  });
-  document.getElementById('quotesCard').hidden=false;
-
-  symbols.forEach(function(symbol){var f=fundamentals[symbol];if(!f)return;var t={price:quotes[symbol]&&quotes[symbol].price,fundamentals:f};var s=window.summarizeEvidence(t);if(!s)return;var next=s.nextEarningsDate?(s.nextEarningsDate+(s.earningsDateEstimated?' (est.)':'')):'—';var record=s.quarterCount?(s.beats+' beat / '+s.meets+' met / '+s.misses+' miss'):'—';var analyst=s.recommendationMean==null?'—':s.recommendationMean.toFixed(2)+(s.analystCount==null?'':' (n='+s.analystCount+')');var tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(symbol)+'</td><td>'+esc(next)+'</td><td>'+esc(s.latestQuarter||'—')+'</td><td>'+number(s.epsActual)+'</td><td>'+number(s.epsEstimate)+'</td><td>'+pct(s.surprisePct)+'</td><td>'+esc(record)+'</td><td>'+pct(s.forwardEpsGrowth)+'</td><td>'+esc(analyst)+'</td><td>'+money(s.targetMeanPrice)+'</td><td>'+pct(s.targetGapPct)+'</td>';
-    document.getElementById('fundRows').appendChild(tr)
-  });
-  document.getElementById('fundCard').hidden=false;
-  var status=document.getElementById('status');status.className='notice ok';status.innerHTML='<strong>Live-only data loaded</strong>'+Object.keys(quotes).length+' fresh quotes. Retrieved '+new Date(quotePayload.updatedAt).toLocaleString()+'. Market timestamps are shown per row.';
-}).catch(function(error){var status=document.getElementById('status');status.className='notice error';status.innerHTML='<strong>Current data unavailable</strong>No market or fundamental values are shown. '+esc(error.message)+'.';});
-</script></body></html>
+  document.getElementById('reconciliationCard').hidden=false;
+  var status=document.getElementById('status');status.className='notice ok';
+  status.innerHTML='<strong>Issuer-filed data loaded</strong>'+Object.keys(issuers).length+' of '+symbols.length+' issuers have standardized facts. '+(yahoo.error?'Yahoo reconciliation is currently unavailable.':'Yahoo reconciliation loaded separately.')+' Retrieved '+new Date(issuerPayload.updatedAt).toLocaleString()+'.';
+}).catch(function(error){
+  var status=document.getElementById('status');status.className='notice error';status.innerHTML='<strong>Issuer-filed data unavailable</strong>No reported fundamental values are shown. '+esc(error.message)+'.';
+});
+</script>
+</body>
+</html>

@@ -1,9 +1,10 @@
-// Thin wrapper around dashboard-core. All Yahoo proxy / static / cache
-// logic lives in dashboard-core; this file just configures the dashboard.
+// Configure dashboard-core's Yahoo proxy and add the issuer-filed SEC source.
 
 const express = require('express');
 const path = require('path');
 const { createDashboardServer } = require('dashboard-core');
+const { loadIssuerData } = require('./issuer-data');
+const universe = require('./public/universe.json');
 
 const coreApp = createDashboardServer({
   publicDir: path.join(__dirname, 'public'),
@@ -13,13 +14,18 @@ const coreApp = createDashboardServer({
 
 const app = express();
 const RETIRED_SYMBOLS = new Set(['SQ', 'CYBR', 'CFLT']);
+const ACTIVE_SYMBOLS = new Set(Object.keys(universe.tickers));
 
-// Market and fundamental endpoints are third-party Yahoo Finance data. Make
-// that provenance machine-readable on every API response instead of implying
-// the dashboard itself is the source.
+// Make source and fallback policy machine-readable on every API response.
 app.use('/api', (req, res, next) => {
-  res.set('x-data-provider', 'Yahoo Finance (unofficial public endpoints)');
   res.set('x-data-policy', 'live-only-no-static-market-fallback');
+  if (req.path === '/issuer-data') {
+    res.set('x-data-provider', 'SEC EDGAR (issuer-filed XBRL facts)');
+  } else if (req.path === '/provenance') {
+    res.set('x-data-provider', 'SEC EDGAR primary; Yahoo Finance reconciliation');
+  } else {
+    res.set('x-data-provider', 'Yahoo Finance (unofficial public endpoints)');
+  }
   const requested = String(req.query.symbols || '').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
   const pathSymbol = String(req.path.split('/').pop() || '').toUpperCase();
   const retired = requested.find((symbol) => RETIRED_SYMBOLS.has(symbol)) ||
@@ -30,19 +36,38 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
+app.get('/api/issuer-data', async (req, res) => {
+  const requested = String(req.query.symbols || '').split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
+  const symbols = requested.length ? [...new Set(requested)] : [...ACTIVE_SYMBOLS];
+  const invalid = symbols.filter((symbol) => !ACTIVE_SYMBOLS.has(symbol));
+  if (invalid.length) return res.status(400).json({ error: `Symbols outside the active universe: ${invalid.join(', ')}` });
+  try {
+    const payload = await loadIssuerData(symbols);
+    res.set('Cache-Control', 'public, max-age=300');
+    return res.status(Object.keys(payload.issuers).length ? 200 : 503).json(payload);
+  } catch (error) {
+    return res.status(503).json({ error: `Issuer-filed data unavailable: ${error.message}` });
+  }
+});
+
 app.get('/api/provenance', (req, res) => {
   res.json({
-    marketData: {
+    reportedFundamentals: {
+      provider: 'SEC EDGAR',
+      access: 'Issuer-filed standardized XBRL company facts',
+      caveat: 'Only standardized US-GAAP or IFRS facts are displayed. SEC does not guarantee the accuracy or scope of its ticker-to-CIK association file, so the mapped CIK and SEC entity name are exposed. Missing issuer facts remain unavailable and are never filled from Yahoo.',
+    },
+    marketReconciliation: {
       provider: 'Yahoo Finance',
       access: 'Unofficial public endpoints via dashboard-core',
-      caveat: 'Third-party data with no service-level guarantee; verify with the exchange or issuer before relying on it.',
+      caveat: 'Used as a secondary reconciliation source for market data and estimates, not as the source of record for reported results.',
     },
     universe: {
       file: 'universe.json',
       kind: 'Curated coverage taxonomy only',
       asOf: '2026-08-09',
     },
-    fallbackPolicy: 'No static market, fundamental, options, insider, or news values are displayed when live data is unavailable.',
+    fallbackPolicy: 'No static or Yahoo-derived value replaces a missing issuer-filed fundamental. No static market, options, insider, or news values are displayed.',
   });
 });
 

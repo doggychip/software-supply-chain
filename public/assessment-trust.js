@@ -14,6 +14,48 @@
 
   function finite(value) { return typeof value === 'number' && Number.isFinite(value); }
 
+  function quarterEnd(value) {
+    if (typeof value !== 'string') return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    var match = value.match(/^([1-4])Q(\d{4})$/);
+    if (!match) return null;
+    return match[2] + ['-03-31', '-06-30', '-09-30', '-12-31'][Number(match[1]) - 1];
+  }
+
+  function compareReported(primary, secondary, secondaryEnd) {
+    if (!primary || !finite(primary.value)) return { status: 'issuer_unavailable' };
+    if (!finite(secondary)) return { status: 'yahoo_unavailable' };
+    if (primary.periodType !== 'quarterly') {
+      return { status: 'period_type_mismatch', primaryPeriodType: primary.periodType || null };
+    }
+    if (!secondaryEnd || primary.end !== secondaryEnd) {
+      return { status: 'period_mismatch', primaryEnd: primary.end, secondaryEnd: secondaryEnd || null };
+    }
+    var difference = secondary - primary.value;
+    var differencePct = Math.abs(primary.value) > 0 ? difference / Math.abs(primary.value) * 100 : null;
+    return {
+      status: differencePct != null && Math.abs(differencePct) <= 0.5 ? 'aligned' : 'differs',
+      primaryValue: primary.value,
+      secondaryValue: secondary,
+      periodEnd: primary.end,
+      difference: difference,
+      differencePct: differencePct,
+    };
+  }
+
+  function reconcileIssuerWithYahoo(issuer, fundamentals) {
+    var facts = issuer && issuer.facts || {};
+    var epsHistory = fundamentals && Array.isArray(fundamentals.epsHistory) ? fundamentals.epsHistory : [];
+    var revenueHistory = fundamentals && Array.isArray(fundamentals.revenueHistory) ? fundamentals.revenueHistory : [];
+    var eps = epsHistory.length ? epsHistory[epsHistory.length - 1] : null;
+    var reported = revenueHistory.length ? revenueHistory[revenueHistory.length - 1] : null;
+    return {
+      revenue: compareReported(facts.revenue, reported && reported.revenue, quarterEnd(reported && reported.date)),
+      netIncome: compareReported(facts.netIncome, reported && reported.earnings, quarterEnd(reported && reported.date)),
+      dilutedEps: compareReported(facts.dilutedEps, eps && eps.epsActual, quarterEnd(eps && eps.quarter)),
+    };
+  }
+
   function summarizeEvidence(ticker) {
     var f = ticker && ticker.fundamentals;
     if (!f) return null;
@@ -55,4 +97,7 @@
   };
   window.summarizeEvidence = summarizeEvidence;
   window.isFutureDate = isFutureDate;
+  window.quarterEnd = quarterEnd;
+  window.compareReported = compareReported;
+  window.reconcileIssuerWithYahoo = reconcileIssuerWithYahoo;
 })();
