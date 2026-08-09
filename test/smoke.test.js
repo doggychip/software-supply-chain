@@ -37,6 +37,15 @@ test('public universe contains taxonomy only and excludes retired symbols', () =
   assert.equal(fs.existsSync(path.join(publicDir, 'build_pages.py')), false);
 });
 
+test('main dashboard renders a taxonomy-only software value chain map', () => {
+  const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8');
+  assert.match(html, /id="valueChainMap"/);
+  assert.match(html, /renderValueChain\(universe\)/);
+  assert.match(html, /Taxonomy only/);
+  assert.match(html, /company classifications only/);
+  assert.doesNotMatch(html, /data-score|price target|bottleneck score/i);
+});
+
 test('retired symbols fail closed without calling the upstream', async (t) => {
   const originalFetch = global.fetch;
   let upstreamCalls = 0;

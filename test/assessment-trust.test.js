@@ -82,6 +82,8 @@ test('pages contain no fabricated, generated, or stored financial datasets', () 
   assert.doesNotMatch(read('options.html'), /Notional activity|totalPrem|Gamma exposure|Max pain/);
   assert.match(read('index.html'), /issuer-filed fundamentals are primary/i);
   assert.match(read('index.html'), /Yahoo values never replace a missing issuer-filed value/i);
+  assert.match(read('index.html'), /This map contains company classifications only/i);
+  assert.doesNotMatch(read('index.html'), /const (UTILIZATION|CONVICTION)|data-score/i);
   assert.match(read('correlation.html'), /No embedded or generated price series/i);
   assert.match(read('technicals.html'), /no technical buy\/sell signal/i);
 });
