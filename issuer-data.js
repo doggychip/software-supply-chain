@@ -9,8 +9,9 @@ const REQUEST_TIMEOUT_MS = 12_000;
 
 const CONCEPTS = {
   revenue: [
-    ['us-gaap', 'RevenueFromContractWithCustomerExcludingAssessedTax'],
     ['us-gaap', 'Revenues'],
+    ['us-gaap', 'RevenueFromContractWithCustomerExcludingAssessedTax'],
+    ['us-gaap', 'RevenueFromContractWithCustomerIncludingAssessedTax'],
     ['us-gaap', 'SalesRevenueNet'],
     ['us-gaap', 'SalesRevenueGoodsNet'],
     ['us-gaap', 'SalesRevenueServicesNet'],
