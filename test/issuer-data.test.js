@@ -16,6 +16,12 @@ function companyFacts() {
     entityName: 'Example Software, Inc.',
     facts: {
       'us-gaap': {
+        Revenues: {
+          label: 'Total revenue',
+          units: { USD: [
+            { start: '2026-04-01', end: '2026-06-30', val: 150, accn: '0000000001-26-000002', form: '10-Q', filed: '2026-07-20', fy: 2026, fp: 'Q2' },
+          ] },
+        },
         RevenueFromContractWithCustomerExcludingAssessedTax: {
           label: 'Revenue',
           units: { USD: [
@@ -42,13 +48,13 @@ function companyFacts() {
   };
 }
 
-test('selectFact chooses the latest discrete reported period and rejects YTD duration', () => {
+test('selectFact chooses total revenue for the latest discrete period and rejects YTD duration', () => {
   const fact = selectFact(companyFacts(), CONCEPTS.revenue, '0000000001');
-  assert.equal(fact.value, 120);
+  assert.equal(fact.value, 150);
   assert.equal(fact.periodType, 'quarterly');
   assert.equal(fact.end, '2026-06-30');
   assert.equal(fact.taxonomy, 'us-gaap');
-  assert.equal(fact.concept, 'RevenueFromContractWithCustomerExcludingAssessedTax');
+  assert.equal(fact.concept, 'Revenues');
 });
 
 test('issuer record preserves filed units, concepts, periods, and direct filing evidence', () => {
@@ -83,7 +89,7 @@ test('live loader declares its SEC identity and leaves unmapped symbols unavaila
   };
   const payload = await loadIssuerData(['EXM', 'NONE'], fakeFetch);
   assert.equal(payload.source.official, true);
-  assert.equal(payload.issuers.EXM.facts.revenue.value, 120);
+  assert.equal(payload.issuers.EXM.facts.revenue.value, 150);
   assert.equal(payload.unavailable.NONE, 'No SEC ticker-to-CIK mapping');
   assert.equal(requests.length, 2);
   assert.match(requests[0].headers['User-Agent'], /@users\.noreply\.github\.com/);
