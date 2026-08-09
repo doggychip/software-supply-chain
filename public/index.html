@@ -37,6 +37,15 @@
     </ul>
   </section>
 
+  <section id="valueChainCard" class="card value-chain-card" hidden>
+    <div class="section-heading">
+      <div><h2>Software value chain map</h2><div class="muted">Curated company coverage from infrastructure through software applications</div></div>
+      <span class="status">Taxonomy only</span>
+    </div>
+    <div id="valueChainMap"></div>
+    <div class="method">This map contains company classifications only. It does not encode market size, bottlenecks, utilization, valuation, conviction, expected returns, or investment recommendations. Reported financial evidence remains in the tables below.</div>
+  </section>
+
   <section id="issuerCard" class="card" hidden>
     <h2>Primary — issuer-filed fundamentals</h2>
     <div class="table-wrap"><table>
@@ -81,6 +90,25 @@ function json(url){return fetch(url).then(function(r){if(!r.ok)throw new Error(u
 var universePromise=json('/universe.json');
 var issuerPromise=json('/api/issuer-data');
 var yahooPromise=Promise.all([json('/api/quotes'),json('/api/fundamentals')]).then(function(parts){return {quotes:parts[0],fundamentals:parts[1]}}).catch(function(error){return {error:error}});
+
+function renderValueChain(universe){
+  var entries=Object.entries(universe.layers||{}),map=document.getElementById('valueChainMap');map.innerHTML='';
+  var track=document.createElement('div');track.className='value-chain-track software';
+  entries.forEach(function(entry){
+    var name=entry[0],meta=entry[1]||{},symbols=Array.isArray(meta.tickers)?meta.tickers:[];
+    var layer=document.createElement('article');layer.className='value-layer';
+    var color=/^#[0-9a-f]{6}$/i.test(meta.color||'')?meta.color:'#5b9cf6';layer.style.setProperty('--layer-color',color);
+    var label=document.createElement('div');label.className='value-layer-label';label.textContent=name;
+    var desc=document.createElement('div');desc.className='value-layer-desc';desc.textContent=meta.desc||'Curated software taxonomy';
+    var count=document.createElement('div');count.className='value-layer-count';count.textContent=symbols.length+' '+(symbols.length===1?'company':'companies');
+    var chips=document.createElement('div');chips.className='ticker-chips';
+    symbols.forEach(function(symbol){var chip=document.createElement('span');chip.className='ticker-chip';chip.textContent=symbol;chips.appendChild(chip)});
+    layer.appendChild(label);layer.appendChild(desc);layer.appendChild(count);layer.appendChild(chips);track.appendChild(layer);
+  });
+  map.appendChild(track);document.getElementById('valueChainCard').hidden=!entries.length;
+}
+
+universePromise.then(renderValueChain).catch(function(){document.getElementById('valueChainCard').hidden=true});
 
 Promise.all([universePromise,issuerPromise,yahooPromise]).then(function(parts){
   var universe=parts[0],issuerPayload=parts[1],yahoo=parts[2];
