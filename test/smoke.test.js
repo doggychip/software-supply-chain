@@ -62,6 +62,8 @@ test('stock decision page exposes a disclosed editable baseline and no buy score
   assert.match(html, /id="layerCriteria"/);
   assert.match(html, /Value-chain fit/);
   assert.match(html, /baselineLayers=\['Cloud Infrastructure','Cybersecurity','Data & Analytics','Observability & DevOps','AI \/ ML Software','Identity & Access'\]/);
+  assert.match(html, /initialCompany=decisionState\.rows\.find\(function\(row\)\{return row\.result\.key==='research_now'\}\)\|\|decisionState\.rows\[0\]/);
+  assert.doesNotMatch(html, /selectCompany\(Object\.keys\(decisionState\.universe\.tickers/);
   assert.match(html, /Issuer guidance is not standardized and is never invented/);
   assert.match(html, /No composite score/);
   assert.match(html, /id="gateResults"/);

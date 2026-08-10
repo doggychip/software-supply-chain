@@ -174,7 +174,7 @@ json('/universe.json').then(function(universe){decisionState.universe=universe;r
   decisionState.issuers=parts[0].issuers||{};decisionState.quotes=parts[1].quotes||{};decisionState.history=parts[2]||{};
   var total=Object.keys(decisionState.universe.tickers||{}).length,issuerCount=Object.keys(decisionState.issuers).length,quoteCount=Object.keys(decisionState.quotes).length,historyCount=Object.keys(decisionState.history).length;
   var status=document.getElementById('sourceStatus');status.className='notice ok';status.innerHTML='<strong>Live evidence loaded</strong>'+issuerCount+'/'+total+' issuer records, '+quoteCount+'/'+total+' Yahoo quotes, and '+historyCount+'/'+total+' price histories. Missing decision metrics remain unavailable.';
-  renderDecision();selectCompany(Object.keys(decisionState.universe.tickers||{}).sort()[0],false);
+  renderDecision();var initialCompany=decisionState.rows.find(function(row){return row.result.key==='research_now'})||decisionState.rows[0];if(initialCompany)selectCompany(initialCompany.symbol,false);
 }).catch(function(error){var status=document.getElementById('sourceStatus');status.className='notice error';status.innerHTML='<strong>Decision evidence unavailable</strong>No candidate classification is shown. '+esc(error.message)+'.'});
 </script>
 </body>
