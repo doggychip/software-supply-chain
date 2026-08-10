@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Stock Decision Research — Software Stack</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="trust-pages.css">
+  <script src="decision-trust.js"></script>
+</head>
+<body>
+<nav class="tabs"><a href="index.html">Main Dashboard</a><a class="active" href="decision.html">Stock Decision</a><a href="correlation.html">Correlation</a><a href="technicals.html">Technicals</a><a href="insider.html">Insider Activity</a><a href="options.html">Options Activity</a><a href="sentiment.html">Market Conditions</a><a href="leaderboard.html">Performance</a><a href="stress-test.html">Scenario Calculator</a><a href="news.html">News</a></nav>
+<main>
+  <header>
+    <div><h1>Stock Decision Research</h1><div class="sub">Issuer-filed operating evidence, Yahoo-reconciled market context, and your explicit decision gates</div></div>
+    <button class="theme" type="button" onclick="toggleTheme()">Theme</button>
+  </header>
+
+  <section class="notice"><strong>Research screen—not a buy recommendation</strong>A company is labeled “Research now” only when it passes every threshold you enter. Missing, stale, or currency-incompatible evidence remains unavailable and cannot pass.</section>
+  <section id="sourceStatus" class="notice"><strong>Loading source-backed evidence…</strong>No stored market values or generated financial claims will be used.</section>
+
+  <section class="card decision-controls">
+    <div class="section-heading"><div><h2>Your mandatory gates</h2><div class="muted">Enter every field to activate classification; blank fields produce “Set criteria.”</div></div><button id="clearCriteria" class="theme" type="button">Clear</button></div>
+    <div class="controls decision-inputs">
+      <div class="control"><label for="minRevenueGrowth">Minimum reported revenue growth (%)</label><input id="minRevenueGrowth" type="number" step="0.1" placeholder="Your threshold"></div>
+      <div class="control"><label for="minFcfMargin">Minimum annual FCF margin (%)</label><input id="minFcfMargin" type="number" step="0.1" placeholder="Your threshold"></div>
+      <div class="control"><label for="maxPriceSales">Maximum price / annual sales (×)</label><input id="maxPriceSales" type="number" min="0" step="0.1" placeholder="Your threshold"></div>
+      <div class="control"><label for="minFcfYield">Minimum annual FCF yield (%)</label><input id="minFcfYield" type="number" step="0.1" placeholder="Your threshold"></div>
+      <div class="control"><label for="proposedWeight">Proposed portfolio weight (%)</label><input id="proposedWeight" type="number" min="0" max="100" step="0.1" placeholder="Your planned size"></div>
+      <div class="control"><label for="maxWeight">Maximum single-stock weight (%)</label><input id="maxWeight" type="number" min="0" max="100" step="0.1" placeholder="Your limit"></div>
+      <div class="control"><label for="maxPortfolioLoss">Maximum portfolio loss at observed drawdown (%)</label><input id="maxPortfolioLoss" type="number" min="0" max="100" step="0.1" placeholder="Your loss budget"></div>
+    </div>
+    <div class="method">These are your screening assumptions. The application provides no default thresholds and does not average failed gates into a score.</div>
+  </section>
+
+  <div id="decisionSummary" class="grid decision-summary" hidden>
+    <section class="card"><div class="label">Research now</div><div class="metric" id="researchCount">0</div><div class="muted">All entered operating, valuation and risk gates pass</div></section>
+    <section class="card"><div class="label">Watch / risk fail</div><div class="metric" id="watchCount">0</div><div class="muted">At least one explicit gate fails</div></section>
+    <section class="card"><div class="label">Incomplete</div><div class="metric" id="incompleteCount">0</div><div class="muted">Criteria or comparable evidence unavailable</div></section>
+  </div>
+
+  <section id="decisionTableCard" class="card" hidden>
+    <div class="section-heading"><div><h2>Source-backed comparison</h2><div class="muted">Select a row to inspect filing evidence and maintain your thesis journal</div></div><span class="status">No composite score</span></div>
+    <div class="table-wrap"><table class="decision-table">
+      <thead><tr><th>Status</th><th>Ticker</th><th>Layer</th><th>Reported revenue growth</th><th>Operating margin</th><th>FCF margin</th><th>SBC / revenue</th><th>Share dilution</th><th>Price / annual sales</th><th>Annual FCF yield</th><th>1-year max drawdown</th><th>Filing evidence</th></tr></thead>
+      <tbody id="decisionRows"></tbody>
+    </table></div>
+    <div class="method">Price/sales = Yahoo market capitalization ÷ latest filed annual revenue. FCF = filed operating cash flow − absolute filed capital expenditure. Valuation is unavailable when currencies differ. Maximum drawdown is a trailing observation from Yahoo daily closes, not a forecast.</div>
+  </section>
+
+  <section id="companyDetail" class="card company-detail" hidden>
+    <div class="section-heading"><div><h2 id="detailTitle">Company evidence</h2><div id="detailMeta" class="muted"></div></div><span id="detailStatus" class="status"></span></div>
+    <div class="detail-grid">
+      <div>
+        <h3>Reported revenue history</h3>
+        <div class="table-wrap"><table><thead><tr><th>Period end</th><th>Type</th><th>Revenue</th><th>Filing</th></tr></thead><tbody id="revenueHistory"></tbody></table></div>
+        <div id="portfolioObservation" class="notice compact-notice"></div>
+      </div>
+      <div>
+        <h3>Guidance and thesis journal</h3>
+        <div class="journal-note">User-supplied notes stored only in this browser. The application does not verify, infer, or score them.</div>
+        <label class="journal-label" for="guidanceSource">Official IR or filing URL</label><input id="guidanceSource" type="url" placeholder="https://company.example/investors/…">
+        <label class="journal-label" for="guidanceNote">Current official guidance</label><textarea id="guidanceNote" rows="3" placeholder="Copy the exact range and period from the source"></textarea>
+        <label class="journal-label" for="thesisNote">Investment thesis</label><textarea id="thesisNote" rows="3" placeholder="What must be true?"></textarea>
+        <label class="journal-label" for="catalystNote">Catalyst</label><textarea id="catalystNote" rows="2" placeholder="What could change market expectations?"></textarea>
+        <label class="journal-label" for="invalidationNote">Invalidation</label><textarea id="invalidationNote" rows="2" placeholder="What evidence would make you reject the thesis?"></textarea>
+        <label class="journal-label" for="riskNote">Key risks</label><textarea id="riskNote" rows="2" placeholder="Company-specific downside risks"></textarea>
+        <button id="saveJournal" class="theme journal-save" type="button">Save browser notes</button><span id="journalStatus" class="muted journal-status"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Source and interpretation boundaries</h2>
+    <ul class="method">
+      <li><strong>Primary:</strong> reported financial facts and filing links from SEC EDGAR company facts.</li>
+      <li><strong>Reconciliation:</strong> current price, market capitalization and daily history from unofficial Yahoo Finance endpoints.</li>
+      <li>Revenue growth uses a comparable prior-year quarter when available, otherwise comparable annual periods.</li>
+      <li>Issuer guidance is not standardized and is never invented. The journal requires you to preserve the official source yourself.</li>
+      <li>“Research now” means only that the available evidence passes your inputs; it is not a prediction, price target or instruction to trade.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+function toggleTheme(){var e=document.documentElement;e.dataset.theme=e.dataset.theme==='dark'?'light':'dark'}
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function finite(v){return typeof v==='number'&&Number.isFinite(v)}
+function compact(v){if(!finite(v))return '—';var a=Math.abs(v);if(a>=1e12)return (v/1e12).toFixed(2)+'T';if(a>=1e9)return (v/1e9).toFixed(2)+'B';if(a>=1e6)return (v/1e6).toFixed(1)+'M';return v.toLocaleString(undefined,{maximumFractionDigits:2})}
+function pct(v){return finite(v)?(v>=0?'+':'')+v.toFixed(1)+'%':'—'}
+function multiple(v){return finite(v)?v.toFixed(1)+'×':'—'}
+function inputNumber(id){var value=document.getElementById(id).value.trim();return value===''?null:Number(value)}
+function criteria(){return {minRevenueGrowthPct:inputNumber('minRevenueGrowth'),minFreeCashFlowMarginPct:inputNumber('minFcfMargin'),maxPriceSales:inputNumber('maxPriceSales'),minFreeCashFlowYieldPct:inputNumber('minFcfYield'),proposedWeightPct:inputNumber('proposedWeight'),maxWeightPct:inputNumber('maxWeight'),maxPortfolioLossPct:inputNumber('maxPortfolioLoss')}}
+function statusClass(key){return key==='research_now'?'positive':key==='watch'||key==='risk_gate_failed'?'negative':'mixed'}
+function safeSecUrl(value){return typeof value==='string'&&value.indexOf('https://www.sec.gov/')===0?value:null}
+function json(url){return fetch(url).then(function(response){if(!response.ok)throw new Error(url+' HTTP '+response.status);return response.json()})}
+
+var decisionState={universe:null,issuers:{},quotes:{},history:{},rows:[],selected:null};
+var statusOrder={research_now:0,watch:1,risk_gate_failed:2,insufficient_evidence:3,set_criteria:4};
+
+function renderDecision(){
+  if(!decisionState.universe)return;
+  var currentCriteria=criteria(),now=Date.now(),rows=[];
+  Object.keys(decisionState.universe.tickers||{}).sort().forEach(function(symbol){
+    var record=decisionState.issuers[symbol]||null;
+    var metrics=window.DecisionTrust.computeMetrics(record,decisionState.quotes[symbol],decisionState.history[symbol],now);
+    var result=window.DecisionTrust.evaluateCandidate(metrics,currentCriteria);
+    rows.push({symbol:symbol,meta:decisionState.universe.tickers[symbol],record:record,metrics:metrics,result:result});
+  });
+  rows.sort(function(a,b){return statusOrder[a.result.key]-statusOrder[b.result.key]||a.symbol.localeCompare(b.symbol)});
+  decisionState.rows=rows;
+  var body=document.getElementById('decisionRows');body.innerHTML='';
+  rows.forEach(function(row){
+    var derived=row.record&&row.record.decisionEvidence&&row.record.decisionEvidence.derived||{};
+    var filing=row.record&&safeSecUrl(row.record.latestFiling&&row.record.latestFiling.sourceUrl);
+    var tr=document.createElement('tr');tr.tabIndex=0;tr.dataset.symbol=row.symbol;
+    tr.innerHTML='<td><span class="status '+statusClass(row.result.key)+'">'+esc(row.result.label)+'</span></td><td class="mono">'+esc(row.symbol)+'</td><td>'+esc(row.meta.layer)+'</td><td>'+pct(row.metrics.revenueGrowthPct)+'<div class="cell-meta">'+esc(row.metrics.revenueGrowthBasis||'unavailable')+'</div></td><td>'+pct(row.metrics.operatingMarginPct)+'</td><td>'+pct(row.metrics.freeCashFlowMarginPct)+'</td><td>'+pct(row.metrics.stockCompensationPct)+'</td><td>'+pct(row.metrics.shareDilutionPct)+'</td><td>'+multiple(row.metrics.priceSales)+'<div class="cell-meta">'+esc(row.metrics.comparableCurrency?(row.metrics.annualUnit||''):'currency unavailable')+'</div></td><td>'+pct(row.metrics.freeCashFlowYieldPct)+'</td><td>'+(finite(row.metrics.oneYearMaxDrawdownPct)?'-'+row.metrics.oneYearMaxDrawdownPct.toFixed(1)+'%':'—')+'</td><td>'+(filing?'<a href="'+esc(filing)+'" target="_blank" rel="noopener">'+esc(row.record.latestFiling.form||'Filing')+'</a><div class="cell-meta">filed '+esc(row.record.latestFiling.filed||'—')+'</div>':'—')+'</td>';
+    tr.addEventListener('click',function(){selectCompany(row.symbol)});tr.addEventListener('keydown',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();selectCompany(row.symbol)}});body.appendChild(tr);
+  });
+  document.getElementById('researchCount').textContent=rows.filter(function(row){return row.result.key==='research_now'}).length;
+  document.getElementById('watchCount').textContent=rows.filter(function(row){return row.result.key==='watch'||row.result.key==='risk_gate_failed'}).length;
+  document.getElementById('incompleteCount').textContent=rows.filter(function(row){return row.result.key==='insufficient_evidence'||row.result.key==='set_criteria'}).length;
+  document.getElementById('decisionSummary').hidden=false;document.getElementById('decisionTableCard').hidden=false;
+  if(decisionState.selected)selectCompany(decisionState.selected,false);
+}
+
+function journalKey(symbol){return 'software-decision-journal:'+symbol}
+function readJournal(symbol){try{return JSON.parse(localStorage.getItem(journalKey(symbol))||'{}')}catch(error){return {}}}
+function selectCompany(symbol,scroll){
+  var row=decisionState.rows.find(function(candidate){return candidate.symbol===symbol});if(!row)return;
+  decisionState.selected=symbol;var record=row.record||{},derived=record.decisionEvidence&&record.decisionEvidence.derived||{};
+  document.getElementById('detailTitle').textContent=symbol+' — '+(record.name||row.meta.name);
+  document.getElementById('detailMeta').textContent=row.meta.layer+' · annual evidence through '+(derived.annualPeriodEnd||'unavailable');
+  var detailStatus=document.getElementById('detailStatus');detailStatus.textContent=row.result.label;detailStatus.className='status '+statusClass(row.result.key);
+  var history=record.decisionEvidence&&record.decisionEvidence.reported&&record.decisionEvidence.reported.revenueQuarterly||[];
+  if(!history.length)history=record.decisionEvidence&&record.decisionEvidence.reported&&record.decisionEvidence.reported.revenueAnnual||[];
+  var historyBody=document.getElementById('revenueHistory');historyBody.innerHTML='';
+  history.slice(-8).reverse().forEach(function(fact){var url=safeSecUrl(fact.sourceUrl);var tr=document.createElement('tr');tr.innerHTML='<td>'+esc(fact.end)+'</td><td>'+esc(fact.periodType)+'</td><td>'+esc(fact.unit)+' '+compact(fact.value)+'</td><td>'+(url?'<a href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(fact.form)+'</a>':'—')+'</td>';historyBody.appendChild(tr)});
+  if(!history.length){var empty=document.createElement('tr');empty.innerHTML='<td colspan="4">Comparable reported revenue history unavailable.</td>';historyBody.appendChild(empty)}
+  var observation=document.getElementById('portfolioObservation');
+  if(finite(row.result.observedLossPct))observation.innerHTML='<strong>Portfolio observation</strong>A '+criteria().proposedWeightPct.toFixed(1)+'% position experiencing the trailing one-year maximum drawdown would have reduced the portfolio by '+row.result.observedLossPct.toFixed(2)+'%. This is historical arithmetic, not a loss forecast.';
+  else observation.innerHTML='<strong>Portfolio observation unavailable</strong>Enter every gate and ensure fresh price history is available.';
+  var journal=readJournal(symbol);['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){document.getElementById(id).value=journal[id]||''});
+  document.getElementById('journalStatus').textContent='';document.getElementById('companyDetail').hidden=false;
+  if(scroll!==false)document.getElementById('companyDetail').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+document.querySelectorAll('.decision-inputs input').forEach(function(input){input.addEventListener('input',renderDecision)});
+document.getElementById('clearCriteria').addEventListener('click',function(){document.querySelectorAll('.decision-inputs input').forEach(function(input){input.value=''});renderDecision()});
+document.getElementById('saveJournal').addEventListener('click',function(){
+  if(!decisionState.selected)return;var journal={};['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){journal[id]=document.getElementById(id).value.trim()});
+  try{localStorage.setItem(journalKey(decisionState.selected),JSON.stringify(journal));document.getElementById('journalStatus').textContent='Saved locally for '+decisionState.selected+'.'}catch(error){document.getElementById('journalStatus').textContent='Browser storage unavailable.'}
+});
+
+Promise.all([json('/universe.json'),json('/api/issuer-data'),json('/api/quotes'),json('/api/history?range=1y&interval=1d')]).then(function(parts){
+  decisionState.universe=parts[0];decisionState.issuers=parts[1].issuers||{};decisionState.quotes=parts[2].quotes||{};decisionState.history=parts[3]||{};
+  var total=Object.keys(decisionState.universe.tickers||{}).length,issuerCount=Object.keys(decisionState.issuers).length,quoteCount=Object.keys(decisionState.quotes).length,historyCount=Object.keys(decisionState.history).length;
+  var status=document.getElementById('sourceStatus');status.className='notice ok';status.innerHTML='<strong>Live evidence loaded</strong>'+issuerCount+'/'+total+' issuer records, '+quoteCount+'/'+total+' Yahoo quotes, and '+historyCount+'/'+total+' price histories. Missing decision metrics remain unavailable.';
+  renderDecision();selectCompany(Object.keys(decisionState.universe.tickers||{}).sort()[0],false);
+}).catch(function(error){var status=document.getElementById('sourceStatus');status.className='notice error';status.innerHTML='<strong>Decision evidence unavailable</strong>No candidate classification is shown. '+esc(error.message)+'.'});
+</script>
+</body>
+</html>

@@ -46,6 +46,19 @@ test('main dashboard renders a taxonomy-only software value chain map', () => {
   assert.doesNotMatch(html, /data-score|price target|bottleneck score/i);
 });
 
+test('stock decision page requires explicit gates and exposes no buy score', () => {
+  const html = fs.readFileSync(path.join(publicDir, 'decision.html'), 'utf8');
+  assert.match(html, /Research screen—not a buy recommendation/);
+  assert.match(html, /Your mandatory gates/);
+  assert.match(html, /Issuer guidance is not standardized and is never invented/);
+  assert.match(html, /No composite score/);
+  assert.match(html, /decision-trust\.js/);
+  assert.doesNotMatch(html, /BUY|HIGHEST CONVICTION|data-score|targetMeanPrice/);
+  for (const page of ['index.html', 'correlation.html', 'technicals.html', 'insider.html', 'options.html', 'sentiment.html', 'leaderboard.html', 'stress-test.html', 'news.html']) {
+    assert.match(fs.readFileSync(path.join(publicDir, page), 'utf8'), /href="decision\.html">Stock Decision/);
+  }
+});
+
 test('retired symbols fail closed without calling the upstream', async (t) => {
   const originalFetch = global.fetch;
   let upstreamCalls = 0;
@@ -77,6 +90,8 @@ test('server exposes issuer-primary provenance, source headers, and current univ
   const provenance = await provenanceResponse.json();
   assert.equal(provenance.reportedFundamentals.provider, 'SEC EDGAR');
   assert.equal(provenance.marketReconciliation.provider, 'Yahoo Finance');
+  assert.equal(provenance.decisionResearch.kind, 'User-controlled evidence gates');
+  assert.match(provenance.decisionResearch.caveat, /not a buy recommendation/i);
   assert.match(provenance.fallbackPolicy, /No static or Yahoo-derived value replaces/);
 });
 

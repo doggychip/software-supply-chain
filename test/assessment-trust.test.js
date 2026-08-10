@@ -80,6 +80,8 @@ test('pages contain no fabricated, generated, or stored financial datasets', () 
     .map(read).join('\n');
   assert.doesNotMatch(combined, /INSIDER_DATA|SAMPLE_NEWS|seededRandom|PRICE_HISTORY\s*=|PRICE_DATA\s*=\s*\{"|QUOTES\s*=\s*\{"|priceHistory|HIGHEST CONVICTION|Top Picks by Signal Strength/);
   assert.doesNotMatch(read('options.html'), /Notional activity|totalPrem|Gamma exposure|Max pain/);
+  assert.match(read('decision.html'), /Missing, stale, or currency-incompatible evidence remains unavailable/);
+  assert.match(read('decision.html'), /your inputs; it is not a prediction, price target or instruction to trade/i);
   assert.match(read('index.html'), /issuer-filed fundamentals are primary/i);
   assert.match(read('index.html'), /Yahoo values never replace a missing issuer-filed value/i);
   assert.match(read('index.html'), /This map contains company classifications only/i);
