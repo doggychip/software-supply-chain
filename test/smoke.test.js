@@ -46,10 +46,19 @@ test('main dashboard renders a taxonomy-only software value chain map', () => {
   assert.doesNotMatch(html, /data-score|price target|bottleneck score/i);
 });
 
-test('stock decision page requires explicit gates and exposes no buy score', () => {
+test('stock decision page exposes a disclosed editable baseline and no buy score', () => {
   const html = fs.readFileSync(path.join(publicDir, 'decision.html'), 'utf8');
   assert.match(html, /Research screen—not a buy recommendation/);
   assert.match(html, /Your mandatory gates/);
+  assert.match(html, /Ryan's medium-risk, 3–5 year quality-growth baseline/);
+  assert.match(html, /id="minRevenueGrowth"[^>]+value="15"/);
+  assert.match(html, /id="minFcfMargin"[^>]+value="15"/);
+  assert.match(html, /id="maxPriceSales"[^>]+value="8"/);
+  assert.match(html, /id="minFcfYield"[^>]+value="2"/);
+  assert.match(html, /id="proposedWeight"[^>]+value="1\.5"/);
+  assert.match(html, /id="maxWeight"[^>]+value="5"/);
+  assert.match(html, /id="maxPortfolioLoss"[^>]+value="1"/);
+  assert.match(html, /id="applyBaseline"/);
   assert.match(html, /Issuer guidance is not standardized and is never invented/);
   assert.match(html, /No composite score/);
   assert.match(html, /id="gateResults"/);

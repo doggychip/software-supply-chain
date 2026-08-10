@@ -21,17 +21,17 @@
   <section id="sourceStatus" class="notice"><strong>Loading source-backed evidence…</strong>No stored market values or generated financial claims will be used.</section>
 
   <section class="card decision-controls">
-    <div class="section-heading"><div><h2>Your mandatory gates</h2><div class="muted">Enter every field to activate classification; blank fields produce “Set criteria.”</div></div><button id="clearCriteria" class="theme" type="button">Clear</button></div>
+    <div class="section-heading"><div><h2>Your mandatory gates</h2><div class="muted">Ryan's medium-risk, 3–5 year quality-growth baseline is applied and remains fully editable.</div></div><div class="decision-actions"><button id="applyBaseline" class="theme" type="button">Reset baseline</button><button id="clearCriteria" class="theme" type="button">Clear</button></div></div>
     <div class="controls decision-inputs">
-      <div class="control"><label for="minRevenueGrowth">Minimum reported revenue growth (%)</label><input id="minRevenueGrowth" type="number" step="0.1" placeholder="Your threshold"></div>
-      <div class="control"><label for="minFcfMargin">Minimum annual FCF margin (%)</label><input id="minFcfMargin" type="number" step="0.1" placeholder="Your threshold"></div>
-      <div class="control"><label for="maxPriceSales">Maximum price / annual sales (×)</label><input id="maxPriceSales" type="number" min="0" step="0.1" placeholder="Your threshold"></div>
-      <div class="control"><label for="minFcfYield">Minimum annual FCF yield (%)</label><input id="minFcfYield" type="number" step="0.1" placeholder="Your threshold"></div>
-      <div class="control"><label for="proposedWeight">Proposed portfolio weight (%)</label><input id="proposedWeight" type="number" min="0" max="100" step="0.1" placeholder="Your planned size"></div>
-      <div class="control"><label for="maxWeight">Maximum single-stock weight (%)</label><input id="maxWeight" type="number" min="0" max="100" step="0.1" placeholder="Your limit"></div>
-      <div class="control"><label for="maxPortfolioLoss">Maximum portfolio loss at observed drawdown (%)</label><input id="maxPortfolioLoss" type="number" min="0" max="100" step="0.1" placeholder="Your loss budget"></div>
+      <div class="control"><label for="minRevenueGrowth">Minimum reported revenue growth (%)</label><input id="minRevenueGrowth" type="number" step="0.1" value="15"></div>
+      <div class="control"><label for="minFcfMargin">Minimum annual FCF margin (%)</label><input id="minFcfMargin" type="number" step="0.1" value="15"></div>
+      <div class="control"><label for="maxPriceSales">Maximum price / annual sales (×)</label><input id="maxPriceSales" type="number" min="0" step="0.1" value="8"></div>
+      <div class="control"><label for="minFcfYield">Minimum annual FCF yield (%)</label><input id="minFcfYield" type="number" step="0.1" value="2"></div>
+      <div class="control"><label for="proposedWeight">Proposed portfolio weight (%)</label><input id="proposedWeight" type="number" min="0" max="100" step="0.1" value="1.5"></div>
+      <div class="control"><label for="maxWeight">Maximum single-stock weight (%)</label><input id="maxWeight" type="number" min="0" max="100" step="0.1" value="5"></div>
+      <div class="control"><label for="maxPortfolioLoss">Maximum portfolio loss at observed drawdown (%)</label><input id="maxPortfolioLoss" type="number" min="0" max="100" step="0.1" value="1"></div>
     </div>
-    <div class="method">These are your screening assumptions. The application provides no default thresholds and does not average failed gates into a score.</div>
+    <div class="method"><strong>Baseline rationale:</strong> require both growth and cash generation, cap sales valuation, start small, and keep the historical drawdown impact near 1% of the portfolio. These are screening assumptions—not personal financial advice—and failed gates are never averaged into a score.</div>
   </section>
 
   <div id="decisionSummary" class="grid decision-summary" hidden>
@@ -94,6 +94,8 @@ function pct(v){return finite(v)?(v>=0?'+':'')+v.toFixed(1)+'%':'—'}
 function multiple(v){return finite(v)?v.toFixed(1)+'×':'—'}
 function inputNumber(id){var value=document.getElementById(id).value.trim();return value===''?null:Number(value)}
 function criteria(){return {minRevenueGrowthPct:inputNumber('minRevenueGrowth'),minFreeCashFlowMarginPct:inputNumber('minFcfMargin'),maxPriceSales:inputNumber('maxPriceSales'),minFreeCashFlowYieldPct:inputNumber('minFcfYield'),proposedWeightPct:inputNumber('proposedWeight'),maxWeightPct:inputNumber('maxWeight'),maxPortfolioLossPct:inputNumber('maxPortfolioLoss')}}
+var baselineCriteria={minRevenueGrowth:'15',minFcfMargin:'15',maxPriceSales:'8',minFcfYield:'2',proposedWeight:'1.5',maxWeight:'5',maxPortfolioLoss:'1'};
+function applyBaseline(){Object.keys(baselineCriteria).forEach(function(id){document.getElementById(id).value=baselineCriteria[id]});renderDecision()}
 function statusClass(key){return key==='research_now'?'positive':key==='watch'||key==='risk_gate_failed'?'negative':'mixed'}
 function safeSecUrl(value){return typeof value==='string'&&value.indexOf('https://www.sec.gov/')===0?value:null}
 function json(url){return fetch(url).then(function(response){if(!response.ok)throw new Error(url+' HTTP '+response.status);return response.json()})}
@@ -152,6 +154,7 @@ function selectCompany(symbol,scroll){
 }
 
 document.querySelectorAll('.decision-inputs input').forEach(function(input){input.addEventListener('input',renderDecision)});
+document.getElementById('applyBaseline').addEventListener('click',applyBaseline);
 document.getElementById('clearCriteria').addEventListener('click',function(){document.querySelectorAll('.decision-inputs input').forEach(function(input){input.value=''});renderDecision()});
 document.getElementById('saveJournal').addEventListener('click',function(){
   if(!decisionState.selected)return;var journal={};['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){journal[id]=document.getElementById(id).value.trim()});
