@@ -53,6 +53,8 @@
     <div class="section-heading"><div><h2 id="detailTitle">Company evidence</h2><div id="detailMeta" class="muted"></div></div><span id="detailStatus" class="status"></span></div>
     <div class="detail-grid">
       <div>
+        <h3>Gate results</h3>
+        <div id="gateResults" class="gate-results"></div>
         <h3>Reported revenue history</h3>
         <div class="table-wrap"><table><thead><tr><th>Period end</th><th>Type</th><th>Revenue</th><th>Filing</th></tr></thead><tbody id="revenueHistory"></tbody></table></div>
         <div id="portfolioObservation" class="notice compact-notice"></div>
@@ -133,6 +135,9 @@ function selectCompany(symbol,scroll){
   document.getElementById('detailTitle').textContent=symbol+' — '+(record.name||row.meta.name);
   document.getElementById('detailMeta').textContent=row.meta.layer+' · annual evidence through '+(derived.annualPeriodEnd||'unavailable');
   var detailStatus=document.getElementById('detailStatus');detailStatus.textContent=row.result.label;detailStatus.className='status '+statusClass(row.result.key);
+  var gateResults=document.getElementById('gateResults');gateResults.innerHTML='';
+  if(row.result.gates&&row.result.gates.length)row.result.gates.forEach(function(gate){var item=document.createElement('div');item.className='gate-result '+(gate.pass?'pass':'fail');item.innerHTML='<span>'+esc(gate.name)+'</span><strong>'+(gate.pass?'Pass':'Fail')+'</strong>';gateResults.appendChild(item)});
+  else{var unavailable=document.createElement('div');unavailable.className='gate-result unavailable';unavailable.textContent=row.result.key==='set_criteria'?'Enter every mandatory gate to evaluate this company.':'One or more required evidence fields are unavailable.';gateResults.appendChild(unavailable)}
   var history=record.decisionEvidence&&record.decisionEvidence.reported&&record.decisionEvidence.reported.revenueQuarterly||[];
   if(!history.length)history=record.decisionEvidence&&record.decisionEvidence.reported&&record.decisionEvidence.reported.revenueAnnual||[];
   var historyBody=document.getElementById('revenueHistory');historyBody.innerHTML='';
