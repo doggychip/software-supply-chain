@@ -52,6 +52,7 @@ test('stock decision page requires explicit gates and exposes no buy score', () 
   assert.match(html, /Your mandatory gates/);
   assert.match(html, /Issuer guidance is not standardized and is never invented/);
   assert.match(html, /No composite score/);
+  assert.match(html, /id="gateResults"/);
   assert.match(html, /decision-trust\.js/);
   assert.doesNotMatch(html, /BUY|HIGHEST CONVICTION|data-score|targetMeanPrice/);
   for (const page of ['index.html', 'correlation.html', 'technicals.html', 'insider.html', 'options.html', 'sentiment.html', 'leaderboard.html', 'stress-test.html', 'news.html']) {
