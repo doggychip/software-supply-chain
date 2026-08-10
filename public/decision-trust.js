@@ -63,7 +63,7 @@
   }
 
   function criteriaComplete(criteria) {
-    return criteria && [
+    return criteria && Array.isArray(criteria.targetLayers) && criteria.targetLayers.length > 0 && [
       criteria.minRevenueGrowthPct,
       criteria.minFreeCashFlowMarginPct,
       criteria.maxPriceSales,
@@ -74,7 +74,7 @@
     ].every(finite);
   }
 
-  function evaluateCandidate(metrics, criteria) {
+  function evaluateCandidate(metrics, criteria, context) {
     if (!criteriaComplete(criteria)) return { key: 'set_criteria', label: 'Set criteria', gates: [] };
     var required = [
       metrics && metrics.revenueGrowthPct,
@@ -83,12 +83,13 @@
       metrics && metrics.freeCashFlowYieldPct,
       metrics && metrics.oneYearMaxDrawdownPct,
     ];
-    if (!metrics || !metrics.quoteFresh || !metrics.historyFresh || !metrics.comparableCurrency || !required.every(finite)) {
+    if (!context || typeof context.layer !== 'string' || !metrics || !metrics.quoteFresh || !metrics.historyFresh || !metrics.comparableCurrency || !required.every(finite)) {
       return { key: 'insufficient_evidence', label: 'Insufficient evidence', gates: [] };
     }
 
     var observedLossPct = criteria.proposedWeightPct * metrics.oneYearMaxDrawdownPct / 100;
     var gates = [
+      { name: 'Value-chain fit', pass: criteria.targetLayers.indexOf(context.layer) >= 0 },
       { name: 'Revenue growth', pass: metrics.revenueGrowthPct >= criteria.minRevenueGrowthPct },
       { name: 'FCF margin', pass: metrics.freeCashFlowMarginPct >= criteria.minFreeCashFlowMarginPct },
       { name: 'Price / sales', pass: metrics.priceSales <= criteria.maxPriceSales },
@@ -98,7 +99,7 @@
     ];
     var riskFailed = gates.slice(-2).some(function (gate) { return !gate.pass; });
     if (riskFailed) return { key: 'risk_gate_failed', label: 'Fails risk gate', gates: gates, observedLossPct: observedLossPct };
-    if (gates.slice(0, 4).some(function (gate) { return !gate.pass; })) {
+    if (gates.slice(0, -2).some(function (gate) { return !gate.pass; })) {
       return { key: 'watch', label: 'Watch', gates: gates, observedLossPct: observedLossPct };
     }
     return { key: 'research_now', label: 'Research now', gates: gates, observedLossPct: observedLossPct };

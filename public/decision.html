@@ -17,7 +17,7 @@
     <button class="theme" type="button" onclick="toggleTheme()">Theme</button>
   </header>
 
-  <section class="notice"><strong>Research screen—not a buy recommendation</strong>A company is labeled “Research now” only when it passes every threshold you enter. Missing, stale, or currency-incompatible evidence remains unavailable and cannot pass.</section>
+  <section class="notice"><strong>Research screen—not a buy recommendation</strong>A company is labeled “Research now” only when it fits your selected value-chain layers and passes every financial and risk threshold. Missing, stale, or currency-incompatible evidence remains unavailable and cannot pass.</section>
   <section id="sourceStatus" class="notice"><strong>Loading source-backed evidence…</strong>No stored market values or generated financial claims will be used.</section>
 
   <section class="card decision-controls">
@@ -31,11 +31,16 @@
       <div class="control"><label for="maxWeight">Maximum single-stock weight (%)</label><input id="maxWeight" type="number" min="0" max="100" step="0.1" value="5"></div>
       <div class="control"><label for="maxPortfolioLoss">Maximum portfolio loss at observed drawdown (%)</label><input id="maxPortfolioLoss" type="number" min="0" max="100" step="0.1" value="1"></div>
     </div>
+    <div class="value-chain-criteria">
+      <div class="section-heading"><div><h3>Target value-chain layers</h3><div class="muted">A company must belong to at least one selected layer to reach “Research now.”</div></div><a href="index.html#valueChainCard">View map</a></div>
+      <div id="layerCriteria" class="layer-criteria"></div>
+      <div class="method">The baseline favors core infrastructure, security, data, developer tooling, AI software, and identity exposure. This is an editable strategy preference derived from the curated map—not evidence that a layer is inherently superior.</div>
+    </div>
     <div class="method"><strong>Baseline rationale:</strong> require both growth and cash generation, cap sales valuation, start small, and keep the historical drawdown impact near 1% of the portfolio. These are screening assumptions—not personal financial advice—and failed gates are never averaged into a score.</div>
   </section>
 
   <div id="decisionSummary" class="grid decision-summary" hidden>
-    <section class="card"><div class="label">Research now</div><div class="metric" id="researchCount">0</div><div class="muted">All entered operating, valuation and risk gates pass</div></section>
+    <section class="card"><div class="label">Research now</div><div class="metric" id="researchCount">0</div><div class="muted">Selected value-chain, operating, valuation and risk gates pass</div></section>
     <section class="card"><div class="label">Watch / risk fail</div><div class="metric" id="watchCount">0</div><div class="muted">At least one explicit gate fails</div></section>
     <section class="card"><div class="label">Incomplete</div><div class="metric" id="incompleteCount">0</div><div class="muted">Criteria or comparable evidence unavailable</div></section>
   </div>
@@ -78,6 +83,7 @@
     <ul class="method">
       <li><strong>Primary:</strong> reported financial facts and filing links from SEC EDGAR company facts.</li>
       <li><strong>Reconciliation:</strong> current price, market capitalization and daily history from unofficial Yahoo Finance endpoints.</li>
+      <li><strong>Value-chain fit:</strong> the curated map supplies company classifications; selected layers are your strategy preference, not a factual claim of layer quality or importance.</li>
       <li>Revenue growth uses a comparable prior-year quarter when available, otherwise comparable annual periods.</li>
       <li>Issuer guidance is not standardized and is never invented. The journal requires you to preserve the official source yourself.</li>
       <li>“Research now” means only that the available evidence passes your inputs; it is not a prediction, price target or instruction to trade.</li>
@@ -93,9 +99,12 @@ function compact(v){if(!finite(v))return '—';var a=Math.abs(v);if(a>=1e12)retu
 function pct(v){return finite(v)?(v>=0?'+':'')+v.toFixed(1)+'%':'—'}
 function multiple(v){return finite(v)?v.toFixed(1)+'×':'—'}
 function inputNumber(id){var value=document.getElementById(id).value.trim();return value===''?null:Number(value)}
-function criteria(){return {minRevenueGrowthPct:inputNumber('minRevenueGrowth'),minFreeCashFlowMarginPct:inputNumber('minFcfMargin'),maxPriceSales:inputNumber('maxPriceSales'),minFreeCashFlowYieldPct:inputNumber('minFcfYield'),proposedWeightPct:inputNumber('proposedWeight'),maxWeightPct:inputNumber('maxWeight'),maxPortfolioLossPct:inputNumber('maxPortfolioLoss')}}
+function selectedLayers(){return Array.from(document.querySelectorAll('#layerCriteria input:checked')).map(function(input){return input.value})}
+function criteria(){return {targetLayers:selectedLayers(),minRevenueGrowthPct:inputNumber('minRevenueGrowth'),minFreeCashFlowMarginPct:inputNumber('minFcfMargin'),maxPriceSales:inputNumber('maxPriceSales'),minFreeCashFlowYieldPct:inputNumber('minFcfYield'),proposedWeightPct:inputNumber('proposedWeight'),maxWeightPct:inputNumber('maxWeight'),maxPortfolioLossPct:inputNumber('maxPortfolioLoss')}}
 var baselineCriteria={minRevenueGrowth:'15',minFcfMargin:'15',maxPriceSales:'8',minFcfYield:'2',proposedWeight:'1.5',maxWeight:'5',maxPortfolioLoss:'1'};
-function applyBaseline(){Object.keys(baselineCriteria).forEach(function(id){document.getElementById(id).value=baselineCriteria[id]});renderDecision()}
+var baselineLayers=['Cloud Infrastructure','Cybersecurity','Data & Analytics','Observability & DevOps','AI / ML Software','Identity & Access'];
+function applyBaseline(){Object.keys(baselineCriteria).forEach(function(id){document.getElementById(id).value=baselineCriteria[id]});document.querySelectorAll('#layerCriteria input').forEach(function(input){input.checked=baselineLayers.indexOf(input.value)>=0});renderDecision()}
+function renderLayerCriteria(universe){var container=document.getElementById('layerCriteria');container.innerHTML='';Object.keys(universe.layers||{}).forEach(function(layer){var label=document.createElement('label');label.className='layer-option';label.style.setProperty('--layer-color',universe.layers[layer].color);var input=document.createElement('input');input.type='checkbox';input.value=layer;input.checked=baselineLayers.indexOf(layer)>=0;input.addEventListener('change',renderDecision);var text=document.createElement('span');text.textContent=layer;label.appendChild(input);label.appendChild(text);container.appendChild(label)})}
 function statusClass(key){return key==='research_now'?'positive':key==='watch'||key==='risk_gate_failed'?'negative':'mixed'}
 function safeSecUrl(value){return typeof value==='string'&&value.indexOf('https://www.sec.gov/')===0?value:null}
 function json(url){return fetch(url).then(function(response){if(!response.ok)throw new Error(url+' HTTP '+response.status);return response.json()})}
@@ -109,7 +118,7 @@ function renderDecision(){
   Object.keys(decisionState.universe.tickers||{}).sort().forEach(function(symbol){
     var record=decisionState.issuers[symbol]||null;
     var metrics=window.DecisionTrust.computeMetrics(record,decisionState.quotes[symbol],decisionState.history[symbol],now);
-    var result=window.DecisionTrust.evaluateCandidate(metrics,currentCriteria);
+    var result=window.DecisionTrust.evaluateCandidate(metrics,currentCriteria,{layer:decisionState.universe.tickers[symbol].layer});
     rows.push({symbol:symbol,meta:decisionState.universe.tickers[symbol],record:record,metrics:metrics,result:result});
   });
   rows.sort(function(a,b){return statusOrder[a.result.key]-statusOrder[b.result.key]||a.symbol.localeCompare(b.symbol)});
@@ -155,14 +164,14 @@ function selectCompany(symbol,scroll){
 
 document.querySelectorAll('.decision-inputs input').forEach(function(input){input.addEventListener('input',renderDecision)});
 document.getElementById('applyBaseline').addEventListener('click',applyBaseline);
-document.getElementById('clearCriteria').addEventListener('click',function(){document.querySelectorAll('.decision-inputs input').forEach(function(input){input.value=''});renderDecision()});
+document.getElementById('clearCriteria').addEventListener('click',function(){document.querySelectorAll('.decision-inputs input').forEach(function(input){input.value=''});document.querySelectorAll('#layerCriteria input').forEach(function(input){input.checked=false});renderDecision()});
 document.getElementById('saveJournal').addEventListener('click',function(){
   if(!decisionState.selected)return;var journal={};['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){journal[id]=document.getElementById(id).value.trim()});
   try{localStorage.setItem(journalKey(decisionState.selected),JSON.stringify(journal));document.getElementById('journalStatus').textContent='Saved locally for '+decisionState.selected+'.'}catch(error){document.getElementById('journalStatus').textContent='Browser storage unavailable.'}
 });
 
-Promise.all([json('/universe.json'),json('/api/issuer-data'),json('/api/quotes'),json('/api/history?range=1y&interval=1d')]).then(function(parts){
-  decisionState.universe=parts[0];decisionState.issuers=parts[1].issuers||{};decisionState.quotes=parts[2].quotes||{};decisionState.history=parts[3]||{};
+json('/universe.json').then(function(universe){decisionState.universe=universe;renderLayerCriteria(universe);return Promise.all([json('/api/issuer-data'),json('/api/quotes'),json('/api/history?range=1y&interval=1d')])}).then(function(parts){
+  decisionState.issuers=parts[0].issuers||{};decisionState.quotes=parts[1].quotes||{};decisionState.history=parts[2]||{};
   var total=Object.keys(decisionState.universe.tickers||{}).length,issuerCount=Object.keys(decisionState.issuers).length,quoteCount=Object.keys(decisionState.quotes).length,historyCount=Object.keys(decisionState.history).length;
   var status=document.getElementById('sourceStatus');status.className='notice ok';status.innerHTML='<strong>Live evidence loaded</strong>'+issuerCount+'/'+total+' issuer records, '+quoteCount+'/'+total+' Yahoo quotes, and '+historyCount+'/'+total+' price histories. Missing decision metrics remain unavailable.';
   renderDecision();selectCompany(Object.keys(decisionState.universe.tickers||{}).sort()[0],false);

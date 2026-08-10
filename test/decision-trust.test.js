@@ -36,6 +36,7 @@ const bars = [
   { d: '2026-08-07', c: 90 },
 ];
 const criteria = {
+  targetLayers: ['Data & Analytics'],
   minRevenueGrowthPct: 10,
   minFreeCashFlowMarginPct: 10,
   maxPriceSales: 3,
@@ -60,7 +61,7 @@ test('valuation fails closed when issuer and quote currencies differ', () => {
   assert.equal(metrics.comparableCurrency, false);
   assert.equal(metrics.priceSales, null);
   assert.equal(metrics.freeCashFlowYieldPct, null);
-  assert.equal(decision.evaluateCandidate(metrics, criteria).key, 'insufficient_evidence');
+  assert.equal(decision.evaluateCandidate(metrics, criteria, { layer: 'Data & Analytics' }).key, 'insufficient_evidence');
 });
 
 test('future market timestamps fail closed', () => {
@@ -73,14 +74,22 @@ test('future market timestamps fail closed', () => {
   );
   assert.equal(metrics.quoteFresh, false);
   assert.equal(metrics.priceSales, null);
-  assert.equal(decision.evaluateCandidate(metrics, criteria).key, 'insufficient_evidence');
+  assert.equal(decision.evaluateCandidate(metrics, criteria, { layer: 'Data & Analytics' }).key, 'insufficient_evidence');
 });
 
 test('candidate labels are deterministic gates rather than a composite score', () => {
   const decision = runtime();
   const metrics = decision.computeMetrics(record, quote, bars, Date.parse('2026-08-10T00:00:00Z'));
-  assert.equal(decision.evaluateCandidate(metrics, criteria).key, 'research_now');
-  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, maxPriceSales: 1 }).key, 'watch');
-  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, proposedWeightPct: 8 }).key, 'risk_gate_failed');
-  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, maxPriceSales: null }).key, 'set_criteria');
+  const matching = decision.evaluateCandidate(metrics, criteria, { layer: 'Data & Analytics' });
+  const outsideTarget = decision.evaluateCandidate(metrics, criteria, { layer: 'Vertical SaaS' });
+  assert.equal(matching.key, 'research_now');
+  assert.equal(matching.gates.length, 7);
+  assert.deepEqual({ ...matching.gates[0] }, { name: 'Value-chain fit', pass: true });
+  assert.equal(outsideTarget.key, 'watch');
+  assert.deepEqual({ ...outsideTarget.gates[0] }, { name: 'Value-chain fit', pass: false });
+  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, maxPriceSales: 1 }, { layer: 'Data & Analytics' }).key, 'watch');
+  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, proposedWeightPct: 8 }, { layer: 'Data & Analytics' }).key, 'risk_gate_failed');
+  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, maxPriceSales: null }, { layer: 'Data & Analytics' }).key, 'set_criteria');
+  assert.equal(decision.evaluateCandidate(metrics, { ...criteria, targetLayers: [] }, { layer: 'Data & Analytics' }).key, 'set_criteria');
+  assert.equal(decision.evaluateCandidate(metrics, criteria).key, 'insufficient_evidence');
 });
