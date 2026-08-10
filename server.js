@@ -62,6 +62,12 @@ app.get('/api/provenance', (req, res) => {
       access: 'Unofficial public endpoints via dashboard-core',
       caveat: 'Used as a secondary reconciliation source for market data and estimates, not as the source of record for reported results.',
     },
+    decisionResearch: {
+      kind: 'User-controlled evidence gates',
+      reportedInputs: 'SEC EDGAR revenue, operating income, operating cash flow, capital expenditure, stock compensation, and shares outstanding when standardized facts are available.',
+      marketInputs: 'Yahoo Finance market capitalization and one-year daily closes, used only when fresh and currency-compatible with the filed annual values.',
+      caveat: 'Research now means the available evidence passes user-entered thresholds. It is not a buy recommendation, prediction, or price target. Missing evidence cannot pass.',
+    },
     universe: {
       file: 'universe.json',
       kind: 'Curated coverage taxonomy only',
