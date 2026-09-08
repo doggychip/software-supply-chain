@@ -14,14 +14,14 @@ function harness(t, overrides = {}, now = NOW) {
   t.after(() => dom.window.close());
   const w = dom.window; w.Date.now = () => now;
   const requests = [];
-  const routes = { '/stock-picks.json': clone(review), '/universe.json': universe, '/api/quotes': { quotes: { ADBE: { price: 257.6, currency: 'USD', asOf: NOW / 1000 } } }, ...overrides };
+  const routes = { '/stock-picks.json': clone(review), '/universe.json': universe, '/api/fmp-quotes': { quotes: { ADBE: { price: 257.6, currency: 'USD', asOf: NOW / 1000 } } }, ...overrides };
   w.fetch = async (url, options) => {
     requests.push({ url, options });
     if (!Object.hasOwn(routes, url)) throw new Error('Unexpected request: ' + url);
     const value = routes[url];
     if (value instanceof Error) throw value;
     if (typeof value === 'function') return value();
-    return { ok: true, json: async () => value };
+    return { ok: true, json: async () => url === '/api/fmp-quotes' && value ? { source: { provider: 'Financial Modeling Prep' }, ...value } : value };
   };
   w.eval(read('stock-picks.js'));
   return { w, d: w.document, requests, routes };
@@ -39,7 +39,7 @@ test('simple home shows 11 dated opinions in three groups, with 45 genuinely unr
   assert.match(d.querySelector('[data-symbol="ADBE"]').textContent, /Reviewed 8 Sept? 2026/);
   assert.match(d.querySelector('[data-symbol="PLTR"]').textContent, /Lower confidence/);
   assert.equal(d.querySelectorAll('.tabs a').length, 2);
-  assert.deepEqual(requests.map(r => r.url).sort(), ['/api/quotes', '/stock-picks.json', '/universe.json']);
+  assert.deepEqual(requests.map(r => r.url).sort(), ['/api/fmp-quotes', '/stock-picks.json', '/universe.json']);
   assert.equal(w.localStorage.length, 0);
 });
 
@@ -57,13 +57,13 @@ test('opinion coverage is unique, sourced, dated, and contains no stored quotes 
 
 test('opinions render while quotes are pending; quote outage never invents prices or removes reviews', async t => {
   let finish; const pending = new Promise(resolve => finish = resolve);
-  const { w, d } = harness(t, { '/api/quotes': () => pending });
+  const { w, d } = harness(t, { '/api/fmp-quotes': () => pending });
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(d.querySelectorAll('.pick-card').length, 11);
   assert.match(d.querySelector('[data-symbol="ADBE"]').textContent, /Price unavailable/);
   finish({ ok: false }); await w.picksReady;
   assert.equal(d.querySelectorAll('#buyPicks article').length, 4);
-  assert.match(d.getElementById('quoteStatus').textContent, /Prices unavailable/);
+  assert.match(d.getElementById('quoteStatus').textContent, /FMP prices unavailable/);
   assert.equal(d.getElementById('refreshQuotes').disabled, false);
 });
 
@@ -77,9 +77,17 @@ test('stale, future, nonnumeric and currency-free quotes fail closed', async t =
     { price: 100, asOf: null, currency: 'USD' }
   ];
   for (const quote of cases) {
-    const { w, d } = harness(t, { '/api/quotes': { quotes: { ADBE: quote } } }); await w.picksReady;
+    const { w, d } = harness(t, { '/api/fmp-quotes': { quotes: { ADBE: quote } } }); await w.picksReady;
     assert.match(d.querySelector('[data-symbol="ADBE"]').textContent, /Price unavailable/);
   }
+});
+
+test('homepage refuses a non-FMP quote payload instead of relabeling its prices', async t => {
+  const { w, d, requests } = harness(t, { '/api/fmp-quotes': { source: { provider: 'Yahoo Finance' }, quotes: { ADBE: { price: 100, currency: 'USD', asOf: NOW / 1000 } } } });
+  await w.picksReady;
+  assert.match(d.querySelector('[data-symbol="ADBE"]').textContent, /Price unavailable/);
+  assert.match(d.getElementById('quoteStatus').textContent, /No Yahoo fallback/);
+  assert.equal(requests.some(r => r.url === '/api/quotes'), false);
 });
 
 test('review deadlines remove calls from active groups, including an already open tab', async t => {
@@ -142,7 +150,7 @@ test('quote refresh preserves open analysis, research dates, opinions and existi
   const { w, d, routes } = harness(t); await w.picksReady;
   const key = 'software-decision-journal:ADBE'; w.localStorage.setItem(key, 'existing-private-note');
   d.getElementById('analysis-ADBE').open = true;
-  routes['/api/quotes'] = { quotes: { ADBE: { price: 270, asOf: NOW / 1000, currency: 'USD' } } };
+  routes['/api/fmp-quotes'] = { quotes: { ADBE: { price: 270, asOf: NOW / 1000, currency: 'USD' } } };
   d.getElementById('refreshQuotes').click(); await new Promise(resolve => setImmediate(resolve));
   assert.equal(d.getElementById('analysis-ADBE').open, true);
   assert.match(d.querySelector('[data-symbol="ADBE"]').textContent, /270.00 USD/);

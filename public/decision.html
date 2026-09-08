@@ -14,7 +14,7 @@
 <nav class="tabs"><a href="index.html">Main Dashboard</a><a class="active" href="decision.html">Stock Decision</a><a href="correlation.html">Correlation</a><a href="technicals.html">Technicals</a><a href="insider.html">Insider Activity</a><a href="options.html">Options Activity</a><a href="sentiment.html">Market Conditions</a><a href="leaderboard.html">Performance</a><a href="stress-test.html">Scenario Calculator</a><a href="news.html">News</a></nav>
 <main>
   <header>
-    <div><h1>Stock Decision Research</h1><div class="sub">FMP financials, issuer-filing checks, Yahoo market context, and your explicit decision gates</div></div>
+    <div><h1>Stock Decision Research</h1><div class="sub">FMP financials and current quotes, issuer-filing checks, Yahoo history, and your explicit decision gates</div></div>
     <button class="theme" type="button" onclick="toggleTheme()">Theme</button>
   </header>
 
@@ -75,7 +75,7 @@
       <thead><tr><th>Status</th><th>Ticker</th><th>Layer</th><th>Quarterly revenue growth</th><th>TTM operating margin</th><th>TTM FCF margin</th><th>TTM SBC / revenue</th><th>Share dilution</th><th>Price / TTM sales</th><th>TTM FCF yield</th><th>1-year max drawdown</th><th>Filing evidence</th></tr></thead>
       <tbody id="decisionRows"></tbody>
     </table></div>
-    <div class="method">TTM means the latest four fiscal quarters. Price/sales = Yahoo market capitalization ÷ TTM revenue. FCF = operating cash flow − capital spending, including separately disclosed capitalized software when reconciled. Matching issuer figures take precedence over FMP-normalized figures. Missing periods, stale statements, currency mismatches and unresolved arithmetic cannot pass. Drawdown uses Yahoo daily closes and is not a forecast. Unverified share dilution is unavailable.</div>
+    <div class="method">TTM means the latest four fiscal quarters. Price/sales = FMP market capitalization ÷ TTM revenue. FCF = operating cash flow − capital spending, including separately disclosed capitalized software when reconciled. Matching issuer figures take precedence over FMP-normalized figures. Missing periods, stale statements, currency mismatches and unresolved arithmetic cannot pass. Drawdown uses Yahoo daily closes and is not a forecast. Unverified share dilution is unavailable.</div>
   </section>
 
   <section id="companyDetail" class="card company-detail" hidden>
@@ -111,7 +111,7 @@
     <h2>Source and interpretation boundaries</h2>
     <ul class="method">
       <li><strong>Financial source:</strong> Financial Modeling Prep quarterly statements, cached for up to 24 hours. Provider-normalized figures are checked against matching SEC issuer filings; corrections and gaps are disclosed per company.</li>
-      <li><strong>Reconciliation:</strong> current price, market capitalization and daily history from unofficial Yahoo Finance endpoints.</li>
+      <li><strong>Market data:</strong> current price and market capitalization from FMP. Daily history remains secondary Yahoo context for historical drawdown checks.</li>
       <li><strong>Value-chain fit:</strong> the curated map supplies company classifications; selected layers are your strategy preference, not a factual claim of layer quality or importance.</li>
       <li>Revenue growth requires the comparable prior-year fiscal quarter. Valuation and cash-flow metrics use the latest four quarters. This TTM basis can change results versus the previous annual screen.</li>
       <li>Issuer guidance is not standardized and is never invented. The journal requires you to preserve the official source yourself.</li>
@@ -212,10 +212,10 @@ document.getElementById('saveJournal').addEventListener('click',function(){
 });
 
 var decisionSourceErrors=[];
-window.decisionReady=json('/universe.json').then(function(universe){decisionState.universe=universe;renderLayerCriteria(universe);return Promise.all(['/api/financial-data','/api/quotes','/api/history?range=1y&interval=1d'].map(function(url){return json(url).catch(function(error){decisionSourceErrors.push(error.message);return {}})}))}).then(function(parts){
+window.decisionReady=json('/universe.json').then(function(universe){decisionState.universe=universe;renderLayerCriteria(universe);return Promise.all(['/api/financial-data','/api/fmp-quotes?symbols='+encodeURIComponent(Object.keys(universe.tickers).join(',')),'/api/history?range=1y&interval=1d'].map(function(url){return json(url).catch(function(error){decisionSourceErrors.push(error.message);return {}})}))}).then(function(parts){
   decisionState.issuers=parts[0].issuers||{};decisionState.quotes=parts[1].quotes||{};decisionState.history=parts[2]||{};
   var total=Object.keys(decisionState.universe.tickers||{}).length,issuerCount=Object.keys(decisionState.issuers).length,quoteCount=Object.keys(decisionState.quotes).length,historyCount=Object.keys(decisionState.history).length;
-  var status=document.getElementById('sourceStatus');status.className=decisionSourceErrors.length?'notice error':'notice ok';status.innerHTML='<strong>'+(decisionSourceErrors.length?'Some decision sources are unavailable':'FMP financial evidence loaded')+'</strong>'+issuerCount+'/'+total+' financial records (up to 24-hour cache), '+quoteCount+'/'+total+' Yahoo quotes, and '+historyCount+'/'+total+' price histories. Select a company to see issuer corrections and unresolved checks. Missing decision metrics remain unavailable. '+esc(decisionSourceErrors.join('; '));
+  var status=document.getElementById('sourceStatus');status.className=decisionSourceErrors.length?'notice error':'notice ok';status.innerHTML='<strong>'+(decisionSourceErrors.length?'Some decision sources are unavailable':'FMP financial evidence loaded')+'</strong>'+issuerCount+'/'+total+' financial records (up to 24-hour cache), '+quoteCount+'/'+total+' FMP quotes, and '+historyCount+'/'+total+' price histories. Select a company to see issuer corrections and unresolved checks. Missing decision metrics remain unavailable. '+esc(decisionSourceErrors.join('; '));
   renderDecision();var initialCompany=decisionState.rows.find(function(row){return row.result.key==='research_now'})||decisionState.rows[0];var requestedSymbol=new URLSearchParams(location.search).get('symbol');var requestedCompany=decisionState.rows.find(function(row){return row.symbol===String(requestedSymbol||'').toUpperCase()});if(requestedCompany)initialCompany=requestedCompany;if(initialCompany)selectCompany(initialCompany.symbol,Boolean(requestedCompany));
 }).catch(function(error){var status=document.getElementById('sourceStatus');status.className='notice error';status.innerHTML='<strong>Decision evidence unavailable</strong>No candidate classification is shown. '+esc(error.message)+'.'});
 </script>

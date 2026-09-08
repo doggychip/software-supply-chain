@@ -46,12 +46,12 @@ function activeGroup(pick, review, now = Date.now()) {
 function quoteAvailable(quote, now = Date.now()) {
   return !!quote && typeof quote.price === 'number' && Number.isFinite(quote.price) && quote.price > 0 && typeof quote.asOf === 'number' && Number.isFinite(quote.asOf) && quote.asOf * 1000 <= now && now - quote.asOf * 1000 <= 7 * DAY && typeof quote.currency === 'string' && /^[A-Z]{3}$/.test(quote.currency);
 }
-async function requestJSON(url) {
+async function requestJSON(url, timeoutMs = 15000) {
   const controller = new AbortController(); let timer;
   try {
     return await Promise.race([
       fetch(url, { signal: controller.signal, cache: 'no-store' }).then(response => { if (!response.ok) throw new Error('Source unavailable'); return response.json(); }),
-      new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('Source timeout')); }, 15000); })
+      new Promise((_, reject) => { timer = setTimeout(() => { controller.abort(); reject(new Error('Source timeout')); }, timeoutMs); })
     ]);
   } finally { clearTimeout(timer); }
 }
@@ -67,7 +67,7 @@ function card(pick, group) {
   const quote = pickState.quotes[pick.symbol]; const price = element('div', undefined, 'pick-price');
   if (quoteAvailable(quote)) {
     price.append(document.createTextNode(quote.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + quote.currency));
-    price.append(element('span', 'Yahoo · ' + new Date(quote.asOf * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC', 'price-time'));
+    price.append(element('span', 'FMP · ' + new Date(quote.asOf * 1000).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) + ' UTC', 'price-time'));
   } else {
     price.append(document.createTextNode('—'), element('span', 'Price unavailable', 'price-time'));
   }
@@ -124,16 +124,16 @@ function renderPicks() {
 async function loadQuotes() {
   if (pickState.loadingQuotes) return;
   pickState.loadingQuotes = true; $('refreshQuotes').disabled = true;
-  $('quoteStatus').textContent = 'Refreshing latest available Yahoo quotes…';
+  $('quoteStatus').textContent = 'Refreshing latest available FMP quotes…';
   try {
-    const response = await requestJSON('/api/quotes');
-    if (!response || !response.quotes || typeof response.quotes !== 'object' || Array.isArray(response.quotes)) throw new Error('Invalid quotes');
+    const response = await requestJSON('/api/fmp-quotes', 60000);
+    if (!response || response.source?.provider !== 'Financial Modeling Prep' || !response.quotes || typeof response.quotes !== 'object' || Array.isArray(response.quotes)) throw new Error('Invalid quotes');
     pickState.quotes = response.quotes;
     const available = Object.values(response.quotes).filter(quote => quoteAvailable(quote)).length;
-    $('quoteStatus').textContent = available ? 'Latest available Yahoo quotes · may be delayed · each price shows its market time. Opinions are unchanged.' : 'No usable prices available. Dated opinions remain visible; no fallback prices are used.';
+    $('quoteStatus').textContent = available ? 'Latest available FMP quotes · may be delayed · each price shows its market time. Opinions are unchanged.' : 'No usable prices available. Dated opinions remain visible; no fallback prices are used.';
   } catch {
     pickState.quotes = {};
-    $('quoteStatus').textContent = 'Prices unavailable. Dated opinions remain visible. Try Refresh prices again.';
+    $('quoteStatus').textContent = 'FMP prices unavailable. No Yahoo fallback is used. Dated opinions remain visible. Try Refresh prices again.';
   } finally {
     pickState.loadingQuotes = false; $('refreshQuotes').disabled = false; renderPicks();
   }

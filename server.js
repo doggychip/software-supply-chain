@@ -4,7 +4,7 @@ const express = require('express');
 const path = require('path');
 const { createDashboardServer } = require('dashboard-core');
 const { loadIssuerData } = require('./issuer-data');
-const { loadFinancialData } = require('./fmp-data');
+const { loadFinancialData, loadFmpQuotes } = require('./fmp-data');
 const universe = require('./public/universe.json');
 
 const coreApp = createDashboardServer({
@@ -20,7 +20,9 @@ const ACTIVE_SYMBOLS = new Set(Object.keys(universe.tickers));
 // Make source and fallback policy machine-readable on every API response.
 app.use('/api', (req, res, next) => {
   res.set('x-data-policy', 'live-only-no-static-market-fallback');
-  if (req.path === '/financial-data') {
+  if (req.path === '/fmp-quotes') {
+    res.set('x-data-provider', 'Financial Modeling Prep');
+  } else if (req.path === '/financial-data') {
     res.set('x-data-provider', 'Financial Modeling Prep; SEC EDGAR reconciliation');
   } else if (req.path === '/issuer-data') {
     res.set('x-data-provider', 'SEC EDGAR (issuer-filed XBRL facts)');
@@ -68,6 +70,22 @@ app.get('/api/financial-data', async (req, res) => {
   }
 });
 
+app.get('/api/fmp-quotes', async (req, res) => {
+  const requested = String(req.query.symbols || '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
+  // The simple homepage needs only the reviewed shortlist, not 56 cold quote/profile pairs.
+  const symbols = requested.length ? [...new Set(requested)] : require('./public/stock-picks.json').picks.map(p => p.symbol);
+  const invalid = symbols.filter(s => !ACTIVE_SYMBOLS.has(s));
+  if (invalid.length) return res.status(400).json({ error: `Symbols outside the active universe: ${invalid.join(', ')}` });
+  try {
+    const payload = await loadFmpQuotes(symbols);
+    res.set('Cache-Control', 'no-store');
+    return res.status(Object.keys(payload.quotes).length ? 200 : 503).json(payload);
+  } catch (error) {
+    res.set('Cache-Control', 'no-store');
+    return res.status(503).json({ error: error.message === 'FMP API key is not configured' ? error.message : 'FMP quotes unavailable' });
+  }
+});
+
 app.get('/api/provenance', (req, res) => {
   res.json({
     reportedFundamentals: {
@@ -76,6 +94,11 @@ app.get('/api/provenance', (req, res) => {
       caveat: 'Provider-normalized fields may differ from GAAP. Matching issuer TTM metrics take precedence when available and every correction is labeled. Missing financials are not replaced by Yahoo or static data.',
     },
     issuerReconciliation: { provider: 'SEC EDGAR', access: 'Issuer-filed XBRL facts and filing links; annual plus current YTD minus prior-year YTD' },
+    homepagePrices: {
+      provider: 'Financial Modeling Prep',
+      endpoint: '/api/fmp-quotes',
+      caveat: 'Five-minute quote cache; original market timestamps preserved. Currency comes from FMP quotes or profiles, never an assumed USD default. No Yahoo or stored-price fallback.',
+    },
     marketReconciliation: {
       provider: 'Yahoo Finance',
       access: 'Unofficial public endpoints via dashboard-core',
@@ -84,7 +107,7 @@ app.get('/api/provenance', (req, res) => {
     decisionResearch: {
       kind: 'User-controlled evidence gates',
       reportedInputs: 'FMP latest quarterly revenue growth and trailing-twelve-month financials, reconciled with matching SEC facts. Unverified share dilution is unavailable.',
-      marketInputs: 'Yahoo Finance market capitalization and one-year daily closes, used only when fresh and currency-compatible with the TTM financials.',
+      marketInputs: 'FMP current price and market capitalization; Yahoo one-year daily closes for historical drawdown. Market inputs are used only when fresh and currency-compatible with the TTM financials.',
       strategyInputs: 'User-selected software value-chain layers from the curated universe taxonomy. Layer selection is a disclosed portfolio preference, not evidence of layer quality or importance.',
       caveat: 'Research now means the available evidence passes user-entered thresholds. It is not a buy recommendation, prediction, or price target. Missing evidence cannot pass.',
     },

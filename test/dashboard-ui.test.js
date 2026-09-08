@@ -11,6 +11,7 @@ function harness(t,page='analysis.html',overrides={},query=''){
   const w=dom.window;w.HTMLElement.prototype.scrollIntoView=function(){};
   const routes={'/universe.json':universe,'/api/financial-data':{issuers:{TEST:record},unavailable:{OTHER:'No test financials'}},'/api/quotes':{quotes:{TEST:{price:10,currency:'USD',asOf:Date.now()/1000,marketCap:50000}}},'/api/fundamentals':{fundamentals:{}},'/api/history?range=1y&interval=1d':{}};
   w.fetch=async url=>{if(Object.hasOwn(overrides,url)){const v=overrides[url];if(v instanceof Error)throw v;if(typeof v==='function')return v();return {ok:true,json:async()=>v}}return {ok:true,json:async()=>routes[url]}};
+  routes['/api/fmp-quotes?symbols=TEST%2COTHER']=routes['/api/quotes'];
   w.eval(read('assessment-trust.js'));
   if(page==='analysis.html')w.eval(read('dashboard.js'));else{w.eval(read('decision-trust.js'));w.eval(read('recommendation-model.js'));w.eval(read('recommendation-ui.js'));for(const m of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g))w.eval(m[1])}
   return w;
