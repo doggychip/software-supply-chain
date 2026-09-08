@@ -88,6 +88,11 @@ app.get('/api/provenance', (req, res) => {
       strategyInputs: 'User-selected software value-chain layers from the curated universe taxonomy. Layer selection is a disclosed portfolio preference, not evidence of layer quality or importance.',
       caveat: 'Research now means the available evidence passes user-entered thresholds. It is not a buy recommendation, prediction, or price target. Missing evidence cannot pass.',
     },
+    editorialRecommendations: {
+      file: 'stock-picks.json',
+      kind: 'Dated assistant research opinions, not automated screening outputs',
+      caveat: 'Published review dates and source limitations apply. Quotes do not refresh the opinions. Reviews expire at their stated cutoff or after seven days, whichever comes first. These are not stored financial-data fallbacks or guarantees of returns.',
+    },
     universe: {
       file: 'universe.json',
       kind: 'Curated coverage taxonomy only',
