@@ -13,7 +13,7 @@
 <nav class="tabs"><a href="index.html">Main Dashboard</a><a class="active" href="decision.html">Stock Decision</a><a href="correlation.html">Correlation</a><a href="technicals.html">Technicals</a><a href="insider.html">Insider Activity</a><a href="options.html">Options Activity</a><a href="sentiment.html">Market Conditions</a><a href="leaderboard.html">Performance</a><a href="stress-test.html">Scenario Calculator</a><a href="news.html">News</a></nav>
 <main>
   <header>
-    <div><h1>Stock Decision Research</h1><div class="sub">Issuer-filed operating evidence, Yahoo-reconciled market context, and your explicit decision gates</div></div>
+    <div><h1>Stock Decision Research</h1><div class="sub">FMP financials, issuer-filing checks, Yahoo market context, and your explicit decision gates</div></div>
     <button class="theme" type="button" onclick="toggleTheme()">Theme</button>
   </header>
 
@@ -24,9 +24,9 @@
     <div class="section-heading"><div><h2>Your mandatory gates</h2><div class="muted">Ryan's medium-risk, 3–5 year quality-growth baseline is applied and remains fully editable.</div></div><div class="decision-actions"><button id="applyBaseline" class="theme" type="button">Reset baseline</button><button id="clearCriteria" class="theme" type="button">Clear</button></div></div>
     <div class="controls decision-inputs">
       <div class="control"><label for="minRevenueGrowth">Minimum reported revenue growth (%)</label><input id="minRevenueGrowth" type="number" step="0.1" value="15"></div>
-      <div class="control"><label for="minFcfMargin">Minimum annual FCF margin (%)</label><input id="minFcfMargin" type="number" step="0.1" value="15"></div>
-      <div class="control"><label for="maxPriceSales">Maximum price / annual sales (×)</label><input id="maxPriceSales" type="number" min="0" step="0.1" value="8"></div>
-      <div class="control"><label for="minFcfYield">Minimum annual FCF yield (%)</label><input id="minFcfYield" type="number" step="0.1" value="2"></div>
+      <div class="control"><label for="minFcfMargin">Minimum TTM FCF margin (%)</label><input id="minFcfMargin" type="number" step="0.1" value="15"></div>
+      <div class="control"><label for="maxPriceSales">Maximum price / TTM sales (×)</label><input id="maxPriceSales" type="number" min="0" step="0.1" value="8"></div>
+      <div class="control"><label for="minFcfYield">Minimum TTM FCF yield (%)</label><input id="minFcfYield" type="number" step="0.1" value="2"></div>
       <div class="control"><label for="proposedWeight">Proposed portfolio weight (%)</label><input id="proposedWeight" type="number" min="0" max="100" step="0.1" value="1.5"></div>
       <div class="control"><label for="maxWeight">Maximum single-stock weight (%)</label><input id="maxWeight" type="number" min="0" max="100" step="0.1" value="5"></div>
       <div class="control"><label for="maxPortfolioLoss">Maximum portfolio loss at observed drawdown (%)</label><input id="maxPortfolioLoss" type="number" min="0" max="100" step="0.1" value="1"></div>
@@ -48,10 +48,10 @@
   <section id="decisionTableCard" class="card" hidden>
     <div class="section-heading"><div><h2>Source-backed comparison</h2><div class="muted">Select a row to inspect filing evidence and maintain your thesis journal</div></div><span class="status">No composite score</span></div>
     <div class="table-wrap"><table class="decision-table">
-      <thead><tr><th>Status</th><th>Ticker</th><th>Layer</th><th>Reported revenue growth</th><th>Operating margin</th><th>FCF margin</th><th>SBC / revenue</th><th>Share dilution</th><th>Price / annual sales</th><th>Annual FCF yield</th><th>1-year max drawdown</th><th>Filing evidence</th></tr></thead>
+      <thead><tr><th>Status</th><th>Ticker</th><th>Layer</th><th>Quarterly revenue growth</th><th>TTM operating margin</th><th>TTM FCF margin</th><th>TTM SBC / revenue</th><th>Share dilution</th><th>Price / TTM sales</th><th>TTM FCF yield</th><th>1-year max drawdown</th><th>Filing evidence</th></tr></thead>
       <tbody id="decisionRows"></tbody>
     </table></div>
-    <div class="method">Price/sales = Yahoo market capitalization ÷ latest filed annual revenue. FCF = filed operating cash flow − absolute filed capital expenditure. Valuation is unavailable when currencies differ. Maximum drawdown is a trailing observation from Yahoo daily closes, not a forecast.</div>
+    <div class="method">TTM means the latest four fiscal quarters. Price/sales = Yahoo market capitalization ÷ TTM revenue. FCF = operating cash flow − capital spending, including separately disclosed capitalized software when reconciled. Matching issuer figures take precedence over FMP-normalized figures. Missing periods, stale statements, currency mismatches and unresolved arithmetic cannot pass. Drawdown uses Yahoo daily closes and is not a forecast. Unverified share dilution is unavailable.</div>
   </section>
 
   <section id="companyDetail" class="card company-detail" hidden>
@@ -81,10 +81,10 @@
   <section class="card">
     <h2>Source and interpretation boundaries</h2>
     <ul class="method">
-      <li><strong>Primary:</strong> reported financial facts and filing links from SEC EDGAR company facts.</li>
+      <li><strong>Financial source:</strong> Financial Modeling Prep quarterly statements, cached for up to 24 hours. Provider-normalized figures are checked against matching SEC issuer filings; corrections and gaps are disclosed per company.</li>
       <li><strong>Reconciliation:</strong> current price, market capitalization and daily history from unofficial Yahoo Finance endpoints.</li>
       <li><strong>Value-chain fit:</strong> the curated map supplies company classifications; selected layers are your strategy preference, not a factual claim of layer quality or importance.</li>
-      <li>Revenue growth uses a comparable prior-year quarter when available, otherwise comparable annual periods.</li>
+      <li>Revenue growth requires the comparable prior-year fiscal quarter. Valuation and cash-flow metrics use the latest four quarters. This TTM basis can change results versus the previous annual screen.</li>
       <li>Issuer guidance is not standardized and is never invented. The journal requires you to preserve the official source yourself.</li>
       <li>“Research now” means only that the available evidence passes your inputs; it is not a prediction, price target or instruction to trade.</li>
     </ul>
@@ -144,7 +144,7 @@ function selectCompany(symbol,scroll){
   var row=decisionState.rows.find(function(candidate){return candidate.symbol===symbol});if(!row)return;
   decisionState.selected=symbol;var record=row.record||{},derived=record.decisionEvidence&&record.decisionEvidence.derived||{};
   document.getElementById('detailTitle').textContent=symbol+' — '+(record.name||row.meta.name);
-  document.getElementById('detailMeta').textContent=row.meta.layer+' · annual evidence through '+(derived.annualPeriodEnd||'unavailable');
+  document.getElementById('detailMeta').textContent=row.meta.layer+' · FMP / issuer TTM through '+(derived.annualPeriodEnd||'unavailable')+' · fetched '+(record.retrievedAt?new Date(record.retrievedAt).toLocaleString():'unavailable')+' · '+(record.reconciliation?(record.reconciliation.blockingIssues||[]).concat(record.reconciliation.warnings||[]).join('; '):'');
   var detailStatus=document.getElementById('detailStatus');detailStatus.textContent=row.result.label;detailStatus.className='status '+statusClass(row.result.key);
   var gateResults=document.getElementById('gateResults');gateResults.innerHTML='';
   if(row.result.gates&&row.result.gates.length)row.result.gates.forEach(function(gate){var item=document.createElement('div');item.className='gate-result '+(gate.pass?'pass':'fail');item.innerHTML='<span>'+esc(gate.name)+'</span><strong>'+(gate.pass?'Pass':'Fail')+'</strong>';gateResults.appendChild(item)});
@@ -170,10 +170,10 @@ document.getElementById('saveJournal').addEventListener('click',function(){
   try{localStorage.setItem(journalKey(decisionState.selected),JSON.stringify(journal));document.getElementById('journalStatus').textContent='Saved locally for '+decisionState.selected+'.'}catch(error){document.getElementById('journalStatus').textContent='Browser storage unavailable.'}
 });
 
-json('/universe.json').then(function(universe){decisionState.universe=universe;renderLayerCriteria(universe);return Promise.all([json('/api/issuer-data'),json('/api/quotes'),json('/api/history?range=1y&interval=1d')])}).then(function(parts){
+json('/universe.json').then(function(universe){decisionState.universe=universe;renderLayerCriteria(universe);return Promise.all([json('/api/financial-data'),json('/api/quotes'),json('/api/history?range=1y&interval=1d')])}).then(function(parts){
   decisionState.issuers=parts[0].issuers||{};decisionState.quotes=parts[1].quotes||{};decisionState.history=parts[2]||{};
   var total=Object.keys(decisionState.universe.tickers||{}).length,issuerCount=Object.keys(decisionState.issuers).length,quoteCount=Object.keys(decisionState.quotes).length,historyCount=Object.keys(decisionState.history).length;
-  var status=document.getElementById('sourceStatus');status.className='notice ok';status.innerHTML='<strong>Live evidence loaded</strong>'+issuerCount+'/'+total+' issuer records, '+quoteCount+'/'+total+' Yahoo quotes, and '+historyCount+'/'+total+' price histories. Missing decision metrics remain unavailable.';
+  var status=document.getElementById('sourceStatus');status.className='notice ok';status.innerHTML='<strong>FMP financial evidence loaded</strong>'+issuerCount+'/'+total+' financial records (up to 24-hour cache), '+quoteCount+'/'+total+' Yahoo quotes, and '+historyCount+'/'+total+' price histories. Select a company to see issuer corrections and unresolved checks. Missing decision metrics remain unavailable.';
   renderDecision();var initialCompany=decisionState.rows.find(function(row){return row.result.key==='research_now'})||decisionState.rows[0];if(initialCompany)selectCompany(initialCompany.symbol,false);
 }).catch(function(error){var status=document.getElementById('sourceStatus');status.className='notice error';status.innerHTML='<strong>Decision evidence unavailable</strong>No candidate classification is shown. '+esc(error.message)+'.'});
 </script>

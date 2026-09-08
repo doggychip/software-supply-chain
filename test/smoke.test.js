@@ -103,12 +103,26 @@ test('server exposes issuer-primary provenance, source headers, and current univ
   assert.equal(health.dashboard, 'Software Supply Chain');
   assert.equal(health.tickerCount, 56);
   const provenance = await provenanceResponse.json();
-  assert.equal(provenance.reportedFundamentals.provider, 'SEC EDGAR');
+  assert.equal(provenance.reportedFundamentals.provider, 'Financial Modeling Prep');
+  assert.equal(provenance.issuerReconciliation.provider, 'SEC EDGAR');
   assert.equal(provenance.marketReconciliation.provider, 'Yahoo Finance');
   assert.equal(provenance.decisionResearch.kind, 'User-controlled evidence gates');
   assert.match(provenance.decisionResearch.strategyInputs, /value-chain layers/i);
   assert.match(provenance.decisionResearch.caveat, /not a buy recommendation/i);
   assert.match(provenance.fallbackPolicy, /No static or Yahoo-derived value replaces/);
+});
+
+test('FMP endpoint rejects unknown symbols and fails visibly without a key', async (t) => {
+  const originalKey = process.env.FMP_API_KEY; delete process.env.FMP_API_KEY;
+  t.after(() => { if (originalKey !== undefined) process.env.FMP_API_KEY = originalKey; });
+  const server = app.listen(0); t.after(() => server.close());
+  await new Promise(resolve => server.once('listening', resolve));
+  const base = `http://127.0.0.1:${server.address().port}/api/financial-data`;
+  assert.equal((await fetch(base + '?symbols=UNKNOWN')).status, 400);
+  const response = await fetch(base + '?symbols=PATH');
+  assert.equal(response.status, 503);
+  assert.match(response.headers.get('x-data-provider'), /Financial Modeling Prep/);
+  assert.match((await response.json()).error, /not configured/);
 });
 
 test('issuer endpoint rejects symbols outside the curated universe before upstream access', async (t) => {

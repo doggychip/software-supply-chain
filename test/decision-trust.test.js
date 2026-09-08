@@ -93,3 +93,11 @@ test('candidate labels are deterministic gates rather than a composite score', (
   assert.equal(decision.evaluateCandidate(metrics, { ...criteria, targetLayers: [] }, { layer: 'Data & Analytics' }).key, 'set_criteria');
   assert.equal(decision.evaluateCandidate(metrics, criteria).key, 'insufficient_evidence');
 });
+
+test('FMP unresolved validation issues and stale TTM periods cannot pass', () => {
+  const decision = runtime();
+  const bad = {decisionEvidence:{derived:{...record.decisionEvidence.derived,financialBasis:'TTM',blockingIssues:['FMP FCF inconsistent']}}};
+  const metrics=decision.computeMetrics(bad,quote,bars,Date.parse('2026-08-10T00:00:00Z'));
+  assert.equal(decision.evaluateCandidate(metrics,criteria,{layer:'Data & Analytics'}).key,'insufficient_evidence');
+  assert.equal(metrics.financialFresh,false);
+});

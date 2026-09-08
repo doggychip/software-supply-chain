@@ -44,6 +44,9 @@ const CONCEPTS = {
     ['us-gaap', 'ShareBasedCompensation'],
     ['ifrs-full', 'ShareBasedPayment'],
   ],
+  capitalizedSoftware: [
+    ['us-gaap', 'PaymentsToDevelopSoftware'],
+  ],
   sharesOutstanding: [
     ['dei', 'EntityCommonStockSharesOutstanding'],
   ],
@@ -344,6 +347,19 @@ function extractIssuerRecord(symbol, cik, companyFacts) {
     name: companyFacts.entityName || null,
     facts,
     decisionEvidence: deriveDecisionEvidence(companyFacts, cik),
+    reconciliationFacts: Object.fromEntries(['revenue', 'operatingIncome', 'operatingCashFlow', 'capitalExpenditure', 'capitalizedSoftware', 'stockCompensation'].map((metric) => {
+      const rows = [];
+      CONCEPTS[metric].forEach(([taxonomy, concept]) => {
+        Object.entries(companyFacts.facts?.[taxonomy]?.[concept]?.units || {}).forEach(([unit, facts]) => {
+          facts.forEach((row) => {
+            const days = durationDays(row), today = new Date().toISOString().slice(0, 10);
+            if (!Number.isFinite(row.val) || days == null || days < 50 || days > 430 || row.end > today || row.filed > today || !ACCEPTED_FORMS.has(row.form)) return;
+            rows.push({ value: row.val, unit, start: row.start, end: row.end, filed: row.filed, days, sourceUrl: filingUrl(cik, row.accn) });
+          });
+        });
+      });
+      return [metric, rows.sort((a, b) => b.end.localeCompare(a.end) || b.filed.localeCompare(a.filed)).slice(0, 100)];
+    })),
     latestFiling: latest ? {
       form: latest.form,
       filed: latest.filed,
