@@ -7,6 +7,22 @@ function fixture(){
   return {row:{symbol:'TEST',meta:{layer:'Testing'},metrics:{financialFresh:true,quoteFresh:true,historyFresh:true,comparableCurrency:true,revenueGrowthPct:20,freeCashFlowMarginPct:30,operatingMarginPct:10,oneYearMaxDrawdownPct:30},record:{decisionEvidence:{derived:{financialBasis:'TTM',annualPeriodEnd:'2026-06-30',annualUnit:'USD',annualRevenue:1000,freeCashFlow:300,stockCompensation:50,blockingIssues:[]}},reconciliation:{blockingIssues:[],fieldSources:Object.fromEntries(['revenue','operatingIncome','operatingCashFlow','capitalExpenditure','stockCompensation'].map(k=>[k,{...source}]))}}},quote:{price:50,currency:'USD',asOf:now/1000,extras:{marketCap:5000}},criteria:{targetLayers:['Testing'],minRevenueGrowthPct:15,minFreeCashFlowMarginPct:15,maxPriceSales:8,minFreeCashFlowYieldPct:2,proposedWeightPct:1.5,maxWeightPct:5,maxPortfolioLossPct:1},a:{...model.defaults},journal:{guidanceSource:'https://www.sec.gov/Archives/test-fixture',thesisReviewed:true,reviewedPeriod:'2026-06-30',...Object.fromEntries(['thesisNote','valueChainNote','balanceSheetNote','catalystNote','invalidationNote','riskNote'].map(k=>[k,'Synthetic test note']))}};
 }
 function run(f){return model.evaluate(f.row,f.quote,f.criteria,f.a,f.journal,now)}
+test('FMP-normalized quotes preserve scenarios and entry ceilings for valuation consumers',()=>{
+  const {normalizeQuote}=require('../fmp-data');
+  const f=fixture();
+  f.quote=normalizeQuote('TEST',{symbol:'TEST',price:50,timestamp:now/1000,currency:'USD',marketCap:5000},null,now);
+  const r=run(f);
+  assert.equal(r.key,'buy');assert.deepEqual(r.scenarios.map(s=>s.price),[60,80,100]);assert.equal(r.buyCeiling,64);
+});
+test('FMP missing market cap stays unavailable to both public quote shapes and valuation',()=>{
+  const {normalizeQuote}=require('../fmp-data');
+  const f=fixture();
+  for(const marketCap of [undefined,0,-1,'5000',NaN]){
+    f.quote=normalizeQuote('TEST',{symbol:'TEST',price:50,timestamp:now/1000,currency:'USD',marketCap},null,now);
+    assert.equal(f.quote.marketCap,null);assert.equal(f.quote.extras?.marketCap,null);
+    assert.equal(run(f).key,'insufficient');assert.deepEqual(run(f).scenarios,[]);
+  }
+});
 test('scenario prices and entry ceiling independently match equity multiple arithmetic',()=>{
   const f=fixture(),r=run(f);assert.equal(r.key,'buy');assert.equal(r.adjustedCashFlow,250);
   assert.deepEqual(r.scenarios.map(s=>s.price),[60,80,100]);assert.equal(r.buyCeiling,64);

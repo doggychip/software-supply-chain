@@ -145,7 +145,9 @@ function normalizeQuote(symbol, quote, profile, now = Date.now()) {
   if (quoteCurrency && profileCurrency && quoteCurrency !== profileCurrency) throw new Error('FMP quote and profile currencies differ');
   const currency = quoteCurrency || profileCurrency;
   if (!currency) throw new Error('FMP quote currency unavailable');
-  return { symbol, price: quote.price, asOf: quote.timestamp, currency, marketCap: finite(quote.marketCap) && quote.marketCap > 0 ? quote.marketCap : null, provider: 'Financial Modeling Prep', retrievedAt: now };
+  const marketCap = finite(quote.marketCap) && quote.marketCap > 0 ? quote.marketCap : null;
+  // Keep the shared dashboard-core shape used by both valuation consumers.
+  return { symbol, price: quote.price, asOf: quote.timestamp, currency, marketCap, extras: { marketCap }, provider: 'Financial Modeling Prep', retrievedAt: now };
 }
 
 async function loadFmpQuotes(symbols, { fetchImpl = global.fetch } = {}) {
