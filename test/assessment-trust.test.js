@@ -73,6 +73,16 @@ test('annual SEC facts are never compared with quarterly Yahoo fields', () => {
   );
   assert.equal(result.status, 'period_type_mismatch');
 });
+test('reconciliation finds the matching quarter in unsorted history and excludes unverified EPS basis', () => {
+  const runtime=loadRuntime(),fact={value:100,end:'2026-03-31',periodType:'quarterly'};
+  const result=runtime.reconcileIssuerWithYahoo({facts:{revenue:fact,netIncome:{...fact,value:0},dilutedEps:{...fact,value:1}}},{
+    revenueHistory:[{date:'2Q2026',revenue:200,earnings:2},{date:'1Q2026',revenue:100,earnings:0},{date:'4Q2025',revenue:90,earnings:1}],
+    epsHistory:[{quarter:'2026-03-31',epsActual:2},{quarter:'2026-06-30',epsActual:3}]
+  });
+  assert.equal(result.revenue.status,'aligned');assert.equal(result.revenue.secondaryValue,100);
+  assert.equal(result.netIncome.status,'aligned');assert.equal(result.dilutedEps.status,'basis_unverified');
+  assert.equal(runtime.quarterEnd('2026-02-30'),null);
+});
 
 test('pages contain no fabricated, generated, or stored financial datasets', () => {
   const combined = fs.readdirSync(publicDir)

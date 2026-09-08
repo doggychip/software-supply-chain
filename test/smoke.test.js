@@ -40,7 +40,7 @@ test('public universe contains taxonomy only and excludes retired symbols', () =
 test('main dashboard renders a taxonomy-only software value chain map', () => {
   const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8');
   assert.match(html, /id="valueChainMap"/);
-  assert.match(html, /renderValueChain\(universe\)/);
+  assert.match(fs.readFileSync(path.join(publicDir, 'dashboard.js'), 'utf8'), /renderValueChain\(universe\)/);
   assert.match(html, /Taxonomy only/);
   assert.match(html, /company classifications only/);
   assert.doesNotMatch(html, /data-score|price target|bottleneck score/i);
