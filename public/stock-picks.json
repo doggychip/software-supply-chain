@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-09-08T14:06:15.654Z",
+  "reviewAfter": "2026-09-15T00:00:00Z",
+  "picks": [
+    {
+      "symbol": "ADBE", "name": "Adobe", "group": "buy", "action": "Buy gradually — start small",
+      "reason": "Creative and document workflows look attractively valued against the company’s earnings guidance.",
+      "risk": "AI competition and the upcoming earnings report could change the thesis.",
+      "valueChain": "Creative and document workflows: professional tools and customer habits may support durable demand. This is a thesis, not proof of a moat.",
+      "reviewTrigger": "Reassess after the September 10 earnings report, or sooner if guidance or subscription demand weakens materially.",
+      "reviewAfter": "2026-09-10T00:00:00Z", "confidence": "Moderate",
+      "evidenceNote": "The September 8 judgment used issuer GAAP earnings guidance, not the higher adjusted earnings figure. It has not been recalculated at the latest quote. Leadership transition adds execution uncertainty.",
+      "sources": [{"label":"Issuer results and guidance (SEC)","url":"https://www.sec.gov/Archives/edgar/data/796343/000079634326000109/adbeex991q226.htm"},{"label":"Adobe leadership update","url":"https://news.adobe.com/news/2026/09/adobe-announces-anil-chakravarthy-to-become-president-and-ceo"}]
+    },
+    {
+      "symbol": "INTU", "name": "Intuit", "group": "buy", "action": "Buy gradually",
+      "reason": "Its accounting and tax workflows offer a strong franchise at a reasonable earnings valuation in this review.",
+      "risk": "Slower tax growth, AI competition and lending capital needs.",
+      "valueChain": "Accounting and tax workflows: recurring business records and filing needs underpin the thesis, rather than generic AI exposure.",
+      "reviewTrigger": "Reassess if GAAP earnings guidance falls materially, tax units keep weakening or QuickBooks growth slows.",
+      "confidence": "Moderate", "evidenceNote": "The review used issuer GAAP guidance. Lending cash flows need separate analysis; a simple free-cash-flow yield is not distributable owner earnings. Changes to adjusted earnings treatment limit historical comparisons.",
+      "sources": [{"label":"Issuer results and guidance","url":"https://investors.intuit.com/sec-filings/all-sec-filings/content/0000896878-26-000029/fy26q4earningspressrelease.htm"}]
+    },
+    {
+      "symbol": "ADSK", "name": "Autodesk", "group": "buy", "action": "Buy gradually",
+      "reason": "Design and construction workflows, supported by cash generation, make the valuation interesting.",
+      "risk": "MaintainX acquisition funding and integration, plus construction cyclicality.",
+      "valueChain": "Design, build and operate workflows connect software to real construction and industrial work. Retention and integration benefits still need monitoring.",
+      "reviewTrigger": "Reassess if post-acquisition cash guidance falls materially or organic growth slows persistently.",
+      "confidence": "Moderate", "evidenceNote": "The review considered issuer cash guidance and the announced MaintainX acquisition. Historical free cash flow does not deduct the acquisition purchase price. Cash flow less stock compensation is a proxy, not GAAP owner earnings.",
+      "sources": [{"label":"Issuer results","url":"https://investors.autodesk.com/news-releases/news-release-details/autodesk-inc-announces-fiscal-2027-second-quarter-results"},{"label":"MaintainX acquisition announcement","url":"https://investors.autodesk.com/news-releases/news-release-details/autodesk-acquire-maintainx-advancing-unified-platform-operations"}]
+    },
+    {
+      "symbol": "CRM", "name": "Salesforce", "group": "buy", "action": "Buy gradually — lower conviction",
+      "reason": "Customer records and embedded workflows provide a useful franchise at a moderate cash valuation.",
+      "risk": "Acquisition-assisted growth and slower cash growth weaken the case.",
+      "valueChain": "Enterprise customer records and workflows can support AI deployment. AI-labelled revenue is not necessarily incremental revenue.",
+      "reviewTrigger": "Reassess if organic growth fails to improve or acquisitions and buybacks weaken the balance sheet.",
+      "confidence": "Moderate, lower within the Buy group", "evidenceNote": "Reported growth includes Informatica and guidance includes pending acquisitions. Changed AI revenue definitions and investment gains need care. The cash-flow-less-stock-compensation proxy is not a forecast or GAAP measure.",
+      "sources": [{"label":"Issuer results and guidance","url":"https://www.salesforce.com/news/press-releases/2026/08/26/fy27-q2-earnings/?bc=OTH"}]
+    },
+    {
+      "symbol": "MSFT", "name": "Microsoft", "group": "wait", "action": "Hold — wait to add",
+      "reason": "Cloud, developer tools and enterprise distribution support the business, but new buying needs more valuation room.",
+      "risk": "AI infrastructure spending may not generate adequate cash returns.",
+      "valueChain": "Cloud infrastructure, developer tools and enterprise distribution provide several routes to customers. Broad reach alone does not prove attractive shareholder returns.",
+      "reviewTrigger": "Reassess as cash returns on infrastructure spending become clearer or valuation offers more room.",
+      "confidence": "Moderate", "evidenceNote": "The review considered reported GAAP earnings, not only the automated screen’s cash-yield ceiling. Investment-related gains can affect earnings comparability.",
+      "sources": [{"label":"Issuer results","url":"https://www.microsoft.com/en-us/Investor/earnings/FY-2026-Q4/press-release-webcast"}]
+    },
+    {
+      "symbol": "FICO", "name": "Fair Isaac", "group": "wait", "action": "Hold — wait to add",
+      "reason": "An embedded credit-decision franchise, but policy and debt risks call for a better entry valuation.",
+      "risk": "Mortgage policy changes, competing scores and leverage.",
+      "valueChain": "Credit scoring and decision tools sit within lending workflows. Adoption rules and competition can change the economics of that position.",
+      "reviewTrigger": "Reassess following material scoring-policy changes, debt changes or a more attractive valuation.",
+      "confidence": "Moderate", "evidenceNote": "The review used issuer earnings guidance and reported growth. A separate policy and leverage review is needed before adding exposure.",
+      "sources": [{"label":"Issuer results","url":"https://investors.fico.com/news-releases/news-release-details/fico-announces-earnings-1045-share-third-quarter-fiscal-2026/"}]
+    },
+    {
+      "symbol": "DT", "name": "Dynatrace", "group": "wait", "action": "Hold — wait to add",
+      "reason": "Observability is useful as software grows more complex; acquisition uncertainty makes adding premature.",
+      "risk": "Arize integration and dilution from stock compensation or the deal.",
+      "valueChain": "Observability helps customers understand application performance and failures. Arize could extend that role into AI, but integration benefits are not assured.",
+      "reviewTrigger": "Reassess when the Arize transaction’s cash, dilution and integration impact becomes clearer.",
+      "confidence": "Moderate", "evidenceNote": "The announced Arize cash-and-stock transaction is not captured by a simple historical cash-yield screen.",
+      "sources": [{"label":"Issuer results","url":"https://ir.dynatrace.com/news-events/press-releases/detail/434/dynatrace-reports-first-quarter-fiscal-year-2027-financial-results"},{"label":"Arize acquisition announcement","url":"https://www.dynatrace.com/news/press-release/dynatrace-to-acquire-arize/"}]
+    },
+    {
+      "symbol": "DDOG", "name": "Datadog", "group": "wait", "action": "Wait — no new buy",
+      "reason": "Strong observability growth, but the valuation and stock compensation leave limited cash-yield support.",
+      "risk": "Growth could slow before shareholder cash generation catches up with valuation.",
+      "valueChain": "Monitoring and observability benefit from complex cloud systems. That demand does not make any share price attractive.",
+      "reviewTrigger": "Reassess after a valuation reset or sustained improvement in cash generation after dilution costs.",
+      "confidence": "Lower — partial source access", "evidenceNote": "The full issuer release returned an access error during the September 8 review. The indexed issuer release and SEC-linked financial snapshot provided partial coverage, not a full filing audit.",
+      "sources": [{"label":"Issuer results (access may be restricted)","url":"https://investors.datadoghq.com/news-releases/news-release-details/datadog-announces-second-quarter-2026-financial-results/"}]
+    },
+    {
+      "symbol": "NET", "name": "Cloudflare", "group": "sell", "action": "Sell / Avoid",
+      "reason": "A valuable edge and security platform, but the reviewed valuation demands too much from current cash economics.",
+      "risk": "Rapid AI demand could justify the premium and make selling too early costly.",
+      "valueChain": "Edge networking, security and developer services have strategic value. This is a valuation objection, not a claim the platform is failing.",
+      "reviewTrigger": "Reassess if exceptional growth translates into much stronger shareholder cash generation, or valuation resets.",
+      "confidence": "Moderate", "evidenceNote": "The September 8 judgment compared market valuation with issuer revenue guidance and recent free-cash-flow margins. It is not a short-sale recommendation.",
+      "sources": [{"label":"Issuer results and guidance","url":"https://www.cloudflare.net/news/news-details/2026/Cloudflare-Announces-Second-Quarter-2026-Financial-Results/default.aspx"}]
+    },
+    {
+      "symbol": "PLTR", "name": "Palantir", "group": "sell", "action": "Reduce / Avoid new buying",
+      "reason": "A strong operational-AI position, but the reviewed valuation prices in exceptional continued success.",
+      "risk": "Extraordinary growth could continue and make reducing too early costly.",
+      "valueChain": "Operational AI connects data to business decisions. A useful platform and rapid adoption do not remove valuation risk.",
+      "reviewTrigger": "Reassess if sustained growth and cash generation catch up with valuation, or after a substantial price reset.",
+      "confidence": "Lower — timing risk and partial source access", "evidenceNote": "The full investor release/PDF was not reliably retrievable during the September 8 review. The call used indexed issuer information and a SEC-linked trailing financial input set. Coverage is partial; this is the most timing-sensitive reduce call.",
+      "sources": [{"label":"SEC filing index used in financial checks","url":"https://www.sec.gov/Archives/edgar/data/1321655/000132165526000041/0001321655-26-000041-index.html"}]
+    },
+    {
+      "symbol": "AI", "name": "C3 AI", "group": "sell", "action": "Sell / Avoid",
+      "reason": "Durable profitable demand remains unproven despite a positive quarterly cash-flow result.",
+      "risk": "A successful turnaround could reverse the outlook; existing cash gives the company time.",
+      "valueChain": "Enterprise AI applications need durable customer demand and profitable delivery. An AI category label does not establish either.",
+      "reviewTrigger": "Reassess after sustained year-on-year revenue recovery and materially lower operating losses.",
+      "confidence": "Moderate", "evidenceNote": "The latest issuer release reports positive quarterly free cash flow and substantial cash/securities alongside a significant adjusted operating loss. This is not a bankruptcy prediction. The dashboard’s trailing fields were FMP-only; the call primarily relies on the issuer release.",
+      "sources": [{"label":"Issuer results","url":"https://ir.c3.ai/news-releases/news-release-details/c3-ai-announces-fiscal-first-quarter-2027-results"}]
+    }
+  ]
+}

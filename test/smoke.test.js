@@ -37,8 +37,8 @@ test('public universe contains taxonomy only and excludes retired symbols', () =
   assert.equal(fs.existsSync(path.join(publicDir, 'build_pages.py')), false);
 });
 
-test('main dashboard renders a taxonomy-only software value chain map', () => {
-  const html = fs.readFileSync(path.join(publicDir, 'index.html'), 'utf8');
+test('detailed analysis renders a taxonomy-only software value chain map', () => {
+  const html = fs.readFileSync(path.join(publicDir, 'analysis.html'), 'utf8');
   assert.match(html, /id="valueChainMap"/);
   assert.match(fs.readFileSync(path.join(publicDir, 'dashboard.js'), 'utf8'), /renderValueChain\(universe\)/);
   assert.match(html, /Taxonomy only/);
@@ -69,7 +69,7 @@ test('stock decision page exposes a disclosed editable baseline and no buy score
   assert.match(html, /id="gateResults"/);
   assert.match(html, /decision-trust\.js/);
   assert.doesNotMatch(html, /BUY|HIGHEST CONVICTION|data-score|targetMeanPrice/);
-  for (const page of ['index.html', 'correlation.html', 'technicals.html', 'insider.html', 'options.html', 'sentiment.html', 'leaderboard.html', 'stress-test.html', 'news.html']) {
+  for (const page of ['analysis.html', 'correlation.html', 'technicals.html', 'insider.html', 'options.html', 'sentiment.html', 'leaderboard.html', 'stress-test.html', 'news.html']) {
     assert.match(fs.readFileSync(path.join(publicDir, page), 'utf8'), /href="decision\.html">Stock Decision/);
   }
 });
@@ -109,6 +109,8 @@ test('server exposes issuer-primary provenance, source headers, and current univ
   assert.equal(provenance.decisionResearch.kind, 'User-controlled evidence gates');
   assert.match(provenance.decisionResearch.strategyInputs, /value-chain layers/i);
   assert.match(provenance.decisionResearch.caveat, /not a buy recommendation/i);
+  assert.equal(provenance.editorialRecommendations.file, 'stock-picks.json');
+  assert.match(provenance.editorialRecommendations.caveat, /Quotes do not refresh the opinions/);
   assert.match(provenance.fallbackPolicy, /No static or Yahoo-derived value replaces/);
 });
 
