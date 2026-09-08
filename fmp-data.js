@@ -77,11 +77,11 @@ function normalize(symbol, incomeRows, cashRows, issuer, now = Date.now()) {
   const prior = income.find((r) => r.period === latest.period && Number(r.fiscalYear) === Number(latest.fiscalYear) - 1 && r.reportedCurrency === unit && Math.abs(days(latest.date, r.date) - 365) <= 10);
   const history = income.slice().reverse().map((r) => ({ value: r.revenue, end: r.date, filed: r.filingDate, unit: r.reportedCurrency, periodType: 'quarterly', form: 'FMP statement', taxonomy: 'FMP', concept: 'revenue', sourceUrl: null }));
   const derived = { financialBasis: 'TTM', annualPeriodEnd: latest.date, annualUnit: unit, annualRevenue: consecutive ? sum(quarters, 'revenue') : null, revenueGrowthPct: prior && prior.revenue > 0 ? percent(latest.revenue - prior.revenue, prior.revenue) : null, revenueGrowthBasis: 'quarterly', revenueGrowthCurrentEnd: latest.date, revenueGrowthPriorEnd: prior?.date || null, shareDilutionPct: null };
-  const raw = { operatingIncome: sum(quarters, 'operatingIncome'), operatingCashFlow: sum(cashQuarters, 'operatingCashFlow'), capitalExpenditure: cashQuarters.length === 4 && cashQuarters.every((r) => finite(r.capitalExpenditure)) ? cashQuarters.reduce((v, r) => v + Math.abs(r.capitalExpenditure), 0) : null, stockCompensation: sum(cashQuarters, 'stockBasedCompensation') };
+  const raw = { revenue: derived.annualRevenue, operatingIncome: sum(quarters, 'operatingIncome'), operatingCashFlow: sum(cashQuarters, 'operatingCashFlow'), capitalExpenditure: cashQuarters.length === 4 && cashQuarters.every((r) => finite(r.capitalExpenditure)) ? cashQuarters.reduce((v, r) => v + Math.abs(r.capitalExpenditure), 0) : null, stockCompensation: sum(cashQuarters, 'stockBasedCompensation') };
   const reconciled = issuer?.reconciliationFacts || {};
   for (const [metric, value] of Object.entries(raw)) {
     const primary = issuerTtm(reconciled[metric], latest.date, unit);
-    derived[metric] = primary ? (metric === 'capitalExpenditure' ? Math.abs(primary.value) : primary.value) : value;
+    derived[metric === 'revenue' ? 'annualRevenue' : metric] = primary ? (metric === 'capitalExpenditure' ? Math.abs(primary.value) : primary.value) : value;
     fieldSources[metric] = primary ? { provider: 'SEC EDGAR', urls: primary.sources } : { provider: 'Financial Modeling Prep', urls: [] };
     if (primary && finite(value) && Math.abs(primary.value - value) > Math.max(1000, Math.abs(primary.value) * 0.001)) warnings.push(`${metric}: FMP differs; aligned issuer TTM used`);
   }

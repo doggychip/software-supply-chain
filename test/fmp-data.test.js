@@ -35,6 +35,18 @@ test('currency-mismatched and future statements are not combined',()=>{
   assert.equal(r.decisionEvidence.derived.annualRevenue,null);assert.ok(r.decisionEvidence.derived.blockingIssues.length);
   assert.throws(()=>normalize('TEST',income.map(r=>({...r,filingDate:'2099-01-01'})),cash,null,now),/No valid/);
 });
+test('issuer TTM revenue replaces earlier normalized quarters even when latest quarter agrees',()=>{
+  const rows=[secRow('2025-02-01','2026-01-31',10000),secRow('2026-02-01','2026-07-31',7000),secRow('2025-02-01','2025-07-31',5000)];
+  const issuer={reconciliationFacts:{revenue:rows},decisionEvidence:{reported:{revenueQuarterly:[{end:income[0].date,unit:'USD',value:income[0].revenue}]}}};
+  const r=normalize('TEST',income,cash,issuer,now),d=r.decisionEvidence.derived;
+  assert.equal(d.annualRevenue,12000);
+  assert.ok(Math.abs(d.operatingMarginPct-100*80/12000)<1e-12);
+  assert.ok(Math.abs(d.freeCashFlowMarginPct-100*100/12000)<1e-12);
+  assert.equal(r.reconciliation.fieldSources.revenue.provider,'SEC EDGAR');
+  assert.equal(r.reconciliation.rawFmpTtm.revenue,400);
+  assert.ok(r.reconciliation.warnings.some(w=>w.startsWith('revenue:')));
+  assert.deepEqual(d.blockingIssues,[]);
+});
 test('fiscal periods and filing dates must align, not just statement end dates',()=>{
   assert.ok(normalize('TEST',income.map((r,i)=>i===2?{...r,period:'Q3'}:r),cash,null,now).decisionEvidence.derived.blockingIssues.length);
   assert.ok(normalize('TEST',income,cash.map((r,i)=>i===2?{...r,fiscalYear:'2025'}:r),null,now).decisionEvidence.derived.blockingIssues.length);
