@@ -59,6 +59,9 @@
       quoteCurrency: quote && quote.currency || null,
       annualPeriodEnd: derived.annualPeriodEnd || null,
       quoteAsOf: quoteFresh ? quote.asOf : null,
+      financialBasis: derived.financialBasis || 'annual',
+      financialFresh: derived.financialBasis !== 'TTM' || (Number.isFinite(Date.parse(derived.annualPeriodEnd)) && Date.parse(derived.annualPeriodEnd) <= now && now - Date.parse(derived.annualPeriodEnd) <= 135 * 86_400_000),
+      blockingIssues: Array.isArray(derived.blockingIssues) ? derived.blockingIssues : [],
     };
   }
 
@@ -83,7 +86,7 @@
       metrics && metrics.freeCashFlowYieldPct,
       metrics && metrics.oneYearMaxDrawdownPct,
     ];
-    if (!context || typeof context.layer !== 'string' || !metrics || !metrics.quoteFresh || !metrics.historyFresh || !metrics.comparableCurrency || !required.every(finite)) {
+    if (!context || typeof context.layer !== 'string' || !metrics || metrics.financialFresh === false || (metrics.blockingIssues && metrics.blockingIssues.length) || !metrics.quoteFresh || !metrics.historyFresh || !metrics.comparableCurrency || !required.every(finite)) {
       return { key: 'insufficient_evidence', label: 'Insufficient evidence', gates: [] };
     }
 

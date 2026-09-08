@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Issuer-Reported Software Market Data</title>
+  <title>FMP Software Market Data</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="trust-pages.css">
@@ -13,14 +13,14 @@
 <nav class="tabs"><a class="active" href="index.html">Main Dashboard</a><a href="decision.html">Stock Decision</a><a href="correlation.html">Correlation</a><a href="technicals.html">Technicals</a><a href="insider.html">Insider Activity</a><a href="options.html">Options Activity</a><a href="sentiment.html">Market Conditions</a><a href="leaderboard.html">Performance</a><a href="stress-test.html">Scenario Calculator</a><a href="news.html">News</a></nav>
 <main>
   <header>
-    <div><h1>Software Stack — Issuer-Reported Results</h1><div class="sub">Issuer-filed fundamentals are primary; Yahoo Finance is a labeled reconciliation source</div></div>
+    <div><h1>Software Stack — FMP Financial Results</h1><div class="sub">FMP financial statements, issuer-filing checks, and Yahoo Finance reconciliation</div></div>
     <button class="theme" type="button" onclick="toggleTheme()">Theme</button>
   </header>
 
-  <section id="status" class="notice"><strong>Loading issuer-filed results…</strong>Missing SEC facts will remain unavailable; Yahoo will not fill them.</section>
+  <section id="status" class="notice"><strong>Loading FMP financial results…</strong>Financials are cached for up to 24 hours. Missing values remain unavailable.</section>
 
   <div id="summary" class="grid" hidden>
-    <section class="card"><div class="label">Issuer filing coverage</div><div class="metric" id="issuerCoverage">—</div><div class="muted">Companies with standardized SEC XBRL facts</div></section>
+    <section class="card"><div class="label">FMP financial coverage</div><div class="metric" id="issuerCoverage">—</div><div class="muted">Companies with valid quarterly statements</div></section>
     <section class="card"><div class="label">Yahoo quote coverage</div><div class="metric" id="quoteCoverage">—</div><div class="muted">Secondary market-data check only</div></section>
     <section class="card"><div class="label">Same-period checks</div><div class="metric" id="checkCoverage">—</div><div class="muted">Aligned within 0.5% / comparable fields</div></section>
   </div>
@@ -28,10 +28,10 @@
   <section class="card">
     <h2>Source hierarchy and limits</h2>
     <ul class="method">
-      <li><strong>Primary:</strong> standardized US-GAAP or IFRS facts filed by each issuer with SEC EDGAR. Every displayed fact includes its concept, period, unit and filing link.</li>
-      <li>SEC does not guarantee the scope or accuracy of its ticker-to-CIK association file, so the mapped SEC entity name and CIK are shown for inspection.</li>
-      <li><strong>Reconciliation:</strong> Yahoo Finance public endpoints. Yahoo values never replace a missing issuer-filed value.</li>
-      <li>“Aligned” means the period ends match and the numeric difference is at most 0.5%; it does not prove identical accounting bases. Yahoo EPS may be adjusted while SEC diluted EPS is filed GAAP/IFRS.</li>
+      <li><strong>Financial source:</strong> Financial Modeling Prep quarterly statements, retrieved server-side and cached for up to 24 hours. Provider-normalized values may differ from filed GAAP/IFRS results.</li>
+      <li><strong>Issuer checks:</strong> matching SEC facts and filing links are retained. The Stock Decision page uses aligned issuer TTM figures when available and discloses corrections. Company names and CIK mappings remain visible for inspection.</li>
+      <li><strong>Reconciliation:</strong> Yahoo Finance public endpoints. Yahoo values never replace missing FMP financials.</li>
+      <li>“Aligned” means period ends match and the numeric difference is at most 0.5%; it does not prove identical accounting bases. EPS and other normalized fields need issuer review.</li>
       <li>Market prices have no comparable issuer filing value, so Yahoo quotes are shown only as secondary market context.</li>
       <li>The layer map is a curated taxonomy dated <span id="universeDate">—</span>, not an issuer fact, assessment score or recommendation.</li>
     </ul>
@@ -47,12 +47,12 @@
   </section>
 
   <section id="issuerCard" class="card" hidden>
-    <h2>Primary — issuer-filed fundamentals</h2>
+    <h2>Financial statements — FMP</h2>
     <div class="table-wrap"><table>
       <thead><tr><th>Ticker</th><th>Company</th><th>Layer</th><th>Latest source filing</th><th>Revenue</th><th>Net income</th><th>Diluted EPS</th></tr></thead>
       <tbody id="issuerRows"></tbody>
     </table></div>
-    <div class="method">Values use the issuer's filed unit and are not currency-converted. Quarterly and annual facts are labeled separately. A fact can come from a different filing than another fact in the same row; its own period and form are shown below the value.</div>
+    <div class="method">Values use the financial-statement currency without conversion. FMP filing dates and period ends are shown separately. An issuer link appears only when a matching SEC revenue period is available. Missing links do not imply that a filing does not exist.</div>
   </section>
 
   <section id="reconciliationCard" class="card" hidden>
@@ -78,17 +78,17 @@ function factCell(fact){if(!fact)return '—';var title=esc(fact.taxonomy+':'+fa
 function safeSecUrl(value){return typeof value==='string'&&value.indexOf('https://www.sec.gov/')===0?value:null}
 function checkCell(check,primary,secondary){
   if(!check)return '—';
-  if(check.status==='issuer_unavailable')return '<span class="status">Issuer fact unavailable</span>';
+  if(check.status==='issuer_unavailable')return '<span class="status">FMP fact unavailable</span>';
   if(check.status==='yahoo_unavailable')return '<span class="status">Yahoo field unavailable</span>';
   if(check.status==='period_type_mismatch')return '<span class="status mixed">Annual vs quarterly</span>';
-  if(check.status==='period_mismatch')return '<span class="status mixed">Periods differ</span><div class="cell-meta">SEC '+esc(check.primaryEnd||'—')+' · Yahoo '+esc(check.secondaryEnd||'—')+'</div>';
+  if(check.status==='period_mismatch')return '<span class="status mixed">Periods differ</span><div class="cell-meta">FMP '+esc(check.primaryEnd||'—')+' · Yahoo '+esc(check.secondaryEnd||'—')+'</div>';
   var cls=check.status==='aligned'?'positive':'negative';var label=check.status==='aligned'?'Aligned':'Different';var delta=finite(check.differencePct)?Math.abs(check.differencePct).toFixed(2)+'%':'—';
-  return '<span class="status '+cls+'">'+label+' '+delta+'</span><div class="cell-meta">SEC '+factValue(primary)+' · Yahoo '+esc(compact(secondary))+'</div>';
+  return '<span class="status '+cls+'">'+label+' '+delta+'</span><div class="cell-meta">FMP '+factValue(primary)+' · Yahoo '+esc(compact(secondary))+'</div>';
 }
 function json(url){return fetch(url).then(function(r){if(!r.ok)throw new Error(url+' HTTP '+r.status);return r.json()})}
 
 var universePromise=json('/universe.json');
-var issuerPromise=json('/api/issuer-data');
+var issuerPromise=json('/api/financial-data');
 var yahooPromise=Promise.all([json('/api/quotes'),json('/api/fundamentals')]).then(function(parts){return {quotes:parts[0],fundamentals:parts[1]}}).catch(function(error){return {error:error}});
 
 function renderValueChain(universe){
@@ -152,9 +152,9 @@ Promise.all([universePromise,issuerPromise,yahooPromise]).then(function(parts){
   document.getElementById('summary').hidden=false;
   document.getElementById('reconciliationCard').hidden=false;
   var status=document.getElementById('status');status.className='notice ok';
-  status.innerHTML='<strong>Issuer-filed data loaded</strong>'+Object.keys(issuers).length+' of '+symbols.length+' issuers have standardized facts. '+(yahoo.error?'Yahoo reconciliation is currently unavailable.':'Yahoo reconciliation loaded separately.')+' Retrieved '+new Date(issuerPayload.updatedAt).toLocaleString()+'.';
+  status.innerHTML='<strong>FMP financial data loaded</strong>'+Object.keys(issuers).length+' of '+symbols.length+' companies have financial statements (up to 24-hour cache). '+(yahoo.error?'Yahoo reconciliation is currently unavailable.':'Yahoo reconciliation loaded separately.')+' Assembled '+new Date(issuerPayload.updatedAt).toLocaleString()+'.';
 }).catch(function(error){
-  var status=document.getElementById('status');status.className='notice error';status.innerHTML='<strong>Issuer-filed data unavailable</strong>No reported fundamental values are shown. '+esc(error.message)+'.';
+  var status=document.getElementById('status');status.className='notice error';status.innerHTML='<strong>FMP financial data unavailable</strong>No financial values are substituted. '+esc(error.message)+'.';
 });
 </script>
 </body>
