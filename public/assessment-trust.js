@@ -16,7 +16,7 @@
 
   function quarterEnd(value) {
     if (typeof value !== 'string') return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value ? value : null;
     var match = value.match(/^([1-4])Q(\d{4})$/);
     if (!match) return null;
     return match[2] + ['-03-31', '-06-30', '-09-30', '-12-31'][Number(match[1]) - 1];
@@ -34,7 +34,7 @@
     var difference = secondary - primary.value;
     var differencePct = Math.abs(primary.value) > 0 ? difference / Math.abs(primary.value) * 100 : null;
     return {
-      status: differencePct != null && Math.abs(differencePct) <= 0.5 ? 'aligned' : 'differs',
+      status: difference === 0 || differencePct != null && Math.abs(differencePct) <= 0.5 ? 'aligned' : 'differs',
       primaryValue: primary.value,
       secondaryValue: secondary,
       periodEnd: primary.end,
@@ -47,12 +47,21 @@
     var facts = issuer && issuer.facts || {};
     var epsHistory = fundamentals && Array.isArray(fundamentals.epsHistory) ? fundamentals.epsHistory : [];
     var revenueHistory = fundamentals && Array.isArray(fundamentals.revenueHistory) ? fundamentals.revenueHistory : [];
-    var eps = epsHistory.length ? epsHistory[epsHistory.length - 1] : null;
-    var reported = revenueHistory.length ? revenueHistory[revenueHistory.length - 1] : null;
+    function matching(rows, field, primary) {
+      var sorted = rows.filter(function(row){return quarterEnd(row[field])}).slice().sort(function(a,b){return quarterEnd(b[field]).localeCompare(quarterEnd(a[field]))});
+      return sorted.find(function(row){return primary && quarterEnd(row[field]) === primary.end}) || sorted[0] || null;
+    }
+    var eps = matching(epsHistory, 'quarter', facts.dilutedEps);
+    var revenue = matching(revenueHistory, 'date', facts.revenue);
+    var earnings = matching(revenueHistory, 'date', facts.netIncome);
+    var epsCheck = compareReported(facts.dilutedEps, eps && eps.epsActual, quarterEnd(eps && eps.quarter));
+    // Yahoo earnings-history actual EPS may be adjusted; it does not establish
+    // the same accounting/share basis as statement diluted EPS.
+    if (epsCheck.status === 'aligned' || epsCheck.status === 'differs') epsCheck.status = 'basis_unverified';
     return {
-      revenue: compareReported(facts.revenue, reported && reported.revenue, quarterEnd(reported && reported.date)),
-      netIncome: compareReported(facts.netIncome, reported && reported.earnings, quarterEnd(reported && reported.date)),
-      dilutedEps: compareReported(facts.dilutedEps, eps && eps.epsActual, quarterEnd(eps && eps.quarter)),
+      revenue: compareReported(facts.revenue, revenue && revenue.revenue, quarterEnd(revenue && revenue.date)),
+      netIncome: compareReported(facts.netIncome, earnings && earnings.earnings, quarterEnd(earnings && earnings.date)),
+      dilutedEps: epsCheck,
     };
   }
 
