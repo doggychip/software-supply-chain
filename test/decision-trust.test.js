@@ -55,6 +55,16 @@ test('decision metrics combine filed annual values with fresh same-currency mark
   assert.equal(metrics.comparableCurrency, true);
 });
 
+test('FMP-normalized quotes feed existing valuation metrics without a shape conversion', () => {
+  const { normalizeQuote } = require('../fmp-data');
+  const now = Date.parse('2026-08-10T00:00:00Z');
+  const normalized = normalizeQuote('TEST', { symbol: 'TEST', price: 100, timestamp: quote.asOf, marketCap: 2000, currency: 'USD' }, null, now);
+  const metrics = runtime().computeMetrics(record, normalized, bars, now);
+  assert.equal(metrics.priceSales, 2);
+  assert.equal(metrics.freeCashFlowYieldPct, 7.5);
+  assert.equal(metrics.comparableCurrency, true);
+});
+
 test('valuation fails closed when issuer and quote currencies differ', () => {
   const decision = runtime();
   const metrics = decision.computeMetrics(record, { ...quote, currency: 'EUR' }, bars, Date.parse('2026-08-10T00:00:00Z'));

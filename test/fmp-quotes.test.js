@@ -20,6 +20,7 @@ test('FMP quotes use profile currency, preserve market time and omit upstream se
   assert.equal(result.source.provider, 'Financial Modeling Prep');
   assert.equal(result.quotes.ADBE.price, 123); assert.equal(result.quotes.ADBE.currency, 'EUR');
   assert.equal(result.quotes.ADBE.asOf, raw.timestamp); assert.equal(result.quotes.ADBE.marketCap, 10000);
+  assert.equal(result.quotes.ADBE.extras?.marketCap, 10000);
   assert.equal(result.quotes.ADBE.provider, 'Financial Modeling Prep');
   assert.doesNotMatch(JSON.stringify(result), /fixture-secret|apikey|999/);
   assert.deepEqual(calls, ['/stable/quote', '/stable/profile']);
