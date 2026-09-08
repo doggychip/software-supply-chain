@@ -12,7 +12,7 @@ function harness(t,page='index.html',overrides={},query=''){
   const routes={'/universe.json':universe,'/api/financial-data':{issuers:{TEST:record},unavailable:{OTHER:'No test financials'}},'/api/quotes':{quotes:{TEST:{price:10,currency:'USD',asOf:Date.now()/1000,marketCap:50000}}},'/api/fundamentals':{fundamentals:{}},'/api/history?range=1y&interval=1d':{}};
   w.fetch=async url=>{if(Object.hasOwn(overrides,url)){const v=overrides[url];if(v instanceof Error)throw v;if(typeof v==='function')return v();return {ok:true,json:async()=>v}}return {ok:true,json:async()=>routes[url]}};
   w.eval(read('assessment-trust.js'));
-  if(page==='index.html')w.eval(read('dashboard.js'));else{w.eval(read('decision-trust.js'));for(const m of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g))w.eval(m[1])}
+  if(page==='index.html')w.eval(read('dashboard.js'));else{w.eval(read('decision-trust.js'));w.eval(read('recommendation-model.js'));w.eval(read('recommendation-ui.js'));for(const m of read(page).matchAll(/<script>([\s\S]*?)<\/script>/g))w.eval(m[1])}
   return w;
 }
 test('financials render without waiting for secondary sources and failed sources do not blank the page',async t=>{
@@ -63,4 +63,29 @@ test('decision page retains financial evidence when price history fails, with no
   assert.equal(w.decisionState.issuers.TEST.symbol,'TEST');
   assert.equal(w.decisionState.rows.some(r=>r.result.key==='research_now'),false);
   assert.match(w.document.getElementById('sourceStatus').textContent,/Some decision sources are unavailable/);
+});
+test('recommendation review expires on note edits and financial-period changes without losing notes',async t=>{
+  const w=harness(t,'decision.html',{},'?symbol=TEST');await w.decisionReady;const d=w.document;
+  d.getElementById('thesisNote').value='Synthetic review';d.getElementById('thesisReviewed').checked=true;
+  assert.equal(w.captureJournal().reviewedPeriod,'2026-06-30');
+  d.getElementById('valueChainNote').value='Synthetic value-chain advantage';
+  d.getElementById('valueChainNote').dispatchEvent(new w.Event('input'));
+  assert.equal(d.getElementById('thesisReviewed').checked,false);
+  d.getElementById('thesisReviewed').checked=true;
+  w.decisionState.rows.find(r=>r.symbol==='TEST').record=JSON.parse(JSON.stringify(record));
+  w.decisionState.rows.find(r=>r.symbol==='TEST').record.decisionEvidence.derived.annualPeriodEnd='2026-09-30';
+  w.selectCompany('TEST',false);
+  assert.equal(d.getElementById('thesisReviewed').checked,false);
+  assert.equal(d.getElementById('thesisNote').value,'Synthetic review');
+  assert.match(d.getElementById('thesisReviewPeriod').textContent,/2026-09-30/);
+});
+test('recommendation filters include missing evidence and invalid assumptions remove valuation outputs',async t=>{
+  const w=harness(t,'decision.html',{},'?symbol=TEST');await w.decisionReady;const d=w.document;
+  assert.equal(d.getElementById('recommendationCard').hidden,false);
+  d.getElementById('recommendationFilter').value='all';d.getElementById('recommendationFilter').dispatchEvent(new w.Event('change'));
+  assert.equal(d.querySelectorAll('#recommendationRows .company-link').length,2);
+  d.getElementById('baseSales').value='';d.getElementById('baseSales').dispatchEvent(new w.Event('input'));
+  assert.match(d.getElementById('recommendationDetail').textContent,/Set valuation assumptions/);
+  assert.equal(d.querySelector('#recommendationDetail table'),null);
+  assert.doesNotMatch(d.getElementById('recommendationDetail').textContent,/Conditional entry ceiling/);
 });

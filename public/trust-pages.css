@@ -1,5 +1,6 @@
 :root{--bg:#0d0f14;--surface:#151822;--surface2:#1b1f2b;--border:#2a3040;--text:#e5e8f0;--muted:#9299aa;--blue:#5b9cf6;--green:#56cc84;--yellow:#f0ad4e;--red:#f07070;--mono:'JetBrains Mono',monospace;--body:'Inter',sans-serif}
 [hidden]{display:none!important}
+.recommendation-card,.recommendation-callout{margin-bottom:22px}.recommendation-card p,.recommendation-callout p{font-size:13px}.recommendation-assumptions{margin:16px 0}.recommendation-filters{margin:16px 0;grid-template-columns:repeat(2,minmax(0,1fr))}.company-link{border:0;padding:0;background:none;color:var(--blue);font:700 12px var(--mono);cursor:pointer;text-decoration:underline}.recommendation-card td:last-child{text-align:left;white-space:normal;min-width:220px;max-width:380px}.recommendation-detail p,.recommendation-detail li{font-size:12px;overflow-wrap:anywhere}.recommendation-detail ul{padding-left:20px}.recommendation-detail strong{display:inline}.review-attestation{margin-top:14px;align-items:flex-start;line-height:1.5}.review-attestation input{flex:0 0 auto}.recommendation-detail h3{margin-top:0}.recommendation-detail td:last-child{white-space:normal}
 :focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 section[id]{scroll-margin-top:70px}
 .page-links{display:flex;flex-wrap:wrap;gap:10px 20px;margin-bottom:20px;font-size:13px}

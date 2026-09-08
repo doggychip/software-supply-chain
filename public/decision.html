@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="trust-pages.css">
   <script src="decision-trust.js"></script>
+  <script src="recommendation-model.js"></script>
 </head>
 <body>
 <nav class="tabs"><a href="index.html">Main Dashboard</a><a class="active" href="decision.html">Stock Decision</a><a href="correlation.html">Correlation</a><a href="technicals.html">Technicals</a><a href="insider.html">Insider Activity</a><a href="options.html">Options Activity</a><a href="sentiment.html">Market Conditions</a><a href="leaderboard.html">Performance</a><a href="stress-test.html">Scenario Calculator</a><a href="news.html">News</a></nav>
@@ -19,6 +20,28 @@
 
   <section class="notice"><strong>Research screen—not a buy recommendation</strong>A company is labeled “Research now” only when it fits your selected value-chain layers and passes every financial and risk threshold. Missing, stale, or currency-incompatible evidence remains unavailable and cannot pass.</section>
   <section id="sourceStatus" class="notice"><strong>Loading source-backed evidence…</strong>No stored market values or generated financial claims will be used.</section>
+
+  <section id="recommendationCard" class="card recommendation-card" hidden>
+    <div class="section-heading"><div><h2>Stock recommendations</h2><div class="muted">Conditional decisions under your assumptions—not personalized trade instructions</div></div><a href="#companyDetail">Selected company review ↓</a></div>
+    <p id="recommendationSummary" role="status" aria-live="polite"></p>
+    <details class="source-method"><summary>Valuation scenarios — editable assumptions, not forecasts</summary>
+      <p class="muted">These illustrative multiples are not analyst consensus or company-specific fair values. All cases hold current TTM financials constant; only the acceptable valuation changes. No future revenue, catalyst or probability is invented.</p>
+      <div class="controls recommendation-assumptions">
+        <div class="control"><label for="bearSales">Bear price / sales (×)</label><input id="bearSales" type="number" min="0.1" max="50" step="0.1" value="6"></div>
+        <div class="control"><label for="baseSales">Base price / sales (×)</label><input id="baseSales" type="number" min="0.1" max="50" step="0.1" value="8"></div>
+        <div class="control"><label for="bullSales">Bull price / sales (×)</label><input id="bullSales" type="number" min="0.1" max="50" step="0.1" value="10"></div>
+        <div class="control"><label for="bearYield">Bear adjusted-cash yield (%)</label><input id="bearYield" type="number" min="0.1" max="100" step="0.1" value="4"></div>
+        <div class="control"><label for="baseYield">Base adjusted-cash yield (%)</label><input id="baseYield" type="number" min="0.1" max="100" step="0.1" value="3"></div>
+        <div class="control"><label for="bullYield">Bull adjusted-cash yield (%)</label><input id="bullYield" type="number" min="0.1" max="100" step="0.1" value="2"></div>
+        <div class="control"><label for="marginOfSafety">Discount to base scenario (%)</label><input id="marginOfSafety" type="number" min="0" max="60" step="1" value="20"></div>
+      </div>
+      <div class="method">Adjusted cash = TTM FCF − 100% of TTM stock-based compensation (SBC). This is a conservative dilution-cost proxy, not GAAP cash flow or a forecast of buyback spending. Scenario equity value = the lower of revenue × price/sales and adjusted cash ÷ required yield. Scenario price = current quote × scenario equity value ÷ current market capitalization. Share count, financials and FX are held constant. No enterprise-value/debt bridge is implied.</div>
+      <div class="method">Entry ceiling = the lower of the base scenario after your discount and the existing sales/FCF-yield gate ceilings. This is not intrinsic value, a guaranteed floor or a stop-loss. A fresh issuer-reconciled input set, positive operating income and adjusted cash, financial/risk gates, selected value-chain layer and a current user-reviewed thesis are required for a Buy candidate. Debt, dilution, business durability and concentration still need human review.</div>
+    </details>
+    <div class="controls recommendation-filters"><div class="control"><label for="recommendationSearch">Find recommendation</label><input id="recommendationSearch" type="search" placeholder="Company or ticker"></div><div class="control"><label for="recommendationFilter">Recommendation view</label><select id="recommendationFilter"><option value="actionable">Candidates / price watch</option><option value="all">All companies</option><option value="buy">Buy candidates</option><option value="review">Thesis review needed</option><option value="wait">Wait for a better price</option><option value="avoid">Avoid for now</option><option value="insufficient">Insufficient evidence</option></select></div></div>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="Stock recommendations table"><table><thead><tr><th>Recommendation</th><th>Company</th><th>Value-chain layer</th><th>Latest quote</th><th>Conditional entry ceiling</th><th>Reason / next step</th></tr></thead><tbody id="recommendationRows"></tbody></table></div>
+    <p class="method">“Avoid” means excluded by this strategy today, not a prediction that the stock will fall. “Review thesis first” means price and quantitative gates pass but qualitative evidence is incomplete. No personalized allocation is suggested without your full holdings, liquidity needs and risk profile. Assumptions reset on page reload; only explicitly saved company notes persist in this browser.</p>
+  </section>
 
   <section class="card decision-controls">
     <div class="section-heading"><div><h2>Your mandatory gates</h2><div class="muted">Ryan's medium-risk, 3–5 year quality-growth baseline is applied and remains fully editable.</div></div><div class="decision-actions"><button id="applyBaseline" class="theme" type="button">Reset baseline</button><button id="clearCriteria" class="theme" type="button">Clear</button></div></div>
@@ -56,6 +79,7 @@
 
   <section id="companyDetail" class="card company-detail" hidden>
     <div class="section-heading"><div><h2 id="detailTitle">Company evidence</h2><div id="detailMeta" class="muted"></div></div><span id="detailStatus" class="status"></span></div>
+    <div id="recommendationDetail" class="notice"></div>
     <div class="detail-grid">
       <div>
         <h3>Gate results</h3>
@@ -66,13 +90,17 @@
       </div>
       <div>
         <h3>Guidance and thesis journal</h3>
-        <div class="journal-note">User-supplied notes stored only in this browser. The application does not verify, infer, or score them.</div>
+        <div class="journal-note">User-supplied notes stored only in this browser. Recommendation checks test completion and your review attestation, not the truth or strength of your claims. No text scoring or generated catalysts.</div>
         <label class="journal-label" for="guidanceSource">Official IR or filing URL</label><input id="guidanceSource" type="url" placeholder="https://company.example/investors/…">
         <label class="journal-label" for="guidanceNote">Current official guidance</label><textarea id="guidanceNote" rows="3" placeholder="Copy the exact range and period from the source"></textarea>
         <label class="journal-label" for="thesisNote">Investment thesis</label><textarea id="thesisNote" rows="3" placeholder="What must be true?"></textarea>
+        <label class="journal-label" for="valueChainNote">Evidence of value-chain advantage</label><textarea id="valueChainNote" rows="3" placeholder="Position in the map, pricing power, switching costs, dependencies, and issuer evidence"></textarea>
+        <label class="journal-label" for="balanceSheetNote">Debt, liquidity and dilution review</label><textarea id="balanceSheetNote" rows="3" placeholder="Debt maturities, cash, commitments, stock compensation and share issuance; cite issuer evidence"></textarea>
         <label class="journal-label" for="catalystNote">Catalyst</label><textarea id="catalystNote" rows="2" placeholder="What could change market expectations?"></textarea>
         <label class="journal-label" for="invalidationNote">Invalidation</label><textarea id="invalidationNote" rows="2" placeholder="What evidence would make you reject the thesis?"></textarea>
         <label class="journal-label" for="riskNote">Key risks</label><textarea id="riskNote" rows="2" placeholder="Company-specific downside risks"></textarea>
+        <label class="layer-option review-attestation"><input id="thesisReviewed" type="checkbox">I reviewed the linked issuer source, value-chain advantage, balance sheet, catalyst and risks for this financial period.</label>
+        <div id="thesisReviewPeriod" class="muted"></div>
         <button id="saveJournal" class="theme journal-save" type="button">Save browser notes</button><span id="journalStatus" class="muted journal-status"></span>
       </div>
     </div>
@@ -87,10 +115,12 @@
       <li>Revenue growth requires the comparable prior-year fiscal quarter. Valuation and cash-flow metrics use the latest four quarters. This TTM basis can change results versus the previous annual screen.</li>
       <li>Issuer guidance is not standardized and is never invented. The journal requires you to preserve the official source yourself.</li>
       <li>“Research now” means only that the available evidence passes your inputs; it is not a prediction, price target or instruction to trade.</li>
+      <li>The recommendation panel adds a separate, stricter valuation and user-reviewed thesis layer. Hypothetical scenario prices do not reflect actual future performance. See <a href="https://www.finra.org/investors/investing/investment-products/stocks/evaluating-stocks" target="_blank" rel="noopener">FINRA stock evaluation guidance</a> and <a href="https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-alerts/investor-56" target="_blank" rel="noopener">SEC limitations of automated investment tools</a>.</li>
     </ul>
   </section>
 </main>
 
+<script src="recommendation-ui.js"></script>
 <script>
 function toggleTheme(){var e=document.documentElement;e.dataset.theme=e.dataset.theme==='dark'?'light':'dark'}
 function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -112,6 +142,9 @@ function json(url){var controller=new AbortController(),timer=setTimeout(functio
 var decisionState={universe:null,issuers:{},quotes:{},history:{},rows:[],selected:null};
 var statusOrder={research_now:0,watch:1,risk_gate_failed:2,insufficient_evidence:3,set_criteria:4};
 var journalDrafts={};
+var journalFields=['guidanceSource','guidanceNote','thesisNote','valueChainNote','balanceSheetNote','catalystNote','invalidationNote','riskNote'];
+var displayedReviewPeriod=null;
+function captureJournal(){var journal={};journalFields.forEach(function(id){journal[id]=document.getElementById(id).value});journal.thesisReviewed=document.getElementById('thesisReviewed').checked;journal.reviewedPeriod=journal.thesisReviewed?displayedReviewPeriod:null;return journal}
 
 function renderDecision(){
   if(!decisionState.universe)return;
@@ -136,14 +169,14 @@ function renderDecision(){
   document.getElementById('watchCount').textContent=rows.filter(function(row){return row.result.key==='watch'||row.result.key==='risk_gate_failed'}).length;
   document.getElementById('incompleteCount').textContent=rows.filter(function(row){return row.result.key==='insufficient_evidence'||row.result.key==='set_criteria'}).length;
   document.getElementById('decisionSummary').hidden=false;document.getElementById('decisionTableCard').hidden=false;
-  if(decisionState.selected)selectCompany(decisionState.selected,false);
+  if(decisionState.selected)selectCompany(decisionState.selected,false);else renderRecommendations();
 }
 
 function journalKey(symbol){return 'software-decision-journal:'+symbol}
 function readJournal(symbol){try{return JSON.parse(localStorage.getItem(journalKey(symbol))||'{}')}catch(error){return {}}}
 function selectCompany(symbol,scroll){
   var row=decisionState.rows.find(function(candidate){return candidate.symbol===symbol});if(!row)return;
-  if(decisionState.selected){var draft={};['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){draft[id]=document.getElementById(id).value});journalDrafts[decisionState.selected]=draft}
+  if(decisionState.selected)journalDrafts[decisionState.selected]=captureJournal();
   decisionState.selected=symbol;var record=row.record||{},derived=record.decisionEvidence&&record.decisionEvidence.derived||{};
   document.getElementById('detailTitle').textContent=symbol+' — '+(record.name||row.meta.name);
   document.getElementById('detailMeta').textContent=row.meta.layer+' · FMP / issuer TTM through '+(derived.annualPeriodEnd||'unavailable')+' · fetched '+(record.retrievedAt?new Date(record.retrievedAt).toLocaleString():'unavailable')+' · '+(record.reconciliation?(record.reconciliation.blockingIssues||[]).concat(record.reconciliation.warnings||[]).join('; '):'');
@@ -159,8 +192,12 @@ function selectCompany(symbol,scroll){
   var observation=document.getElementById('portfolioObservation');
   if(finite(row.result.observedLossPct))observation.innerHTML='<strong>Portfolio observation</strong>A '+criteria().proposedWeightPct.toFixed(1)+'% position experiencing the trailing one-year maximum drawdown would have reduced the portfolio by '+row.result.observedLossPct.toFixed(2)+'%. This is historical arithmetic, not a loss forecast.';
   else observation.innerHTML='<strong>Portfolio observation unavailable</strong>Enter every gate and ensure fresh price history is available.';
-  var journal=journalDrafts[symbol]||readJournal(symbol);['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){document.getElementById(id).value=journal[id]||''});
+  var journal=journalDrafts[symbol]||readJournal(symbol);journalFields.forEach(function(id){document.getElementById(id).value=journal[id]||''});
+  displayedReviewPeriod=derived.annualPeriodEnd||null;
+  document.getElementById('thesisReviewed').checked=journal.thesisReviewed===true&&journal.reviewedPeriod===displayedReviewPeriod;
+  document.getElementById('thesisReviewPeriod').textContent='Review applies to financial period '+(derived.annualPeriodEnd||'unavailable')+'. A new financial period or edited note requires a new review.';
   document.getElementById('journalStatus').textContent='';document.getElementById('companyDetail').hidden=false;
+  renderRecommendations();renderRecommendationDetail(row);
   if(scroll!==false)document.getElementById('companyDetail').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
@@ -168,8 +205,9 @@ document.querySelectorAll('.decision-inputs input').forEach(function(input){inpu
 document.getElementById('applyBaseline').addEventListener('click',applyBaseline);
 document.getElementById('clearCriteria').addEventListener('click',function(){document.querySelectorAll('.decision-inputs input').forEach(function(input){input.value=''});document.querySelectorAll('#layerCriteria input').forEach(function(input){input.checked=false});renderDecision()});
 document.getElementById('saveJournal').addEventListener('click',function(){
-  if(!decisionState.selected)return;var journal={};['guidanceSource','guidanceNote','thesisNote','catalystNote','invalidationNote','riskNote'].forEach(function(id){journal[id]=document.getElementById(id).value.trim()});
+  if(!decisionState.selected)return;var journal=captureJournal();journalDrafts[decisionState.selected]=journal;
   try{localStorage.setItem(journalKey(decisionState.selected),JSON.stringify(journal));document.getElementById('journalStatus').textContent='Saved locally for '+decisionState.selected+'.'}catch(error){document.getElementById('journalStatus').textContent='Browser storage unavailable.'}
+  renderRecommendations();var row=decisionState.rows.find(function(r){return r.symbol===decisionState.selected});if(row)renderRecommendationDetail(row);
 });
 
 var decisionSourceErrors=[];
