@@ -49,3 +49,32 @@ check source/price failure states and expiry tests, open a card's analysis, sear
 for an unreviewed ticker, and follow the value-chain link. After merging, confirm
 Zeabur is RUNNING on the merged commit and repeat these flows on the live site.
 The change has no database migration, new dependency or environment variable.
+
+## FMP current market data
+
+The homepage and valuation screen now read `/api/fmp-quotes`. The server uses
+FMP's stable quote endpoint and, when necessary, its profile endpoint for the
+quote currency. Market timestamps are preserved; retrieval time never stands in
+for quote time. Missing/stale quotes, missing currencies and inaccessible plan
+features remain unavailable, with no Yahoo or static-price fallback.
+
+Quotes are cached for five minutes, profiles for 24 hours, and failed lookups for
+one minute. In-flight requests are deduplicated and share the existing FMP pacing
+queue. Authentication/rate-limit failures pause all FMP requests; endpoint-specific
+entitlement failures pause only that endpoint, preserving access to financial
+statements. The homepage requests only the reviewed shortlist by default. The
+advanced valuation screen explicitly requests the full universe.
+
+Yahoo remains secondary reconciliation data and historical-price context for
+drawdown checks, not the source of current price or market capitalization in the
+valuation screen. Dated editorial opinions are unchanged by switching providers.
+The existing server-side `FMP_API_KEY` is reused; it is never sent to the browser.
+The local preview cannot fetch live FMP data without a configured server key;
+do not copy production credentials into the preview to hide this limitation.
+
+Release checks: quote normalization, currency/date rejection, secret stripping,
+cache sharing, partial failures, endpoint-specific access errors, missing-key
+API responses, UI provider checks, and all existing financial/decision tests.
+On the hosted service verify `/api/fmp-quotes` identifies FMP and that the cards
+show FMP market timestamps. Roll back to e2e2c0c240ee131e06017909346f84dd792f6905
+if this release breaks the homepage or existing financial-statement access.

@@ -3,8 +3,10 @@
 const { loadIssuerData } = require('./issuer-data');
 const TTL = 24 * 60 * 60 * 1000;
 const cache = new Map(), pending = new Map();
+const quoteCache = new Map(), quotePending = new Map(), profileCache = new Map(), blockedEndpoints = new Map();
 let queue = Promise.resolve(), blockedUntil = 0;
 const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+const currencyCode = v => typeof v === 'string' && /^[A-Z]{3}$/.test(v);
 const days = (a, b) => (Date.parse(a) - Date.parse(b)) / 86400000;
 const ratio = (a, b) => finite(a) && finite(b) && b > 0 ? a / b : null;
 const percent = (a, b) => { const value = ratio(a, b); return value == null ? null : 100 * value; };
@@ -14,23 +16,26 @@ const source = { provider: 'Financial Modeling Prep', kind: 'Provider-normalized
 async function request(endpoint, symbol, fetchImpl = global.fetch) {
   const key = process.env.FMP_API_KEY?.trim();
   if (!key) throw new Error('FMP API key is not configured');
-  if (Date.now() < blockedUntil) throw new Error('FMP access or quota unavailable; retry after cooldown');
+  if (Date.now() < Math.max(blockedUntil, blockedEndpoints.get(endpoint) || 0)) throw new Error('FMP access or quota unavailable; retry after cooldown');
   const slot = queue.then(() => new Promise((resolve) => setTimeout(resolve, 220)));
   queue = slot.catch(() => {}); await slot;
-  if (Date.now() < blockedUntil) throw new Error('FMP access or quota unavailable; retry after cooldown');
+  if (Date.now() < Math.max(blockedUntil, blockedEndpoints.get(endpoint) || 0)) throw new Error('FMP access or quota unavailable; retry after cooldown');
   const url = new URL(`https://financialmodelingprep.com/stable/${endpoint}`);
-  Object.entries({ symbol, period: 'quarter', limit: '8', apikey: key }).forEach(([k, v]) => url.searchParams.set(k, v));
+  const marketEndpoint = ['quote', 'profile'].includes(endpoint);
+  Object.entries({ symbol, ...(marketEndpoint ? {} : { period: 'quarter', limit: '8' }), apikey: key }).forEach(([k, v]) => url.searchParams.set(k, v));
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
   try {
     const response = await fetchImpl(url.toString(), { signal: controller.signal, redirect: 'error', headers: { Accept: 'application/json' } });
     if (!response.ok) {
-      if ([401, 402, 403, 429].includes(response.status)) blockedUntil = Date.now() + 30 * 60 * 1000;
+      if ([401, 429].includes(response.status)) blockedUntil = Date.now() + 30 * 60 * 1000;
+      // A quote/profile entitlement failure must not disable available financial statements.
+      if ([402, 403].includes(response.status)) blockedEndpoints.set(endpoint, Date.now() + 30 * 60 * 1000);
       throw new Error(`FMP HTTP ${response.status}`);
     }
     const payload = await response.json();
     if (!Array.isArray(payload)) throw new Error('FMP returned an invalid statement response');
     // Explicit allowlist prevents upstream metadata, URLs or credentials reaching clients.
-    const fields = ['date', 'symbol', 'reportedCurrency', 'cik', 'filingDate', 'acceptedDate', 'fiscalYear', 'period', 'revenue', 'netIncome', 'epsDiluted', 'operatingIncome', 'operatingCashFlow', 'capitalExpenditure', 'freeCashFlow', 'stockBasedCompensation'];
+    const fields = marketEndpoint ? (endpoint === 'quote' ? ['symbol', 'price', 'timestamp', 'currency', 'marketCap'] : ['symbol', 'currency']) : ['date', 'symbol', 'reportedCurrency', 'cik', 'filingDate', 'acceptedDate', 'fiscalYear', 'period', 'revenue', 'netIncome', 'epsDiluted', 'operatingIncome', 'operatingCashFlow', 'capitalExpenditure', 'freeCashFlow', 'stockBasedCompensation'];
     return payload.map((row) => Object.fromEntries(fields.filter((k) => Object.hasOwn(row, k)).map((k) => [k, row[k]])));
   } catch (error) {
     // Never return fetch error messages: they may contain a URL with the key.
@@ -133,5 +138,55 @@ async function loadFinancialData(symbols, { fetchImpl = global.fetch, issuerLoad
   return { updatedAt: Date.now(), source, cacheTtlHours: 24, issuers, unavailable };
 }
 
-function resetCaches() { cache.clear(); pending.clear(); blockedUntil = 0; queue = Promise.resolve(); }
-module.exports = { loadFinancialData, normalize, issuerTtm, validRows, request, resetCaches };
+function normalizeQuote(symbol, quote, profile, now = Date.now()) {
+  if (quote?.symbol !== symbol || !finite(quote.price) || quote.price <= 0 || !finite(quote.timestamp) || quote.timestamp <= 0 || quote.timestamp * 1000 > now || now - quote.timestamp * 1000 > 7 * 86400000) throw new Error('FMP quote price or market timestamp is unavailable or stale');
+  const quoteCurrency = currencyCode(quote.currency) ? quote.currency : null;
+  const profileCurrency = profile?.symbol === symbol && currencyCode(profile.currency) ? profile.currency : null;
+  if (quoteCurrency && profileCurrency && quoteCurrency !== profileCurrency) throw new Error('FMP quote and profile currencies differ');
+  const currency = quoteCurrency || profileCurrency;
+  if (!currency) throw new Error('FMP quote currency unavailable');
+  return { symbol, price: quote.price, asOf: quote.timestamp, currency, marketCap: finite(quote.marketCap) && quote.marketCap > 0 ? quote.marketCap : null, provider: 'Financial Modeling Prep', retrievedAt: now };
+}
+
+async function loadFmpQuotes(symbols, { fetchImpl = global.fetch } = {}) {
+  if (!process.env.FMP_API_KEY?.trim()) throw new Error('FMP API key is not configured');
+  const quotes = {}, unavailable = {};
+  await Promise.all([...new Set(symbols)].map(async symbol => {
+    if (!/^[A-Z][A-Z0-9.-]{0,9}$/.test(symbol)) { unavailable[symbol] = 'Invalid symbol'; return; }
+    let entry = quoteCache.get(symbol);
+    if (!entry || entry.expires <= Date.now()) {
+      if (!quotePending.has(symbol)) {
+        const work = (async () => {
+          try {
+            const rows = await request('quote', symbol, fetchImpl);
+            const quote = rows.find(row => row.symbol === symbol);
+            if (!quote) throw new Error('FMP quote unavailable for requested symbol');
+            let profile = profileCache.get(symbol);
+            if (!currencyCode(quote.currency) && (!profile || profile.expires <= Date.now())) {
+              const profiles = await request('profile', symbol, fetchImpl);
+              const value = profiles.find(row => row.symbol === symbol && currencyCode(row.currency));
+              if (!value) throw new Error('FMP quote currency unavailable');
+              profile = { value, expires: Date.now() + TTL }; profileCache.set(symbol, profile);
+            }
+            const value = normalizeQuote(symbol, quote, profile?.expires > Date.now() ? profile.value : null);
+            const result = { value, expires: Date.now() + 5 * 60 * 1000 }; quoteCache.set(symbol, result); return result;
+          } catch (error) {
+            const result = { error: error.message, expires: Date.now() + 60000 }; quoteCache.set(symbol, result); return result;
+          }
+        })().finally(() => quotePending.delete(symbol));
+        quotePending.set(symbol, work);
+      }
+      entry = await quotePending.get(symbol);
+    }
+    if (entry.error) unavailable[symbol] = entry.error;
+    else {
+      // Recheck market age when serving a cached response; retrieval time is not market time.
+      try { normalizeQuote(symbol, { ...entry.value, timestamp: entry.value.asOf }); quotes[symbol] = entry.value; }
+      catch (error) { unavailable[symbol] = error.message; }
+    }
+  }));
+  return { updatedAt: Date.now(), source: { provider: 'Financial Modeling Prep', kind: 'Market quotes; currency from FMP quote or company profile', url: 'https://site.financialmodelingprep.com/developer/docs/stable' }, cacheTtlMinutes: 5, quotes, unavailable };
+}
+
+function resetCaches() { cache.clear(); pending.clear(); quoteCache.clear(); quotePending.clear(); profileCache.clear(); blockedEndpoints.clear(); blockedUntil = 0; queue = Promise.resolve(); }
+module.exports = { loadFinancialData, loadFmpQuotes, normalizeQuote, normalize, issuerTtm, validRows, request, resetCaches };
